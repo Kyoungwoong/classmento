@@ -60,9 +60,16 @@ describe("ExperienceSection", () => {
     await waitFor(() => expect(onResync).toHaveBeenCalledTimes(1));
   });
 
-  it("나누기 실패 → 다시 시도하면 목록 재조회가 아니라 나누기를 다시 한다", async () => {
-    const load = vi.spyOn(api, "resumeExperiences").mockResolvedValue([]);
-    const onResync = vi.fn().mockRejectedValueOnce(new Error("x")).mockResolvedValue(undefined);
+  it("나누기 실패 → 다시 시도하면 목록 재조회가 아니라 나누기를 다시 하고, 성공하면 새 목록을 보여준다", async () => {
+    const load = vi
+      .spyOn(api, "resumeExperiences")
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([exp]);
+    const retried = deferred<void>();
+    const onResync = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("x"))
+      .mockReturnValueOnce(retried.promise);
     render(<ExperienceSection resumeId={1} version={1} onResync={onResync} />);
 
     fireEvent.click(await screen.findByRole("button", { name: "경험으로 나누기" }));
@@ -70,7 +77,27 @@ describe("ExperienceSection", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "다시 시도하기" }));
     await waitFor(() => expect(onResync).toHaveBeenCalledTimes(2));
+    // 나누는 중: 에러는 사라지고 목록 재조회는 아직 하지 않는다
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(load).toHaveBeenCalledTimes(1);
+
+    await act(async () => retried.resolve());
+    expect(await screen.findByRole("heading", { name: "실시간 재고 동기화" })).toBeInTheDocument();
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it("나누기에 성공하면 부모가 version을 바꾸지 않아도 스스로 목록을 다시 불러온다", async () => {
+    const load = vi
+      .spyOn(api, "resumeExperiences")
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([exp]);
+    const onResync = vi.fn().mockResolvedValue(undefined);
+    render(<ExperienceSection resumeId={1} version={1} onResync={onResync} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "경험으로 나누기" }));
+
+    expect(await screen.findByRole("heading", { name: "실시간 재고 동기화" })).toBeInTheDocument();
+    expect(load).toHaveBeenCalledTimes(2);
   });
 
   it("나누기 성공 직후 새 목록이 오기 전에는 '찾지 못했어요'를 보이지 않고 불러오는 중으로 둔다", async () => {
