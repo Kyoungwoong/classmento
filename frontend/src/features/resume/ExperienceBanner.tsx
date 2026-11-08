@@ -30,8 +30,8 @@ export function ExperienceBanner({ experience }: ExperienceBannerProps) {
       {summary && <p className="mt-1 line-clamp-2 text-body2 text-text-sub">{summary}</p>}
       {shown.length > 0 && (
         <ul className="mt-3 flex flex-wrap gap-2" aria-label="사용한 기술">
-          {shown.map((s) => (
-            <li key={s}>
+          {shown.map((s, i) => (
+            <li key={`${i}-${s}`}>
               <Chip label={s} size="sm" tone="surface" />
             </li>
           ))}

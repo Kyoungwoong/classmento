@@ -1,14 +1,18 @@
 import clsx from "clsx";
 
-interface ChipProps {
+interface ChipBase {
   label: string;
-  /** 있으면 오른쪽에 지우기 버튼 */
-  onRemove?: () => void;
-  /** md: 편집용(36px) / sm: 읽기 전용 작은 표시(28px) */
-  size?: "md" | "sm";
   /** muted: 흰 배경 위(회색 면) / surface: 회색 면 위(흰 면) */
   tone?: "muted" | "surface";
 }
+
+/**
+ * md: 편집용(36px). 지우기 버튼(터치 44px)을 붙일 수 있다.
+ * sm: 읽기 전용 작은 표시(28px). 버튼이 칩보다 커지므로 지우기를 타입으로 막는다.
+ */
+type ChipProps =
+  | (ChipBase & { size?: "md"; onRemove?: () => void })
+  | (ChipBase & { size: "sm"; onRemove?: never });
 
 /** 기술 스택 같은 짧은 키워드. 색은 회색·흰색 면 하나만. */
 export function Chip({ label, onRemove, size = "md", tone = "muted" }: ChipProps) {
