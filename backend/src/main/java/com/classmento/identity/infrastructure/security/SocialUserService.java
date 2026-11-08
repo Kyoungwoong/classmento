@@ -41,9 +41,9 @@ public class SocialUserService extends DefaultOAuth2UserService {
     Email email;
     try {
       email = Email.of(profile.email());
-    } catch (DomainException e) {
+    } catch (DomainException ignored) {
       // 공급자가 이메일을 주지 않았거나 형식이 틀림 → 500이 아니라 OAuth2 실패 화면(failureUrl)으로 보낸다
-      throw new OAuth2AuthenticationException(new OAuth2Error("invalid_email"), e.getMessage());
+      throw new OAuth2AuthenticationException(new OAuth2Error("invalid_email"), "이메일을 확인할 수 없어요.");
     }
     if (users.existsByEmailIgnoreCase(email.value())) {
       // 같은 이메일의 다른 가입 방식이 있으면 자동 연결하지 않는다(계정 탈취 방지).
