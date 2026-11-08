@@ -15,7 +15,14 @@ import {
   Toast,
   TopBar,
 } from "@/components/ui";
-import { api, ApiError, type ParsedResume, type ResumeDetail } from "@/lib/api/client";
+import {
+  api,
+  ApiError,
+  type ExperienceView,
+  type ParsedResume,
+  type ResumeDetail,
+} from "@/lib/api/client";
+import { ExperienceBanner } from "./ExperienceBanner";
 import { useResume } from "./useResume";
 
 export function ResumeScreen() {
@@ -144,7 +151,7 @@ function ParsedView({
     }
   }
 
-  const { profile, experiences, projects, educations } = draft;
+  const { profile, educations } = draft;
 
   return (
     <Screen
@@ -169,6 +176,12 @@ function ParsedView({
       <Section title="기본 정보">
         <ListRow title={profile.name ?? "이름 없음"} description={profileLine(profile)} />
       </Section>
+
+      <ExperienceSection
+        resumeId={resume.id}
+        version={resume.parsed}
+        onResync={() => api.updateParsed(resume.id, resume.parsed!).then(onSaved)}
+      />
 
       <Section title="기술" count={draft.skills.length}>
         <div className="flex flex-wrap gap-2 pt-2">
@@ -204,28 +217,6 @@ function ParsedView({
             추가하기
           </Button>
         </form>
-      </Section>
-
-      <Section title="경력" count={experiences.length}>
-        {experiences.map((e, i) => (
-          <ListRow
-            key={i}
-            title={[e.company, e.role].filter(Boolean).join(" · ")}
-            description={[e.period, ...e.highlights].filter(Boolean).join("\n")}
-          />
-        ))}
-      </Section>
-
-      <Section title="프로젝트" count={projects.length}>
-        {projects.map((p, i) => (
-          <ListRow
-            key={i}
-            title={p.name ?? "이름 없는 프로젝트"}
-            description={[p.period, p.description, p.techStack.join(", ")]
-              .filter(Boolean)
-              .join("\n")}
-          />
-        ))}
       </Section>
 
       <Section title="학력" count={educations.length}>
@@ -267,6 +258,88 @@ function Section({
         <p className="py-4 text-body2 text-text-hint">찾지 못했어요</p>
       ) : (
         <div className="mt-2">{children}</div>
+      )}
+    </section>
+  );
+}
+
+/**
+ * 경험(경력·프로젝트 하나씩) 배너 목록. 경험 기반 면접에서 고르는 단위(ADR 0005).
+ * 이전 버전으로 정리된 이력서는 경험이 비어 있을 수 있어, 다시 정리하는 행동을 준다.
+ */
+function ExperienceSection({
+  resumeId,
+  version,
+  onResync,
+}: {
+  resumeId: number;
+  version: unknown;
+  onResync: () => Promise<unknown>;
+}) {
+  const [items, setItems] = useState<ExperienceView[] | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [resyncing, setResyncing] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .resumeExperiences(resumeId)
+      .then((list) => !cancelled && setItems(list))
+      .catch(() => !cancelled && setFailed(true));
+    return () => {
+      cancelled = true;
+    };
+  }, [resumeId, version]);
+
+  async function resync() {
+    setResyncing(true);
+    try {
+      await onResync();
+    } catch {
+      setFailed(true);
+    } finally {
+      setResyncing(false);
+    }
+  }
+
+  return (
+    <section className="mt-10">
+      <h2 className="text-title2 text-text-strong">
+        경험
+        {items && items.length > 0 && <span className="ml-1.5 text-text-hint">{items.length}</span>}
+      </h2>
+      <p className="mt-1 text-body2 text-text-sub">
+        경험 하나를 골라 그 경험으로 면접을 볼 수 있어요.
+      </p>
+
+      {failed ? (
+        <p className="py-4 text-body2 text-danger">
+          경험을 불러오지 못했어요. 잠시 후 다시 열어 주세요.
+        </p>
+      ) : items === null ? (
+        <p className="py-4 text-body2 text-text-hint">경험을 불러오고 있어요</p>
+      ) : items.length === 0 ? (
+        <div className="mt-3 rounded-lg bg-bg-muted px-5 py-4">
+          <p className="text-body2 text-text">아직 경험으로 나누지 않았어요.</p>
+          <Button
+            variant="secondary"
+            size="md"
+            className="mt-3"
+            onClick={resync}
+            loading={resyncing}
+            loadingText="나누고 있어요"
+          >
+            경험으로 나누기
+          </Button>
+        </div>
+      ) : (
+        <ul className="mt-3 flex flex-col gap-3">
+          {items.map((e) => (
+            <li key={e.id}>
+              <ExperienceBanner experience={e} />
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );
