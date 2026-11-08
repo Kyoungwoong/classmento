@@ -1,0 +1,87 @@
+# 재사용 워크플로: 서비스 하나의 Docker 이미지를 빌드하고 (선택) 레지스트리에 푸시한다.
+# - CI(ci.yml): push=false → 빌드가 깨지지 않는지만 확인
+# - CD(cd.yml): push=true  → AWS ECR에 푸시 (OIDC로 역할 위임, 장기 키 없음)
+# 레지스트리를 바꾸려면 이 파일의 "레지스트리 로그인" 단계만 교체하면 된다.
+name: Docker image
+
+on:
+  workflow_call:
+    inputs:
+      service:
+        description: "backend | frontend (폴더 이름 = 이미지 이름 접미사)"
+        required: true
+        type: string
+      push:
+        description: "레지스트리에 푸시할지"
+        required: false
+        type: boolean
+        default: false
+      aws-region:
+        required: false
+        type: string
+        default: ap-northeast-2
+      backend-url:
+        description: "frontend 빌드 시 /api 프록시 대상 (빌드 시점 고정)"
+        required: false
+        type: string
+        default: http://backend:8080
+    outputs:
+      image:
+        description: "푸시한 이미지 (레지스트리/이름:sha). push=false면 빈 값"
+        value: ${{ jobs.build.outputs.image }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # AWS OIDC (push=true일 때만 사용)
+    outputs:
+      image: ${{ steps.result.outputs.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      # ---- 레지스트리 로그인 (push=true일 때만) ----
+      - name: AWS 자격 증명 (OIDC)
+        if: inputs.push
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ inputs.aws-region }}
+
+      - name: ECR 로그인
+        id: ecr
+        if: inputs.push
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 이미지 이름·태그
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ inputs.push && format('{0}/classmento-{1}', steps.ecr.outputs.registry, inputs.service) || format('classmento-{0}', inputs.service) }}
+          tags: |
+            type=sha,format=long,prefix=
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 빌드${{ inputs.push && ' 및 푸시' || '' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.service }}
+          push: ${{ inputs.push }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            BACKEND_URL=${{ inputs.backend-url }}
+          cache-from: type=gha,scope=${{ inputs.service }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.service }}
+
+      - id: result
+        if: inputs.push
+        run: echo "image=${{ steps.ecr.outputs.registry }}/classmento-${{ inputs.service }}:${{ github.sha }}" >> "$GITHUB_OUTPUT"

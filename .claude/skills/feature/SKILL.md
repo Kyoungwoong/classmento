@@ -26,4 +26,6 @@ API 모양, 화면 경로, 사용할 프롬프트 버전, 단계 체크리스트
 - `bash scripts/verify.sh` 통과.
 - `docs/api/README.md` 엔드포인트 표, `docs/design/screens.md`(화면 변경 시)를 실제와 맞춘다.
 - 계획 파일을 `docs/exec-plans/completed/`로 옮기고 "결과"를 쓴다.
-- 커밋은 사용자가 요청할 때만.
+
+## 브랜치·커밋·PR
+구현을 시작하기 전에 `ship` 스킬 1단계로 브랜치를 만든다. 위 3번의 각 단계가 끝날 때마다 잘게 커밋하고, 마무리 후 `ship` 4단계(PR)부터 이어간다.

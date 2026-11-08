@@ -1,0 +1,92 @@
+# CD (골격): 이미지를 AWS ECR에 푸시하고 배포한다. 아직 비활성 — AWS 설정 후 켠다.
+#
+# 켜는 방법 (docs/ops/deploy.md):
+#   1) AWS에 ECR 저장소 classmento-backend / classmento-frontend 생성
+#   2) GitHub OIDC 신뢰 역할 생성 → 저장소 변수 AWS_ROLE_ARN 등록 (Settings → Variables)
+#   3) 저장소 변수 CD_ENABLED=true
+#   4) 배포 대상(ECS 등)을 정하면 아래 deploy 잡의 TODO를 채운다
+#
+# 실행: 수동(workflow_dispatch) 또는 버전 태그(v1.2.3) 푸시
+name: CD
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 배포 환경
+        type: choice
+        options: [staging, production]
+        default: staging
+  push:
+    tags: ["v*.*.*"]
+
+concurrency:
+  group: cd-${{ inputs.environment || 'production' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    name: CD 활성화·CI 통과 확인
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read # 같은 커밋의 CI 결과 조회
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CD_ENABLED: ${{ vars.CD_ENABLED }}
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+        run: |
+          if [ "$CD_ENABLED" != "true" ] || [ -z "$AWS_ROLE_ARN" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CD 비활성 상태입니다 (vars.CD_ENABLED / vars.AWS_ROLE_ARN 미설정). docs/ops/deploy.md 참고"
+            exit 0
+          fi
+          # 배포하려는 커밋에서 CI가 성공했는지 확인 (태그만 찍고 검사 안 된 커밋이 나가는 것 방지)
+          conclusion=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --commit "$GITHUB_SHA" \
+            --json conclusion --jq '[.[] | select(.conclusion == "success")] | length')
+          if [ "${conclusion:-0}" -lt 1 ]; then
+            echo "::error::커밋 $GITHUB_SHA 에 성공한 CI 실행이 없습니다. CI 통과 후 다시 실행하세요."
+            exit 1
+          fi
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+
+  images:
+    name: 이미지 푸시 (${{ matrix.service }})
+    needs: guard
+    if: needs.guard.outputs.enabled == 'true'
+    strategy:
+      matrix:
+        service: [backend, frontend]
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/docker-image.yml
+    with:
+      service: ${{ matrix.service }}
+      push: true
+      aws-region: ${{ vars.AWS_REGION || 'ap-northeast-2' }}
+      backend-url: ${{ vars.BACKEND_INTERNAL_URL || 'http://backend:8080' }}
+
+  deploy:
+    name: 배포 (${{ inputs.environment || 'production' }})
+    needs: images
+    runs-on: ubuntu-latest
+    # GitHub Environment 보호 규칙(승인자)으로 운영 배포 전 사람 확인을 걸 수 있다
+    environment: ${{ inputs.environment || 'production' }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: 배포 (TODO)
+        run: |
+          echo "이미지 태그: ${{ github.sha }}"
+          echo "TODO: 배포 대상 확정 후 구현"
+          echo " - ECS: aws-actions/amazon-ecs-render-task-definition + amazon-ecs-deploy-task-definition"
+          echo " - DB 마이그레이션: 백엔드 기동 시 Flyway가 자동 적용 (별도 잡 불필요)"

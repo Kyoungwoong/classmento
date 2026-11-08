@@ -56,3 +56,12 @@ tasks.withType<Test> {
 	systemProperty("spring.profiles.active", "test")
 	useJUnitPlatform()
 }
+
+// Docker 이미지에서 쓰는 실행 jar 이름 고정 (build/libs/app.jar). plain jar는 만들지 않는다.
+tasks.bootJar {
+	archiveFileName.set("app.jar")
+}
+
+tasks.jar {
+	enabled = false
+}

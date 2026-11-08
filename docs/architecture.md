@@ -23,7 +23,8 @@
 | `speech` | `SttClient` 포트 / `ClovaSttClient` | common |
 | `storage` | `FileStorage` 포트 / `LocalFileStorage` (나중에 S3) | — |
 | `resume` | 업로드 → 추출(PDFBox/POI) → 청크·임베딩 → 구조화, kNN 검색 | common, auth, llm, embedding, storage |
-| `interview` | 세션·질문 생성·답변 수신 (예정) | common, llm, speech, resume, embedding |
+| `questionbank` | 질문 은행 관리(관리자 CRUD + 임베딩) · 조건/kNN 검색 (예정) | common, embedding |
+| `interview` | 세션(4가지 유형, ADR 0004)·질문 생성·꼬리질문·답변 수신 (예정) | common, llm, speech, resume, questionbank, embedding |
 | `evaluation` | 답변 채점·리포트 (예정) | common, llm, interview |
 
 규칙
@@ -35,8 +36,11 @@
 ## RAG 흐름
 ```
 [이력서]  업로드 → 텍스트 추출 → 청크(문단 기준 ~800자, 겹침 100자) → 임베딩 → resume_chunk(vector(1536))
-[질문 생성 시] 질문 주제/JD 문장 → 임베딩 → ResumeChunkRepository.findNearest(resumeId, 벡터, k)
-             → 관련 청크 k개를 프롬프트에 넣어 Claude 호출            (예정: 질문 은행·JD도 같은 방식)
+[질문 생성 시, 유형별]
+  TECH        : 조건(직무·연차·스택·CS) 필터 + 조건 문장 임베딩 → question_bank kNN → 후보를 프롬프트에 → Claude
+  RESUME_TECH : 이력서 기술·프로젝트 → resume_chunk kNN + question_bank(태그 일치) → Claude
+  DEEP_DIVE   : 주제(이력서 청크 또는 기술) + 지금까지의 Q/A → Claude가 다음 질문 1개(또는 done)
+  BEHAVIORAL  : question_bank(category=BEHAVIORAL)에서 카테고리 안 겹치게 선택 → Claude는 말투만 다듬음
 ```
 - 거리: `<=>` 코사인 거리. 인덱스: HNSW `vector_cosine_ops`.
 - 가짜 임베딩(`HashEmbeddingClient`)은 단어 해시 기반이다. 같은 단어를 공유하면 가깝게 나오지만, 의미 검색 품질은 실제 키로만 확인할 수 있다.
@@ -74,9 +78,11 @@ spring_session, spring_session_attributes      -- 로그인 세션
 ```
 예정:
 ```
-interview_session(id, user_id, resume_id, type, status) / question(id, session_id, seq, text, intent, source)
+question_bank(id, category[CS|STACK|ROLE|BEHAVIORAL], job_role, level, tags[], text, intent, eval_points, embedding, created_by)
+interview_session(id, user_id, mode[TECH|RESUME_TECH|DEEP_DIVE|BEHAVIORAL], resume_id?, config(jsonb), status)
+question(id, session_id, seq, parent_question_id?, depth, text, intent, source)
 answer(id, question_id, audio_key, transcript, duration_ms) / evaluation(..., model, prompt_version)
-question_bank(id, category, text, embedding) / job_posting(id, user_id, text, embedding)
+job_posting(id, user_id, text, embedding)
 credit_ledger / payment  → ADR 0003
 ```
 스키마 변경은 **새 Flyway 파일**(`V2__...sql`)로만 한다. 이미 적용된 파일은 수정하지 않는다.

@@ -1,0 +1,15 @@
+# 저장소에는 항상 LF로 저장 (Windows 작업 + Linux CI/Docker 빌드 호환)
+* text=auto eol=lf
+
+*.sh text eol=lf
+gradlew text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+*.jar binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary
+*.pdf binary
+*.docx binary
