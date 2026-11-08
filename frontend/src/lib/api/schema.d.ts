@@ -84,6 +84,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/resumes/{id}/experiences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["experiences"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -177,6 +193,7 @@ export interface components {
             company?: string;
             role?: string;
             period?: string;
+            summary?: string;
             highlights: string[];
         };
         ParsedResume: {
@@ -195,6 +212,7 @@ export interface components {
         Project: {
             name?: string;
             period?: string;
+            summary?: string;
             description?: string;
             techStack: string[];
         };
@@ -237,6 +255,19 @@ export interface components {
             status: "UPLOADED" | "EXTRACTED" | "PARSED" | "FAILED";
             /** Format: date-time */
             createdAt: string;
+        };
+        ExperienceView: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int32 */
+            seq: number;
+            /** @enum {string} */
+            type: "WORK" | "PROJECT";
+            title: string;
+            organization?: string;
+            period?: string;
+            summary: string;
+            skills: string[];
         };
         HealthResponse: {
             status: string;
@@ -425,6 +456,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ResumeDetail"];
+                };
+            };
+        };
+    };
+    experiences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ExperienceView"][];
                 };
             };
         };

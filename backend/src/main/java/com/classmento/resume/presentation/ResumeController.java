@@ -1,6 +1,7 @@
 package com.classmento.resume.presentation;
 
 import com.classmento.common.security.AuthUser;
+import com.classmento.resume.application.ResumeDtos.ExperienceView;
 import com.classmento.resume.application.ResumeDtos.ResumeDetail;
 import com.classmento.resume.application.ResumeDtos.ResumeSummary;
 import com.classmento.resume.application.ResumeService;
@@ -46,6 +47,13 @@ public class ResumeController {
   @GetMapping("/{id}")
   public ResumeDetail detail(@AuthenticationPrincipal AuthUser user, @PathVariable Long id) {
     return service.detail(user.id(), id);
+  }
+
+  /** 경험 목록(경력·프로젝트 하나씩). 경험 기반 면접에서 고른다. */
+  @GetMapping("/{id}/experiences")
+  public List<ExperienceView> experiences(
+      @AuthenticationPrincipal AuthUser user, @PathVariable Long id) {
+    return service.experiences(user.id(), id);
   }
 
   @PutMapping("/{id}/parsed")

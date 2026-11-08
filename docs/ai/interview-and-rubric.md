@@ -10,7 +10,7 @@
 
 | 프롬프트 | 파일 | 용도 |
 |---|---|---|
-| 이력서 구조화 | `resume-parse.v1.md` | 추출 텍스트 → `ParsedResume` JSON (`ResumeParser`) |
+| 이력서 구조화 | `resume-parse.v2.md` (v1은 기록용) | 추출 텍스트 → `ParsedResume` JSON. v2부터 경력·프로젝트별 `summary` (`ResumeParser`) → `ExperienceFactory`가 경험으로 분리 |
 | 기술 질문 | `question-tech.v1.md` (예정) | 직무·연차·스택·CS 조건 + 질문 은행 후보 → 질문 N개 (`TECH`) |
 | 이력서 기반 질문 | `question-generation.v1.md` → `question-resume-tech.v2.md`로 개편 예정 | 이력서 청크 + 질문 은행 후보 → 질문 N개 (`RESUME_TECH`) |
 | 꼬리질문 | `question-followup.v1.md` (예정) | 주제 + 지금까지의 질문·답변 → 다음 질문 1개 또는 `done` (`DEEP_DIVE`) |
@@ -18,7 +18,10 @@
 | 답변 평가 | `answer-evaluation.v1.md` | 질문 + STT 답변 → 점수·피드백 |
 | 세션 리포트 | `session-report.v1.md` (예정) | 문항 평가들 → 종합 |
 
-## 질문 생성 전략 (유형별, ADR 0004)
+## 질문 생성 전략
+> ADR 0005로 탭이 바뀌었다(경험 기반 / 기술 / 인성 / 혼합). 아래 유형별 전략은 면접 기능을 만들 때 ADR 0005 기준으로 다시 쓴다.
+
+### (이전) ADR 0004 기준
 - **1. 기술 `TECH`**
   - 질문 은행에서 직무·연차·스택·CS 조건으로 후보를 거른다. 조건 문장을 임베딩해 kNN으로 상위 후보를 뽑는다.
   - AI는 후보에서 고르고 연차 수준에 맞게 다듬는다. 후보가 모자라면 새로 만들되, 그 질문에는 `source: "generated"`를 표시한다.

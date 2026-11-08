@@ -13,7 +13,7 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 public class ResumeParser {
 
-  static final String PROMPT = "resume-parse.v1";
+  static final String PROMPT = "resume-parse.v2";
   private static final int MAX_INPUT_CHARS = 30_000;
 
   private final LlmClient llm;
