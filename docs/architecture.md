@@ -50,7 +50,10 @@
   BEHAVIORAL : question_bank(인성)
   MIXED      : TECH + BEHAVIORAL
 ```
-- 거리: `<=>` 코사인 거리. 인덱스: HNSW `vector_cosine_ops`.
+- 거리: `<=>` 코사인 거리.
+- 인덱스 정책:
+  - **이력서별 검색**(`resume_chunk`, `resume_experience`, `WHERE resume_id = ?`)은 HNSW를 쓰지 않고 정확 정렬한다(V3). 전역 HNSW에 필터를 걸면 후보 선필터 때문에 결과가 k개보다 적어질 수 있어서다.
+  - **전역 검색**(질문 은행 등)에만 HNSW `vector_cosine_ops`를 쓴다.
 - 가짜 임베딩(`HashEmbeddingClient`)은 단어 해시 기반이다. 같은 단어를 공유하면 가깝게 나오지만, 의미 검색 품질은 실제 키로만 확인할 수 있다.
 
 ## 이력서 처리 상태
