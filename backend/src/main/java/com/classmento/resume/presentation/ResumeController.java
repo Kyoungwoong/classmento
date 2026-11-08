@@ -1,8 +1,10 @@
-package com.classmento.resume;
+package com.classmento.resume.presentation;
 
 import com.classmento.common.security.AuthUser;
-import com.classmento.resume.ResumeDtos.ResumeDetail;
-import com.classmento.resume.ResumeDtos.ResumeSummary;
+import com.classmento.resume.application.ResumeDtos.ResumeDetail;
+import com.classmento.resume.application.ResumeDtos.ResumeSummary;
+import com.classmento.resume.application.ResumeService;
+import com.classmento.resume.domain.ParsedResume;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

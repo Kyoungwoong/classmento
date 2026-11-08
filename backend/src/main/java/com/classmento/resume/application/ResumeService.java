@@ -1,8 +1,12 @@
-package com.classmento.resume;
+package com.classmento.resume.application;
 
 import com.classmento.common.web.ApiException;
-import com.classmento.resume.ResumeDtos.ResumeDetail;
-import com.classmento.resume.ResumeDtos.ResumeSummary;
+import com.classmento.resume.application.ResumeDtos.ResumeDetail;
+import com.classmento.resume.application.ResumeDtos.ResumeSummary;
+import com.classmento.resume.domain.ParsedResume;
+import com.classmento.resume.domain.Resume;
+import com.classmento.resume.domain.ResumeFileType;
+import com.classmento.resume.domain.ResumeRepository;
 import com.classmento.storage.FileStorage;
 import java.io.IOException;
 import java.util.Arrays;

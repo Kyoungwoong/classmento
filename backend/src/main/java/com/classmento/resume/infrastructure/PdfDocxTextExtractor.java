@@ -1,5 +1,7 @@
-package com.classmento.resume;
+package com.classmento.resume.infrastructure;
 
+import com.classmento.resume.application.TextExtractor;
+import com.classmento.resume.domain.ResumeFileType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import org.apache.pdfbox.Loader;
@@ -11,8 +13,9 @@ import org.springframework.stereotype.Component;
 
 /** PDF(PDFBox), DOCX(Apache POI)에서 본문 텍스트를 뽑는다. 스캔 이미지 PDF(OCR 필요)는 빈 문자열이 나온다. */
 @Component
-public class TextExtractor {
+public class PdfDocxTextExtractor implements TextExtractor {
 
+  @Override
   public String extract(ResumeFileType type, byte[] content) throws IOException {
     String raw =
         switch (type) {

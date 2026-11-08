@@ -1,4 +1,4 @@
-package com.classmento.resume;
+package com.classmento.resume.domain;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;

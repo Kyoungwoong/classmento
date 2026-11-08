@@ -1,5 +1,7 @@
-package com.classmento.resume;
+package com.classmento.resume.application;
 
+import com.classmento.resume.domain.ParsedResume;
+import com.classmento.resume.domain.Resume;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 

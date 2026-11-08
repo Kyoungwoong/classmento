@@ -1,4 +1,4 @@
-package com.classmento.resume;
+package com.classmento.resume.domain;
 
 import java.util.ArrayList;
 import java.util.List;

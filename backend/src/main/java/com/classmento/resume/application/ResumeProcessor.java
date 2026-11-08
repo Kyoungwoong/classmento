@@ -1,6 +1,11 @@
-package com.classmento.resume;
+package com.classmento.resume.application;
 
 import com.classmento.embedding.EmbeddingClient;
+import com.classmento.resume.domain.Resume;
+import com.classmento.resume.domain.ResumeChunkRepository;
+import com.classmento.resume.domain.ResumeFileType;
+import com.classmento.resume.domain.ResumeRepository;
+import com.classmento.resume.domain.TextChunker;
 import com.classmento.storage.FileStorage;
 import java.util.List;
 import org.slf4j.Logger;

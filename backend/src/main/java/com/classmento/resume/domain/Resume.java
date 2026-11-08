@@ -1,4 +1,4 @@
-package com.classmento.resume;
+package com.classmento.resume.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

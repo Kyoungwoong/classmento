@@ -1,4 +1,4 @@
-package com.classmento.resume;
+package com.classmento.resume.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

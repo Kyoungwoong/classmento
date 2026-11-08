@@ -1,4 +1,4 @@
-package com.classmento.resume;
+package com.classmento.resume.domain;
 
 import java.util.Locale;
 import java.util.Optional;

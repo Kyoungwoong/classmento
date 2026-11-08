@@ -1,9 +1,10 @@
-package com.classmento.resume;
+package com.classmento.resume.application;
 
 import com.classmento.llm.LlmClient;
 import com.classmento.llm.LlmRequest;
 import com.classmento.llm.LlmResponse;
 import com.classmento.llm.PromptLoader;
+import com.classmento.resume.domain.ParsedResume;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;

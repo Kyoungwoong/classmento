@@ -1,9 +1,12 @@
-package com.classmento.resume;
+package com.classmento.resume.infrastructure;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.classmento.embedding.EmbeddingClient;
 import com.classmento.identity.domain.AppUser;
+import com.classmento.resume.domain.Resume;
+import com.classmento.resume.domain.ResumeChunkRepository;
+import com.classmento.resume.domain.ResumeRepository;
 import com.classmento.support.IntegrationTest;
 import java.util.List;
 import org.junit.jupiter.api.Test;
