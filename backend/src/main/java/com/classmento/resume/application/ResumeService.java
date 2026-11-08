@@ -103,6 +103,9 @@ public class ResumeService {
    * 503(AI_UNAVAILABLE)으로 끝난다(사용자는 다시 저장).
    */
   public ResumeDetail updateParsed(Long userId, Long id, ParsedResume parsed) {
+    // 외부 임베딩(비용) 전에 본인·상태를 먼저 확인한다(남의 것 404, 처리 중 409).
+    // 트랜잭션 안 도메인 검사는 그 사이 상태가 바뀌는 경우를 위해 그대로 둔다.
+    find(userId, id).ensureParsed();
     ExperienceSync.Prepared prepared = experienceSync.prepare(parsed);
     return tx.execute(
         status -> {

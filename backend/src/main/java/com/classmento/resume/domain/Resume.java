@@ -105,10 +105,15 @@ public class Resume {
 
   /** 사용자가 구조화 결과를 고친다. 파싱이 끝난 뒤에만 가능하다. */
   public void updateParsed(String json) {
+    ensureParsed();
+    this.parsedJson = json;
+  }
+
+  /** 파싱이 끝난 이력서인지 확인한다. 아니면 RESUME_NOT_READY(409). 결과를 고치기 전에 쓴다. */
+  public void ensureParsed() {
     if (status != Status.PARSED) {
       throw new DomainException("RESUME_NOT_READY", "아직 이력서를 읽고 있어요. 잠시 후 다시 시도해 주세요.");
     }
-    this.parsedJson = json;
   }
 
   /** 처리 중(UPLOADED/EXTRACTED) 실패. 사유는 사용자에게 보여줄 문장. */
