@@ -115,6 +115,40 @@ class ExperienceFactoryTest {
   }
 
   @Test
+  void 기술은_단어_경계로만_연결한다() {
+    ResumeExperience work =
+        factory
+            .from(
+                resume(
+                    List.of(
+                        new Experience(
+                            "회사",
+                            "개발자",
+                            null,
+                            null,
+                            List.of("JavaScript로 화면 개발", "Google 로그인 연동"))),
+                    List.of(),
+                    List.of("Java", "JavaScript", "Go", "C")))
+            .get(0);
+
+    assertThat(work.skills()).containsExactly("JavaScript");
+  }
+
+  @Test
+  void 특수문자가_있는_기술명도_연결한다() {
+    ResumeExperience work =
+        factory
+            .from(
+                resume(
+                    List.of(new Experience("회사", "개발자", null, null, List.of("C++와 Node.js 사용"))),
+                    List.of(),
+                    List.of("C++", "Node.js", "C")))
+            .get(0);
+
+    assertThat(work.skills()).containsExactly("C++", "Node.js");
+  }
+
+  @Test
   void 빈_이력서는_빈_목록() {
     assertThat(factory.from(new ParsedResume(null, null, null, null, null))).isEmpty();
   }
