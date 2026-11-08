@@ -29,19 +29,33 @@ permissions:
 
 jobs:
   guard:
-    name: CD 활성화 확인
+    name: CD 활성화·CI 통과 확인
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read # 같은 커밋의 CI 결과 조회
     outputs:
       enabled: ${{ steps.check.outputs.enabled }}
     steps:
       - id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CD_ENABLED: ${{ vars.CD_ENABLED }}
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
         run: |
-          if [ "${{ vars.CD_ENABLED }}" = "true" ] && [ -n "${{ vars.AWS_ROLE_ARN }}" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
+          if [ "$CD_ENABLED" != "true" ] || [ -z "$AWS_ROLE_ARN" ]; then
             echo "enabled=false" >> "$GITHUB_OUTPUT"
             echo "::notice::CD 비활성 상태입니다 (vars.CD_ENABLED / vars.AWS_ROLE_ARN 미설정). docs/ops/deploy.md 참고"
+            exit 0
           fi
+          # 배포하려는 커밋에서 CI가 성공했는지 확인 (태그만 찍고 검사 안 된 커밋이 나가는 것 방지)
+          conclusion=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --commit "$GITHUB_SHA" \
+            --json conclusion --jq '[.[] | select(.conclusion == "success")] | length')
+          if [ "${conclusion:-0}" -lt 1 ]; then
+            echo "::error::커밋 $GITHUB_SHA 에 성공한 CI 실행이 없습니다. CI 통과 후 다시 실행하세요."
+            exit 1
+          fi
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
 
   images:
     name: 이미지 푸시 (${{ matrix.service }})

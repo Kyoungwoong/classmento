@@ -27,9 +27,16 @@ ci-ok       : 위 결과 종합 → 브랜치 보호의 필수 체크로 이것 
 
 ## CD 켜기 (AWS)
 1. **ECR 저장소:** `classmento-backend`, `classmento-frontend`
-2. **OIDC 역할:** GitHub OIDC 공급자(`token.actions.githubusercontent.com`)를 신뢰하는 IAM 역할을 만든다.
-   - 조건: `repo:Kyoungwoong/classmento:ref:refs/tags/v*`와 `environment:staging|production`
-   - 권한: ECR push(+ 이후 ECS 배포)
+2. **OIDC 역할:** GitHub OIDC 공급자(`token.actions.githubusercontent.com`)를 신뢰하는 IAM 역할을 만든다. 역할은 2개로 나누는 것을 권장한다.
+   - **이미지 푸시 역할**(`AWS_ROLE_ARN`)
+     - 사용처: `images` 잡. 재사용 워크플로 호출 잡이라 `environment`를 지정할 수 없다.
+     - 토큰 `sub`: 태그 실행은 `repo:Kyoungwoong/classmento:ref:refs/tags/v*`, 수동 실행은 `repo:Kyoungwoong/classmento:ref:refs/heads/main`. 이 두 값을 신뢰 조건에 넣는다.
+     - 권한: ECR push만.
+   - **배포 역할**
+     - 사용처: `deploy` 잡. `environment`가 지정돼 있다.
+     - 토큰 `sub`: `repo:Kyoungwoong/classmento:environment:staging|production`
+     - 권한: ECS 배포 등.
+   - CD는 실행 전에 같은 커밋의 CI 성공 여부를 확인한다(`guard` 잡).
 3. **저장소 Variables:** `AWS_ROLE_ARN`, `AWS_REGION`(기본 ap-northeast-2), `BACKEND_INTERNAL_URL`(프론트 이미지의 /api 프록시 대상), `CD_ENABLED=true`
 4. **Environments:** `staging`, `production` 생성. production에는 승인자를 지정한다.
 5. **배포 대상:** 확정되면 `cd.yml`의 `deploy` 잡 TODO를 채운다. ECS Fargate라면 task definition 렌더 → 배포 액션을 쓴다.
@@ -41,7 +48,9 @@ ci-ok       : 위 결과 종합 → 브랜치 보호의 필수 체크로 이것 
 ## 이미지 메모
 - **backend:** `SPRING_PROFILES_ACTIVE=prod`이므로 `DB_URL/DB_USERNAME/DB_PASSWORD`가 필요하다. Flyway가 기동할 때 마이그레이션을 적용한다.
   - 업로드 파일은 `/app/data/uploads`에 쓴다. 컨테이너는 휘발성이므로 운영 전에 `FileStorage`의 S3 구현이 필요하다.
-- **frontend:** `/api` 프록시 대상(`BACKEND_URL`)이 **빌드 시점에 고정**된다. 환경마다 값이 다르면 이미지를 따로 빌드한다.
+- **frontend:** `/api` 프록시 대상(`BACKEND_URL`)이 **빌드 시점에 고정**된다.
+  - 지금은 `vars.BACKEND_INTERNAL_URL` 하나로 빌드한다. 컨테이너 안 서비스 이름(`http://backend:8080`)처럼 환경과 무관한 값을 쓰면 이미지 하나로 충분하다.
+  - 환경마다 주소가 다르면 `images` 잡을 환경별로 나누거나, 프록시를 런타임 설정(`src/proxy.ts`에서 `NextResponse.rewrite`)으로 옮긴다.
 - **로컬에서 이미지 빌드(WSL):**
   ```bash
   wsl docker build -t classmento-backend ./backend
