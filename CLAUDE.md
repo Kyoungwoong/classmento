@@ -38,6 +38,18 @@ cd frontend && pnpm gen:api            # 백엔드 실행 중일 때 OpenAPI →
 5. **비밀값 커밋 금지.** 키는 환경변수(`.env.example` 참고). `.env*`는 읽지도 쓰지도 않는다.
 6. **완료 = `bash scripts/verify.sh` 통과.** 화면 변경이면 스크린샷 확인까지(`ui-screen` 스킬).
 7. 여러 단계 기능은 `docs/exec-plans/active/`에 계획부터(`feature` 스킬).
+8. **main에 직접 커밋·푸시 금지.** 모든 변경은 브랜치 → PR → 리뷰 → 머지(아래 작업 절차).
+
+## 작업 절차 (매 요청) — 상세: [docs/conventions/git.md](docs/conventions/git.md), `ship` 스킬
+```
+계획(사용자와 합의) → main pull → 브랜치 생성 → 기능마다 잘게 커밋 → verify → push + PR(템플릿)
+→ pr-reviewer 서브에이전트 리뷰(PR 코멘트, VERDICT) → [필수] 반영 커밋 → 재리뷰 (최대 3회)
+→ ci-ok 통과 + APPROVE → merge commit으로 머지 → main checkout + pull → study-log
+```
+- 역할: 마스터·개발 = 메인 세션, 리뷰 = `pr-reviewer`(개발 맥락을 넘기지 않고 PR 번호만 전달)
+- 커밋은 Conventional Commits(`feat(scope): 요약`). 리뷰 반영은 새 커밋으로 하고 force push 금지.
+- 3회 리뷰 후에도 REQUEST_CHANGES거나, 계획에 없던 큰 결정이 필요하면 멈추고 사용자에게 묻는다.
+- CI/CD: [docs/ops/deploy.md](docs/ops/deploy.md) (CI = `.github/workflows/ci.yml`, CD는 골격만)
 
 ## 작업 기록 (study-log) — 매 요청마다 필수
 사용자가 나중에 복습할 수 있도록, **파일을 바꾸거나 명령을 실행한 요청은 끝내기 전에 반드시** 기록을 남긴다.
@@ -56,7 +68,10 @@ cd frontend && pnpm gen:api            # 백엔드 실행 중일 때 OpenAPI →
   7. **다음에 할 일 / 공부거리**
 
 ## 스킬
-`feature`(기능 전체 흐름) · `ui-screen`(화면 제작+리뷰) · `api-endpoint`(API 추가+타입 생성) · `interview-ai`(프롬프트·루브릭) · `verify`(검증)
+`feature`(기능 구현 흐름) · `ship`(브랜치→커밋→PR→리뷰→머지) · `ui-screen`(화면 제작+리뷰) · `api-endpoint`(API 추가+타입 생성) · `interview-ai`(프롬프트·루브릭) · `verify`(검증)
+
+## 서브에이전트
+`pr-reviewer`(PR 독립 리뷰) · `design-reviewer`(화면 디자인 규칙) · `contract-checker`(FE/BE API 계약)
 
 ## 응답 언어
 사용자와는 한국어로 대화한다. 코드 식별자는 영어, 주석·문서·UI 문구는 한국어.
