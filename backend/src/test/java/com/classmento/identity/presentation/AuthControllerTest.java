@@ -79,6 +79,20 @@ class AuthControllerTest extends IntegrationTest {
         .andExpect(jsonPath("$.message").value("비밀번호는 8자 이상이에요."));
   }
 
+  /** 입력 형식 오류는 도메인(409)까지 가지 않고 요청 검증에서 400으로 끝나야 한다. */
+  @Test
+  void emailWithoutDomainDotIsBadRequest() throws Exception {
+    mockMvc
+        .perform(
+            post("/api/auth/signup")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"email\":\"a@b\",\"password\":\"password123\",\"name\":\"가\"}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+        .andExpect(jsonPath("$.message").value("이메일 형식이 맞지 않아요."));
+  }
+
   @Test
   void loginSucceedsAndFails() throws Exception {
     createUser("user@test.com", AppUser.Role.USER);
