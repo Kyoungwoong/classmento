@@ -67,12 +67,14 @@ public class AppUser {
     this.providerId = providerId;
   }
 
-  public static AppUser local(String email, String passwordHash, String name, Role role) {
-    return new AppUser(email, passwordHash, name, role, Provider.LOCAL, null);
+  /** 이메일·비밀번호 가입. 이메일은 {@link Email}로 검증·정규화된 값만 받는다. */
+  public static AppUser local(Email email, String passwordHash, String name, Role role) {
+    return new AppUser(email.value(), passwordHash, name, role, Provider.LOCAL, null);
   }
 
-  public static AppUser social(String email, String name, Provider provider, String providerId) {
-    return new AppUser(email, null, name, Role.USER, provider, providerId);
+  /** 소셜 가입. 비밀번호가 없으므로 이메일 로그인은 할 수 없다. */
+  public static AppUser social(Email email, String name, Provider provider, String providerId) {
+    return new AppUser(email.value(), null, name, Role.USER, provider, providerId);
   }
 
   public Long getId() {

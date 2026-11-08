@@ -2,6 +2,7 @@ package com.classmento.identity.infrastructure.security;
 
 import com.classmento.identity.domain.AppUser;
 import com.classmento.identity.domain.AppUserRepository;
+import com.classmento.identity.domain.Email;
 import java.util.Map;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -42,7 +43,8 @@ public class SocialUserService extends DefaultOAuth2UserService {
           new OAuth2Error("email_taken"), "이미 다른 방법으로 가입된 이메일이에요.");
     }
     return users.save(
-        AppUser.social(profile.email(), profile.name(), profile.provider(), profile.providerId()));
+        AppUser.social(
+            Email.of(profile.email()), profile.name(), profile.provider(), profile.providerId()));
   }
 
   record SocialProfile(AppUser.Provider provider, String providerId, String email, String name) {

@@ -3,6 +3,7 @@ package com.classmento.identity.application;
 import com.classmento.common.domain.DomainException;
 import com.classmento.identity.domain.AppUser;
 import com.classmento.identity.domain.AppUserRepository;
+import com.classmento.identity.domain.Email;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +22,8 @@ public class SignupService {
 
   @Transactional
   public AppUser signup(SignupCommand command) {
-    String email = command.email().trim().toLowerCase();
-    if (users.existsByEmailIgnoreCase(email)) {
+    Email email = Email.of(command.email());
+    if (users.existsByEmailIgnoreCase(email.value())) {
       throw new DomainException("EMAIL_TAKEN", "이미 가입된 이메일이에요.");
     }
     return users.save(

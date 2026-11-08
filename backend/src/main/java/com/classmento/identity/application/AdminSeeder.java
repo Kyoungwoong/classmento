@@ -2,6 +2,7 @@ package com.classmento.identity.application;
 
 import com.classmento.identity.domain.AppUser;
 import com.classmento.identity.domain.AppUserRepository;
+import com.classmento.identity.domain.Email;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -32,14 +33,14 @@ public class AdminSeeder implements ApplicationRunner {
     if (blank(properties.email()) || blank(properties.password())) {
       return;
     }
-    String email = properties.email().trim().toLowerCase();
-    if (users.existsByEmailIgnoreCase(email)) {
+    Email email = Email.of(properties.email());
+    if (users.existsByEmailIgnoreCase(email.value())) {
       return;
     }
     users.save(
         AppUser.local(
             email, passwordEncoder.encode(properties.password()), "관리자", AppUser.Role.ADMIN));
-    log.info("관리자 계정 생성: {}", email);
+    log.info("관리자 계정 생성: {}", email.value());
   }
 
   private static boolean blank(String s) {
