@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import {
   BottomCTA,
   Button,
@@ -16,6 +16,8 @@ import {
   TopBar,
 } from "@/components/ui";
 import { api, ApiError, type ParsedResume, type ResumeDetail } from "@/lib/api/client";
+import { ExperienceSection } from "./ExperienceSection";
+import { Section } from "./ResumeSection";
 import { useResume } from "./useResume";
 
 export function ResumeScreen() {
@@ -144,7 +146,7 @@ function ParsedView({
     }
   }
 
-  const { profile, experiences, projects, educations } = draft;
+  const { profile, educations } = draft;
 
   return (
     <Screen
@@ -206,27 +208,11 @@ function ParsedView({
         </form>
       </Section>
 
-      <Section title="경력" count={experiences.length}>
-        {experiences.map((e, i) => (
-          <ListRow
-            key={i}
-            title={[e.company, e.role].filter(Boolean).join(" · ")}
-            description={[e.period, ...e.highlights].filter(Boolean).join("\n")}
-          />
-        ))}
-      </Section>
-
-      <Section title="프로젝트" count={projects.length}>
-        {projects.map((p, i) => (
-          <ListRow
-            key={i}
-            title={p.name ?? "이름 없는 프로젝트"}
-            description={[p.period, p.description, p.techStack.join(", ")]
-              .filter(Boolean)
-              .join("\n")}
-          />
-        ))}
-      </Section>
+      <ExperienceSection
+        resumeId={resume.id}
+        version={resume.parsed}
+        onResync={() => api.updateParsed(resume.id, resume.parsed!).then(onSaved)}
+      />
 
       <Section title="학력" count={educations.length}>
         {educations.map((e, i) => (
@@ -246,28 +232,4 @@ function ParsedView({
 function profileLine(p: ParsedResume["profile"]) {
   const years = p.yearsOfExperience != null ? `경력 ${p.yearsOfExperience}년` : null;
   return [p.headline, years].filter(Boolean).join(" · ") || undefined;
-}
-
-function Section({
-  title,
-  count,
-  children,
-}: {
-  title: string;
-  count?: number;
-  children: ReactNode;
-}) {
-  return (
-    <section className="mt-10 first-of-type:mt-0">
-      <h2 className="text-title2 text-text-strong">
-        {title}
-        {count !== undefined && <span className="ml-1.5 text-text-hint">{count}</span>}
-      </h2>
-      {count === 0 ? (
-        <p className="py-4 text-body2 text-text-hint">찾지 못했어요</p>
-      ) : (
-        <div className="mt-2">{children}</div>
-      )}
-    </section>
-  );
 }

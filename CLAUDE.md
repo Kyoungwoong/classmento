@@ -1,6 +1,6 @@
 # classmento
 
-말로 답하는 모의면접 서비스. 면접 유형 4가지: ① 기술(직무·연차·스택·CS, 질문 은행) ② 이력서 기반 기술(이력서 RAG) ③ 꼬리질문(답변을 듣고 실시간으로 파고듦) ④ 인성(공통 질문). 음성 답변 → STT → AI 평가. 유형 정의: [docs/adr/0004-interview-modes.md](docs/adr/0004-interview-modes.md)
+말로 답하는 모의면접 서비스. 면접 탭 4개: ① 경험 기반(이력서에서 뽑은 경험 하나를 골라 관련 기술·CS 질문) ② 기술(질문 은행: Language·Framework·CS) ③ 인성(질문 은행) ④ 혼합(기술+인성). 음성 답변 → STT → AI 평가. 탭 정의: [docs/adr/0005-interview-tabs.md](docs/adr/0005-interview-tabs.md)
 
 ## 지도
 | 경로 | 내용 | 규칙 |
