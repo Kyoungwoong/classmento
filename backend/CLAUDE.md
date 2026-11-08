@@ -33,6 +33,7 @@
   - 통합 테스트는 `support/IntegrationTest`를 상속한다(매 테스트 TRUNCATE).
   - 로그인 사용자는 `.with(user(authUser))`, 변경 요청은 `.with(csrf())`를 붙인다.
 - 컨트롤러를 추가·변경하면 `api-endpoint` 스킬 절차(OpenAPI → `pnpm gen:api`)를 따른다.
+- 세션 principal(`common.security.AuthUser`)은 세션 DB에 자바 직렬화로 저장된다. 이름이나 구조를 바꾸면 기존 세션은 읽히지 않는다. `SessionSerializationConfig`가 이 경우를 비로그인으로 처리하므로 500은 나지 않지만, 사용자는 다시 로그인해야 한다.
 - 백그라운드 `bootRun`을 멈춘 뒤에도 java 프로세스가 8080을 점유할 수 있다 → 포트를 쓰는 프로세스를 종료한다.
 
 ## 명령
