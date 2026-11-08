@@ -18,6 +18,7 @@ public final class AuthDtos {
           @Email(
               regexp = com.classmento.identity.domain.Email.INPUT_REGEX,
               message = "이메일 형식이 맞지 않아요.")
+          @Size(max = com.classmento.identity.domain.Email.MAX_LENGTH, message = "이메일이 너무 길어요.")
           String email,
       @NotBlank(message = "비밀번호를 입력해 주세요.") @Size(min = 8, max = 64, message = "비밀번호는 8자 이상이에요.")
           String password,
