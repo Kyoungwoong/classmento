@@ -1,0 +1,30 @@
+{
+  "profile": { "name": "김예시", "headline": "백엔드 개발자 (가짜 AI 응답)", "yearsOfExperience": 3 },
+  "experiences": [
+    {
+      "company": "예시커머스",
+      "role": "백엔드 개발자",
+      "period": "2022.03 - 현재",
+      "highlights": [
+        "주문 API 응답 속도를 Redis 캐시로 40% 개선",
+        "결제 모듈을 모놀리스에서 분리해 장애 범위 축소"
+      ]
+    },
+    {
+      "company": "스타트업랩",
+      "role": "인턴",
+      "period": "2021.07 - 2021.12",
+      "highlights": ["사내 관리자 페이지 CRUD 개발"]
+    }
+  ],
+  "skills": ["Java", "Spring Boot", "PostgreSQL", "Redis", "AWS"],
+  "projects": [
+    {
+      "name": "실시간 재고 동기화",
+      "period": "2023.01 - 2023.06",
+      "description": "여러 판매 채널의 재고를 이벤트 기반으로 맞춤",
+      "techStack": ["Kafka", "Spring Boot"]
+    }
+  ],
+  "educations": [{ "school": "한국대학교", "major": "컴퓨터공학", "period": "2016 - 2022" }]
+}

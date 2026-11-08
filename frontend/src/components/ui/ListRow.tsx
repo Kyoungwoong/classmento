@@ -24,8 +24,13 @@ export function ListRow({ leading, title, description, trailing, onClick }: List
     >
       {leading && <div className="shrink-0">{leading}</div>}
       <div className="min-w-0 flex-1">
-        <p className="text-body1 font-medium text-text-strong">{title}</p>
-        {description && <p className="mt-0.5 text-body2 text-text-sub">{description}</p>}
+        {/* 긴 파일명·이메일이 좁은 화면에서 넘치지 않게 */}
+        <p className="truncate text-body1 font-medium text-text-strong">{title}</p>
+        {description && (
+          <p className="mt-0.5 text-body2 break-words whitespace-pre-line text-text-sub">
+            {description}
+          </p>
+        )}
       </div>
       {trailing && <div className="shrink-0 text-body2 text-text-sub">{trailing}</div>}
     </Comp>

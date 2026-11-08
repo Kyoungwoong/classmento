@@ -22,8 +22,9 @@
 
 ## 명령
 ```bash
-bash scripts/verify.sh                 # 전체 검증 (FE만: --fe, BE만: --be)
-cd backend && ./gradlew bootRun        # API :8080, Swagger /swagger-ui.html
+bash scripts/db.sh up                  # PostgreSQL 17 + pgvector (:5433, WSL Docker). 백엔드 실행·테스트 전 필수
+bash scripts/verify.sh                 # 전체 검증 (FE만: --fe, BE만: --be). DB 자동 기동
+cd backend && ./gradlew bootRun        # API :8080, Swagger /swagger-ui.html (키 없으면 가짜 AI 모드)
 cd frontend && pnpm dev                # 웹 :3000
 cd frontend && pnpm gen:api            # 백엔드 실행 중일 때 OpenAPI → TS 타입
 ```
@@ -31,7 +32,8 @@ cd frontend && pnpm gen:api            # 백엔드 실행 중일 때 OpenAPI →
 ## 불변 규칙
 1. **계약은 OpenAPI가 원본.** 백엔드 API를 바꾸면 같은 작업에서 `pnpm gen:api` → 프론트 컴파일 통과까지.
 2. **프롬프트는 `backend/src/main/resources/prompts/*.vN.md`에만.** 코드에 프롬프트 문자열 금지. 의미 변경은 새 버전.
-3. **AI 호출은 백엔드에서만**, `LlmClient`/`SttClient` 인터페이스를 통해서만. 자동 테스트에서 실제 API 호출 금지(Fake 사용).
+3. **AI 호출은 백엔드에서만**, 포트 인터페이스(`LlmClient`/`EmbeddingClient`/`SttClient`)를 통해서만. 자동 테스트에서 실제 API 호출 금지(가짜 사용).
+3-1. **스키마 변경은 새 Flyway 파일**(`V{n}__*.sql`)로만. 적용된 마이그레이션 수정 금지. 모든 사용자 데이터 테이블은 `user_id`를 갖고, 조회는 본인 것만(남의 것은 404).
 4. **UI는 디자인 시스템 토큰·컴포넌트만.** 금지 목록(그라데이션, 이모지 아이콘, 카드 남발, 임의 색/px) 위반 금지.
 5. **비밀값 커밋 금지.** 키는 환경변수(`.env.example` 참고). `.env*`는 읽지도 쓰지도 않는다.
 6. **완료 = `bash scripts/verify.sh` 통과.** 화면 변경이면 스크린샷 확인까지(`ui-screen` 스킬).

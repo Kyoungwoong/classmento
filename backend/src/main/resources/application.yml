@@ -7,13 +7,30 @@ spring:
     multipart:
       max-file-size: 20MB
       max-request-size: 25MB
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/classmento}
+    username: ${DB_USERNAME:classmento}
+    password: ${DB_PASSWORD:classmento}
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  session:
+    jdbc:
+      initialize-schema: never
+    timeout: 14d
 
 server:
   port: 8080
+  # Next.js rewrites(프록시) 뒤에서 원래 호스트로 리다이렉트 URL을 만들기 위함
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
 
 management:
   endpoints:
@@ -30,37 +47,47 @@ springdoc:
 classmento:
   cors:
     allowed-origins: ${CLASSMENTO_CORS_ORIGINS:http://localhost:3000}
+  ai:
+    # 키가 없을 때 가짜 LLM·임베딩으로 전체 흐름을 돌려볼지 (local 기본 true, prod false)
+    fake: ${CLASSMENTO_AI_FAKE:false}
   llm:
     api-key: ${ANTHROPIC_API_KEY:}
     model: ${CLASSMENTO_LLM_MODEL:claude-sonnet-5-5}
     max-tokens: 4096
+  embedding:
+    api-key: ${OPENAI_API_KEY:}
+    model: text-embedding-3-small
+    dimensions: 1536
   stt:
     invoke-url: ${CLOVA_SPEECH_INVOKE_URL:}
     secret: ${CLOVA_SPEECH_SECRET:}
     language: ko-KR
+  storage:
+    root: ${CLASSMENTO_STORAGE_ROOT:./data/uploads}
+  admin:
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
+  resume:
+    # true면 업로드 요청 안에서 바로 처리(테스트용). 기본은 백그라운드 스레드.
+    sync-processing: false
+  social:
+    google-client-id: ${GOOGLE_CLIENT_ID:}
+    google-client-secret: ${GOOGLE_CLIENT_SECRET:}
+    kakao-client-id: ${KAKAO_CLIENT_ID:}
+    kakao-client-secret: ${KAKAO_CLIENT_SECRET:}
+  oauth:
+    # 소셜 로그인 성공/실패 후 돌아갈 프론트 주소
+    success-url: ${CLASSMENTO_OAUTH_SUCCESS_URL:http://localhost:3000/}
+    failure-url: ${CLASSMENTO_OAUTH_FAILURE_URL:http://localhost:3000/login?error=social}
 
 ---
 spring:
   config:
     activate:
       on-profile: local
-  datasource:
-    url: jdbc:h2:file:./data/classmento;MODE=PostgreSQL
-    username: sa
-    password:
-  h2:
-    console:
-      enabled: true
-
----
-spring:
-  config:
-    activate:
-      on-profile: prod
-  datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-  jpa:
-    hibernate:
-      ddl-auto: validate
+classmento:
+  ai:
+    fake: ${CLASSMENTO_AI_FAKE:true}
+  admin:
+    email: ${ADMIN_EMAIL:admin@classmento.local}
+    password: ${ADMIN_PASSWORD:admin1234!}

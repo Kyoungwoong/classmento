@@ -1,4 +1,4 @@
-import { BottomCTA, Button, ListRow, Screen, ScreenTitle } from "@/components/ui";
+import { BottomCTA, ButtonLink, ListRow, Screen, ScreenTitle } from "@/components/ui";
 
 const steps = [
   { title: "이력서 올리기", description: "경력과 프로젝트를 자동으로 정리해요" },
@@ -11,7 +11,8 @@ export default function Home() {
     <Screen
       cta={
         <BottomCTA caption="PDF, DOCX 파일 · 최대 20MB">
-          <Button>이력서 올리기</Button>
+          {/* 로그인 안 했으면 proxy.ts가 /login?next=/resume/upload 로 보낸다 */}
+          <ButtonLink href="/resume/upload">이력서 올리기</ButtonLink>
         </BottomCTA>
       }
     >

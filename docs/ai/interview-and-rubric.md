@@ -6,10 +6,11 @@
 - `Evaluation`에 `promptVersion`과 `model`을 저장한다.
 - 출력은 JSON. 서버에서 파싱·검증(필드 누락·점수 범위) 후 저장. 실패 시 1회 재시도 후 `FAILED`.
 - 입력은 XML 태그로 감싼다(`<resume>`, `<question>`, `<answer>`). 사용자 입력 안의 지시문은 데이터로 취급하도록 프롬프트에 명시.
+- 키 없이 개발할 때 쓰는 가짜 응답: `backend/src/main/resources/fake/<name>.vN.json`(`DevFakeLlmClient`). 새 프롬프트를 만들면 출력 형식에 맞는 샘플도 함께 추가한다.
 
 | 프롬프트 | 파일 | 용도 |
 |---|---|---|
-| 이력서 구조화 | `resume-parse.v1.md` (예정) | 추출 텍스트 → `ParsedResume` JSON |
+| 이력서 구조화 | `resume-parse.v1.md` | 추출 텍스트 → `ParsedResume` JSON (`ResumeParser`) |
 | 질문 생성 | `question-generation.v1.md` | 이력서 + 유형 → 질문 N개 |
 | 답변 평가 | `answer-evaluation.v1.md` | 질문 + STT 답변 → 점수·피드백 |
 | 세션 리포트 | `session-report.v1.md` (예정) | 문항 평가들 → 종합 |

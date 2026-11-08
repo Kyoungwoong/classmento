@@ -48,6 +48,8 @@ if [ "$MODE" = "all" ] || [ "$MODE" = "--fe" ]; then
 fi
 
 if [ "$MODE" = "all" ] || [ "$MODE" = "--be" ]; then
+  # 백엔드 테스트는 실제 Postgres(classmento_test)를 쓴다
+  step "DB up"         bash "$ROOT/scripts/db.sh" up
   cd "$ROOT/backend" || exit 1
   step "BE spotless"   ./gradlew -q spotlessCheck
   step "BE test"       ./gradlew -q test

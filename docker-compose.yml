@@ -1,0 +1,24 @@
+# 로컬 개발용 PostgreSQL 17 + pgvector
+# Windows: bash scripts/db.sh up   (내부적으로 WSL의 docker compose 사용)
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: classmento-postgres
+    environment:
+      POSTGRES_USER: classmento
+      POSTGRES_PASSWORD: classmento
+      POSTGRES_DB: classmento
+    ports:
+      - "5433:5432"
+    volumes:
+      - classmento-pgdata:/var/lib/postgresql/data
+      - ./infra/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U classmento -d classmento"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  classmento-pgdata:

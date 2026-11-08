@@ -15,8 +15,14 @@ src/
 
 ## 규칙
 - 스타일: 토큰 클래스만. 임의값(`text-[#333]`, `p-[13px]`), 인라인 style 색상 금지. 예외는 동적 수치(진행률 width)뿐.
-- 컴포넌트: 서버 컴포넌트 기본. 상태·브라우저 API(녹음 등)가 필요한 곳만 `"use client"`, 가능한 한 잎(leaf)에.
-- API: `lib/api/client.ts`의 함수만 사용. 응답 타입은 `schema.d.ts`에서. 컴포넌트에서 `fetch` 직접 호출 금지.
+- 컴포넌트: 서버 컴포넌트가 기본이다. 상태나 브라우저 API(녹음 등)가 필요한 곳만 `"use client"`로 하고, 가능한 한 잎(leaf)에 둔다.
+- `useSearchParams`·`useParams` 같은 URL 훅을 쓰는 클라이언트 컴포넌트는 page에서 `<Suspense>`로 감싼다. 감싸지 않으면 `cacheComponents` 모드에서 "blocking-prerender" 에러가 난다.
+- API: `lib/api/client.ts`의 `api.*` 함수만 쓴다. 응답 타입은 `schema.d.ts`에서 가져온다. 컴포넌트에서 `fetch`를 직접 호출하지 않는다. CSRF 헤더는 `client.ts`가 붙인다.
+- 인증:
+  - 로그인이 필요한 경로는 `src/proxy.ts`(Next 16에서 middleware 대신)의 matcher에 추가한다.
+  - 쿠키 기반 낙관적 검사이므로 401 처리는 화면에도 둔다.
+  - 로그인 후 이동은 `safeNext()`로 내부 경로만 허용한다.
+- 화면 이동 버튼은 `ButtonLink`, 동작 버튼은 `Button`. 상단 뒤로 가기·작은 행동은 `TopBar`.
 - 녹음: `features/interview/useRecorder.ts`(예정)에 MediaRecorder 캡슐화. 권한 거부·미지원 브라우저 상태를 반드시 처리.
 - 문구: [design-system.md#문구-톤](../design/design-system.md). 하드코딩 한국어 OK(MVP는 i18n 없음).
 - 테스트: 컴포넌트 동작은 `*.test.tsx`로 같은 폴더에. 스냅샷 테스트 금지.
