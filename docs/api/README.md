@@ -46,5 +46,6 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 | POST | `/api/resumes` | 로그인 | multipart `file`(PDF/DOCX ≤20MB) → 202 `ResumeDetail` |
 | GET | `/api/resumes` | 로그인 | 내 이력서 목록 `ResumeSummary[]` |
 | GET | `/api/resumes/{id}` | 본인 | 상태 + `parsed`(PARSED일 때) |
+| GET | `/api/resumes/{id}/experiences` | 본인 | 경험 목록 `ExperienceView[]`(seq 순: 경력 → 프로젝트) |
 | PUT | `/api/resumes/{id}/parsed` | 본인 | 수정한 `ParsedResume` 저장 (PARSED 상태에서만, 아니면 409 `RESUME_NOT_READY`) |
 | GET | `/api/admin/users` | ADMIN | 최근 가입 순 200명 |

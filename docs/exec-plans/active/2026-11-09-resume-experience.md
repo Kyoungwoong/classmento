@@ -15,13 +15,14 @@
 
 ## 단계
 - [x] ADR 0005
-- [ ] ResumeExperience 규칙 red/green
-- [ ] ExperienceFactory red/green
-- [ ] resume-parse.v2 + 가짜 응답
-- [ ] V2 + JdbcExperienceRepository(통합 테스트)
-- [ ] ResumeProcessor·updateParsed 연결
-- [ ] 경험 목록 API red/green + gen:api
-- [ ] 문서
+- [x] ResumeExperience 규칙 red/green
+- [x] ExperienceFactory red/green
+- [x] resume-parse.v2 + 가짜 응답
+- [x] V2 + JdbcExperienceRepository(통합 테스트)
+- [x] ResumeProcessor·updateParsed 연결
+- [x] 경험 목록 API red/green + gen:api
+- [x] 문서
 
 ## 결정 로그
 - 2026-11-09: 클래스 이름은 `ResumeExperience`로 한다. `ParsedResume.Experience`(경력 항목)와 헷갈리지 않게 하기 위해서다.
+- 2026-11-09: 경험 저장소는 JPA 엔티티가 아니라 JDBC로 만든다. 벡터와 jsonb를 같이 다루고, 항상 이력서 단위로 통째 교체하기 때문이다.

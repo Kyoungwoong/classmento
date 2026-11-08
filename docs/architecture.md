@@ -18,7 +18,7 @@
 | 컨텍스트 | domain | application | infrastructure | presentation |
 |---|---|---|---|---|
 | `identity` 회원 | `AppUser`, `Email`(값 객체), `AppUserRepository` | `SignupService`, `MemberQueryService`, `AdminSeeder` | `persistence.AppUserJpaRepository`, `security.*`(SecurityConfig, 소셜, UserDetails, `AuthUsers`) | `AuthController`, `AdminController` |
-| `resume` 이력서 | `Resume`(상태 전이), `ParsedResume`, `ResumeFileType`, `TextChunker`, `ResumeRepository`, `ResumeChunkRepository` | `ResumeService`, `ResumeProcessor`, `ResumeParser`, `TextExtractor`(포트) | `ResumeJpaRepository`, `JdbcResumeChunkRepository`(pgvector), `PdfDocxTextExtractor`, 실행기 | `ResumeController` |
+| `resume` 이력서 | `Resume`(상태 전이), `ResumeExperience`, `ExperienceFactory`, `ParsedResume`, `ResumeFileType`, `TextChunker`, `ResumeRepository`, `ResumeChunkRepository`, `ResumeExperienceRepository` | `ResumeService`, `ResumeProcessor`, `ResumeParser`, `ExperienceSync`, `TextExtractor`(포트) | `ResumeJpaRepository`, `JdbcResumeChunkRepository`·`JdbcResumeExperienceRepository`(pgvector), `PdfDocxTextExtractor`, 실행기 | `ResumeController` |
 | `questionbank` | (예정) | | | |
 | `interview` | (예정, 4유형 ADR 0004) | | | |
 | `evaluation` | (예정) | | | |
@@ -42,12 +42,13 @@
 
 ## RAG 흐름
 ```
-[이력서]  업로드 → 텍스트 추출 → 청크(문단 기준 ~800자, 겹침 100자) → 임베딩 → resume_chunk(vector(1536))
-[질문 생성 시, 유형별]
-  TECH        : 조건(직무·연차·스택·CS) 필터 + 조건 문장 임베딩 → question_bank kNN → 후보를 프롬프트에 → Claude
-  RESUME_TECH : 이력서 기술·프로젝트 → resume_chunk kNN + question_bank(태그 일치) → Claude
-  DEEP_DIVE   : 주제(이력서 청크 또는 기술) + 지금까지의 Q/A → Claude가 다음 질문 1개(또는 done)
-  BEHAVIORAL  : question_bank(category=BEHAVIORAL)에서 카테고리 안 겹치게 선택 → Claude는 말투만 다듬음
+[이력서]  업로드 → 텍스트 추출 → 청크(~800자) → 임베딩 → resume_chunk          (전체 검색용)
+          → Claude 구조화(v2) → ExperienceFactory → 경험마다 임베딩 → resume_experience (경험 단위)
+[면접, ADR 0005]
+  EXPERIENCE : 사용자가 고른 경험(제목·요약·본문·기술) → 경험 벡터로 question_bank kNN + Claude 질문 생성
+  TECH       : question_bank(Language·Framework·CS) 필터(+이력서 기술) → 선택·변형
+  BEHAVIORAL : question_bank(인성)
+  MIXED      : TECH + BEHAVIORAL
 ```
 - 거리: `<=>` 코사인 거리. 인덱스: HNSW `vector_cosine_ops`.
 - 가짜 임베딩(`HashEmbeddingClient`)은 단어 해시 기반이다. 같은 단어를 공유하면 가깝게 나오지만, 의미 검색 품질은 실제 키로만 확인할 수 있다.
@@ -81,6 +82,7 @@ app_user(id, email, password_hash?, name, role[USER|ADMIN], provider[LOCAL|GOOGL
 resume(id, user_id, original_filename, content_type, size_bytes, storage_key, status, failure_reason,
        extracted_text, parsed_json(jsonb), parse_model, prompt_version, created_at, updated_at)
 resume_chunk(id, resume_id, seq, content, embedding vector(1536))
+resume_experience(id, resume_id, seq, type[WORK|PROJECT], title, organization, period, summary, detail, skills jsonb, embedding vector(1536))
 spring_session, spring_session_attributes      -- 로그인 세션
 ```
 예정:
