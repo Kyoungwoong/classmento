@@ -34,7 +34,10 @@ public class SessionSerializationConfig {
     return conversion;
   }
 
-  /** 역직렬화 실패 시 null(속성 없음)을 돌려준다. */
+  /**
+   * 역직렬화 실패 시 null(속성 없음)을 돌려준다. 깨진 속성은 다시 로그인하거나 세션이 만료될 때까지 요청마다 읽히므로 로그는 DEBUG로 남긴다(운영 로그 소음
+   * 방지).
+   */
   static final class LenientDeserializer implements Converter<byte[], Object> {
 
     private final DeserializingConverter delegate;
@@ -48,7 +51,7 @@ public class SessionSerializationConfig {
       try {
         return delegate.convert(source);
       } catch (SerializationFailedException e) {
-        log.warn("읽을 수 없는 세션 속성을 무시합니다(로그아웃 상태로 처리): {}", rootMessage(e));
+        log.debug("읽을 수 없는 세션 속성을 무시합니다(로그아웃 상태로 처리): {}", rootMessage(e));
         return null;
       }
     }
