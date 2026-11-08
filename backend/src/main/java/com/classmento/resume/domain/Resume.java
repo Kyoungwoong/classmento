@@ -1,5 +1,6 @@
 package com.classmento.resume.domain;
 
+import com.classmento.common.domain.DomainException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -85,12 +86,16 @@ public class Resume {
     updatedAt = Instant.now();
   }
 
+  /** UPLOADED → EXTRACTED: 텍스트 추출과 청크 임베딩이 끝났다. */
   public void markExtracted(String text) {
+    requireStatus(Status.UPLOADED);
     this.extractedText = text;
     this.status = Status.EXTRACTED;
   }
 
+  /** EXTRACTED → PARSED: 구조화 결과를 저장한다. 어떤 모델·프롬프트 버전으로 만들었는지 함께 남긴다. */
   public void markParsed(String json, String model, String promptVersion) {
+    requireStatus(Status.EXTRACTED);
     this.parsedJson = json;
     this.parseModel = model;
     this.promptVersion = promptVersion;
@@ -98,13 +103,29 @@ public class Resume {
     this.failureReason = null;
   }
 
+  /** 사용자가 구조화 결과를 고친다. 파싱이 끝난 뒤에만 가능하다. */
   public void updateParsed(String json) {
+    if (status != Status.PARSED) {
+      throw new DomainException("RESUME_NOT_READY", "아직 이력서를 읽고 있어요. 잠시 후 다시 시도해 주세요.");
+    }
     this.parsedJson = json;
   }
 
+  /** 처리 중(UPLOADED/EXTRACTED) 실패. 사유는 사용자에게 보여줄 문장. */
   public void markFailed(String reason) {
+    requireStatus(Status.UPLOADED, Status.EXTRACTED);
     this.status = Status.FAILED;
     this.failureReason = reason;
+  }
+
+  private void requireStatus(Status... allowed) {
+    for (Status s : allowed) {
+      if (status == s) {
+        return;
+      }
+    }
+    throw new DomainException(
+        "RESUME_INVALID_STATE", "이력서 처리 상태가 맞지 않아요. 다시 시도해 주세요. (현재: " + status + ")");
   }
 
   public Long getId() {

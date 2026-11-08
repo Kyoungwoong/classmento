@@ -79,9 +79,7 @@ public class ResumeService {
   @Transactional
   public ResumeDetail updateParsed(Long userId, Long id, ParsedResume parsed) {
     Resume resume = find(userId, id);
-    if (resume.getStatus() != Resume.Status.PARSED) {
-      throw ApiException.badRequest("아직 이력서를 읽고 있어요. 잠시 후 다시 시도해 주세요.");
-    }
+    // 파싱 전 수정 금지 규칙은 도메인(Resume.updateParsed)이 지킨다 → 409 RESUME_NOT_READY
     resume.updateParsed(json.writeValueAsString(parsed));
     return toDetail(resume);
   }
