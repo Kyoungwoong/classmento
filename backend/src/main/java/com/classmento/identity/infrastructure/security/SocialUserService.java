@@ -1,5 +1,6 @@
 package com.classmento.identity.infrastructure.security;
 
+import com.classmento.common.domain.DomainException;
 import com.classmento.identity.domain.AppUser;
 import com.classmento.identity.domain.AppUserRepository;
 import com.classmento.identity.domain.Email;
@@ -37,14 +38,20 @@ public class SocialUserService extends DefaultOAuth2UserService {
   }
 
   private AppUser register(SocialProfile profile) {
-    if (users.existsByEmailIgnoreCase(profile.email())) {
+    Email email;
+    try {
+      email = Email.of(profile.email());
+    } catch (DomainException e) {
+      // 공급자가 이메일을 주지 않았거나 형식이 틀림 → 500이 아니라 OAuth2 실패 화면(failureUrl)으로 보낸다
+      throw new OAuth2AuthenticationException(new OAuth2Error("invalid_email"), e.getMessage());
+    }
+    if (users.existsByEmailIgnoreCase(email.value())) {
       // 같은 이메일의 다른 가입 방식이 있으면 자동 연결하지 않는다(계정 탈취 방지).
       throw new OAuth2AuthenticationException(
           new OAuth2Error("email_taken"), "이미 다른 방법으로 가입된 이메일이에요.");
     }
     return users.save(
-        AppUser.social(
-            Email.of(profile.email()), profile.name(), profile.provider(), profile.providerId()));
+        AppUser.social(email, profile.name(), profile.provider(), profile.providerId()));
   }
 
   record SocialProfile(AppUser.Provider provider, String providerId, String email, String name) {
@@ -57,7 +64,7 @@ public class SocialUserService extends DefaultOAuth2UserService {
             new SocialProfile(
                 AppUser.Provider.GOOGLE,
                 String.valueOf(a.get("sub")),
-                String.valueOf(a.get("email")),
+                a.get("email") == null ? null : a.get("email").toString(),
                 String.valueOf(a.getOrDefault("name", "회원")));
         case "kakao" -> {
           String id = String.valueOf(a.get("id"));
