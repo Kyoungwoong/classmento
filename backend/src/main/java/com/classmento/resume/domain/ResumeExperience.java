@@ -41,6 +41,8 @@ public record ResumeExperience(
       throw new DomainException("INVALID_EXPERIENCE", "경험 제목이 비어 있어요.");
     }
     title = ellipsize(title, TITLE_MAX);
+    organization = optional(organization, ORGANIZATION_MAX);
+    period = optional(period, PERIOD_MAX);
     summary = ellipsize(firstNonBlank(summary, detail), SUMMARY_MAX);
     skills = normalizeSkills(skills);
   }
@@ -50,6 +52,11 @@ public record ResumeExperience(
       return preferred.strip();
     }
     return fallback == null ? "" : fallback.strip().replaceAll("\\s+", " ");
+  }
+
+  /** 선택 값: 비면 null, 길면 말줄임(LLM·사용자 입력이 컬럼 길이를 넘지 않게). */
+  private static String optional(String s, int max) {
+    return s == null || s.isBlank() ? null : ellipsize(s.strip(), max);
   }
 
   /** max자를 넘으면 (max-1)자 + "…"로 자른다. */
