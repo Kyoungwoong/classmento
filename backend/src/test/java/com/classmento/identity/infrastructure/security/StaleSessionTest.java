@@ -1,15 +1,20 @@
 package com.classmento.identity.infrastructure.security;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.classmento.identity.domain.AppUser;
 import com.classmento.support.IntegrationTest;
 import jakarta.servlet.http.Cookie;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MvcResult;
 
 /**
  * 세션 DB에 역직렬화할 수 없는 값(예: 패키지가 바뀐 옛 principal 클래스)이 남아 있어도, 그 쿠키를 가진 사용자는 500이 아니라 "로그인 안 됨"으로 처리돼
@@ -48,6 +53,28 @@ class StaleSessionTest extends IntegrationTest {
         .perform(get("/api/auth/me").cookie(staleSessionCookie()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.authenticated").value(false));
+  }
+
+  /** 핵심: 깨진 쿠키를 가진 채로 다시 로그인할 수 있고, 이후 로그인 상태가 된다. */
+  @Test
+  void 깨진_세션_쿠키로도_다시_로그인할_수_있다() throws Exception {
+    createUser("me@test.com", AppUser.Role.USER);
+
+    MvcResult login =
+        mockMvc
+            .perform(
+                post("/api/auth/login")
+                    .cookie(staleSessionCookie())
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"email\":\"me@test.com\",\"password\":\"password123\"}"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+    Cookie fresh = login.getResponse().getCookie("SESSION");
+    mockMvc
+        .perform(get("/api/auth/me").cookie(fresh))
+        .andExpect(jsonPath("$.authenticated").value(true));
   }
 
   @Test

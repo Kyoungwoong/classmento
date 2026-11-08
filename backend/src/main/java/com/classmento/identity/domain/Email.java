@@ -7,7 +7,8 @@ import java.util.regex.Pattern;
 /** 회원 이메일 값 객체. 생성 시 정규화(공백 제거·소문자)하고 형식을 검증한다. */
 public record Email(String value) {
 
-  private static final int MAX_LENGTH = 254;
+  /** 이메일 최대 길이(RFC 5321). 요청 검증(@Size)과 공유한다. */
+  public static final int MAX_LENGTH = 254;
 
   /** 로컬@도메인.최상위 — 공백·@ 중복 없이, 도메인에 점이 하나 이상. */
   private static final String CORE = "[^\\s@]+@[^\\s@]+\\.[^\\s@]+";
