@@ -40,18 +40,25 @@ com.classmento
 - 컨텍스트끼리는 직접 의존하지 않는다(`common`을 통해서만).
 
 ## 단계 (커밋 단위)
-- [ ] docs: DDD·TDD 규칙
-- [ ] build: ArchUnit
-- [ ] test(arch): 계층 규칙 (red — 현재 구조에서 실패)
-- [ ] refactor(common): AuthUser → common.security, DomainException
-- [ ] refactor(identity): 패키지 계층 분리 + 리포지토리 인터페이스/JPA 구현 분리
-- [ ] test(identity): Email 값 객체 (red) → feat(identity): Email 구현·적용 (green)
-- [ ] refactor(resume): 계층 분리 + 포트(TextExtractor, 리포지토리) 분리
-- [ ] test(resume): 상태 전이 불변식 (red) → feat(resume): 불변식 구현 + 409 매핑 (green)
-- [ ] arch 테스트 green 확인, docs/architecture.md 갱신
+- [x] docs: DDD·TDD 규칙
+- [x] build: ArchUnit
+- [x] test(arch): 계층 규칙 (red — 현재 구조에서 실패)
+- [x] refactor(common): AuthUser → common.security, DomainException
+- [x] refactor(identity): 패키지 계층 분리 + 리포지토리 인터페이스/JPA 구현 분리
+- [x] test(identity): Email 값 객체 (red) → feat(identity): Email 구현·적용 (green)
+- [x] refactor(resume): 계층 분리 + 포트(TextExtractor, 리포지토리) 분리
+- [x] test(resume): 상태 전이 불변식 (red) → feat(resume): 불변식 구현 + 409 매핑 (green)
+- [x] arch 테스트 green 확인, docs/architecture.md 갱신
 
 ## 결정 로그
 - 2026-11-08: 도메인 엔티티에 JPA 애너테이션 허용(실용적 DDD).
   - 도메인 모델과 영속 모델을 따로 두면 매핑 코드가 두 배가 된다. 지금 규모에서는 이득보다 비용이 크다.
   - Spring Data 리포지토리 인터페이스는 infrastructure에 둔다. domain에는 순수 Java 리포지토리 인터페이스만 둔다.
 - 2026-11-08: red 커밋도 **컴파일은 돼야 한다**. 새 API는 `UnsupportedOperationException`을 던지는 뼈대로 두고 테스트를 실패시킨다. PR head는 항상 green.
+
+## 결과
+- 커밋(이 PR): docs → build → test(arch, red) → refactor(common) → refactor(identity) → test/feat(Email) → refactor(resume) → test/feat(Resume 불변식) → docs
+- 테스트: 기존 통합 테스트 24개 유지 + 도메인 단위(EmailTest, ResumeTest) + ArchitectureTest 5규칙 → 전체 green
+- API 변화: 파싱 전 결과 수정 400 → 409 `RESUME_NOT_READY`. 그 외 동일.
+- 주의: 세션 principal(AuthUser) 패키지 변경으로 기존 로그인 세션은 무효(재로그인).
+- 남은 일: 플랫폼 포트 위치(llm/embedding/…)를 `platform.*`으로 묶을지 결정, application의 `ApiException`(HTTP 개념) 사용 줄이기
