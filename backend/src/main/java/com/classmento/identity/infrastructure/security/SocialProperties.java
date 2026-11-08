@@ -1,4 +1,4 @@
-package com.classmento.auth;
+package com.classmento.identity.infrastructure.security;
 
 import java.util.ArrayList;
 import java.util.List;

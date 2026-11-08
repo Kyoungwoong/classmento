@@ -1,4 +1,4 @@
-package com.classmento.auth;
+package com.classmento.identity.infrastructure.security;
 
 import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;

@@ -2,8 +2,8 @@ package com.classmento.resume;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.classmento.auth.AppUser;
 import com.classmento.embedding.EmbeddingClient;
+import com.classmento.identity.domain.AppUser;
 import com.classmento.support.IntegrationTest;
 import java.util.List;
 import org.junit.jupiter.api.Test;

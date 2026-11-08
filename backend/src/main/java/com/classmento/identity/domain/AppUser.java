@@ -1,4 +1,4 @@
-package com.classmento.auth;
+package com.classmento.identity.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

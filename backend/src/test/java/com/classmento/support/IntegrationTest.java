@@ -1,9 +1,9 @@
 package com.classmento.support;
 
-import com.classmento.auth.AppUser;
-import com.classmento.auth.AppUserRepository;
-import com.classmento.auth.AuthUsers;
 import com.classmento.common.security.AuthUser;
+import com.classmento.identity.domain.AppUser;
+import com.classmento.identity.domain.AppUserRepository;
+import com.classmento.identity.infrastructure.security.AuthUsers;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

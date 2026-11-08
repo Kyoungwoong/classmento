@@ -1,5 +1,7 @@
-package com.classmento.auth;
+package com.classmento.identity.infrastructure.security;
 
+import com.classmento.identity.domain.AppUser;
+import com.classmento.identity.domain.AppUserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

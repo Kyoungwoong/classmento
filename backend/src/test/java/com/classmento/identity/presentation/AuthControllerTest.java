@@ -1,4 +1,4 @@
-package com.classmento.auth;
+package com.classmento.identity.presentation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.classmento.common.security.AuthUser;
+import com.classmento.identity.domain.AppUser;
 import com.classmento.support.IntegrationTest;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;

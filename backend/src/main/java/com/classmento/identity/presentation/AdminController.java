@@ -1,7 +1,7 @@
-package com.classmento.admin;
+package com.classmento.identity.presentation;
 
-import com.classmento.auth.AppUser;
-import com.classmento.auth.AppUserRepository;
+import com.classmento.identity.application.MemberQueryService;
+import com.classmento.identity.domain.AppUser;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
@@ -14,15 +14,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/admin")
 public class AdminController {
 
-  private final AppUserRepository users;
+  private final MemberQueryService members;
 
-  public AdminController(AppUserRepository users) {
-    this.users = users;
+  public AdminController(MemberQueryService members) {
+    this.members = members;
   }
 
   @GetMapping("/users")
   public List<AdminUserView> users() {
-    return users.findTop200ByOrderByCreatedAtDesc().stream().map(AdminUserView::of).toList();
+    return members.recentMembers().stream().map(AdminUserView::of).toList();
   }
 
   @Schema(requiredProperties = {"id", "email", "name", "role", "provider", "createdAt"})

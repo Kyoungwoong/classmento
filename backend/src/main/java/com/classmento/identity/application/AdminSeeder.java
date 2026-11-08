@@ -1,5 +1,7 @@
-package com.classmento.auth;
+package com.classmento.identity.application;
 
+import com.classmento.identity.domain.AppUser;
+import com.classmento.identity.domain.AppUserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;

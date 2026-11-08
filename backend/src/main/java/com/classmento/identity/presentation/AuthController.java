@@ -1,13 +1,16 @@
-package com.classmento.auth;
+package com.classmento.identity.presentation;
 
-import com.classmento.auth.AuthDtos.CsrfResponse;
-import com.classmento.auth.AuthDtos.LoginRequest;
-import com.classmento.auth.AuthDtos.MeResponse;
-import com.classmento.auth.AuthDtos.ProvidersResponse;
-import com.classmento.auth.AuthDtos.SignupRequest;
-import com.classmento.auth.AuthDtos.SocialProvider;
-import com.classmento.auth.AuthDtos.UserView;
 import com.classmento.common.security.AuthUser;
+import com.classmento.identity.application.SignupService;
+import com.classmento.identity.application.SignupService.SignupCommand;
+import com.classmento.identity.infrastructure.security.SocialProperties;
+import com.classmento.identity.presentation.AuthDtos.CsrfResponse;
+import com.classmento.identity.presentation.AuthDtos.LoginRequest;
+import com.classmento.identity.presentation.AuthDtos.MeResponse;
+import com.classmento.identity.presentation.AuthDtos.ProvidersResponse;
+import com.classmento.identity.presentation.AuthDtos.SignupRequest;
+import com.classmento.identity.presentation.AuthDtos.SocialProvider;
+import com.classmento.identity.presentation.AuthDtos.UserView;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -31,17 +34,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-  private final AuthService authService;
+  private final SignupService signupService;
   private final AuthenticationManager authenticationManager;
   private final SecurityContextRepository contextRepository;
   private final SocialProperties social;
 
   public AuthController(
-      AuthService authService,
+      SignupService signupService,
       AuthenticationManager authenticationManager,
       SecurityContextRepository contextRepository,
       SocialProperties social) {
-    this.authService = authService;
+    this.signupService = signupService;
     this.authenticationManager = authenticationManager;
     this.contextRepository = contextRepository;
     this.social = social;
@@ -59,7 +62,7 @@ public class AuthController {
       @Valid @RequestBody SignupRequest body,
       HttpServletRequest request,
       HttpServletResponse response) {
-    authService.signup(body);
+    signupService.signup(new SignupCommand(body.email(), body.password(), body.name()));
     return login(new LoginRequest(body.email(), body.password()), request, response);
   }
 
