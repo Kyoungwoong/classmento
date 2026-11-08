@@ -79,6 +79,23 @@ class AuthControllerTest extends IntegrationTest {
         .andExpect(jsonPath("$.message").value("비밀번호는 8자 이상이에요."));
   }
 
+  /** 길이 상한(254)도 요청 검증에서 400으로 끝나야 한다(도메인 409까지 가지 않게). */
+  @Test
+  void tooLongEmailIsBadRequest() throws Exception {
+    // 로컬 64자 + 도메인 207자 = 272자: Hibernate @Email(로컬 ≤64, 도메인 ≤255)은 통과하지만 도메인 상한 254 초과
+    String label = "d".repeat(50);
+    String email = "a".repeat(64) + "@" + String.join(".", label, label, label, label) + ".com";
+    mockMvc
+        .perform(
+            post("/api/auth/signup")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    "{\"email\":\"" + email + "\",\"password\":\"password123\",\"name\":\"가\"}"))
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value("INVALID_REQUEST"));
+  }
+
   /** 입력 형식 오류는 도메인(409)까지 가지 않고 요청 검증에서 400으로 끝나야 한다. */
   @Test
   void emailWithoutDomainDotIsBadRequest() throws Exception {
