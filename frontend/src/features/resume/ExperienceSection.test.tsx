@@ -101,23 +101,24 @@ describe("ExperienceSection", () => {
   });
 
   it("나누기 성공 직후 새 목록이 오기 전에는 '찾지 못했어요'를 보이지 않고 불러오는 중으로 둔다", async () => {
-    vi.spyOn(api, "resumeExperiences").mockResolvedValue([]);
+    const reloaded = deferred<ExperienceView[]>();
+    vi.spyOn(api, "resumeExperiences")
+      .mockResolvedValueOnce([])
+      .mockReturnValueOnce(reloaded.promise);
     const onResync = vi.fn().mockResolvedValue(undefined);
-    const { rerender } = render(<ExperienceSection resumeId={1} version={1} onResync={onResync} />);
+    render(<ExperienceSection resumeId={1} version={1} onResync={onResync} />);
 
     fireEvent.click(await screen.findByRole("button", { name: "경험으로 나누기" }));
     await waitFor(() => expect(onResync).toHaveBeenCalled());
     await act(async () => {});
 
-    // 부모가 version(resume.parsed)을 바꾸기 전 — 아직 재조회 결과 없음
+    // 재조회 결과가 오기 전
     expect(screen.queryByText("이력서에서 경력·프로젝트를 찾지 못했어요.")).not.toBeInTheDocument();
     expect(screen.getByText("경험을 불러오고 있어요")).toBeInTheDocument();
 
     // 재조회 결과가 정말 0건이면 그때 문구를 보여주고 버튼은 숨긴다
-    rerender(<ExperienceSection resumeId={1} version={2} onResync={onResync} />);
-    expect(
-      await screen.findByText("이력서에서 경력·프로젝트를 찾지 못했어요."),
-    ).toBeInTheDocument();
+    await act(async () => reloaded.resolve([]));
+    expect(screen.getByText("이력서에서 경력·프로젝트를 찾지 못했어요.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "경험으로 나누기" })).not.toBeInTheDocument();
   });
 });

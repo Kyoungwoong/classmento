@@ -16,6 +16,7 @@ export function ExperienceSection({
   onResync,
 }: {
   resumeId: number;
+  /** 바뀌면 다시 불러온다(예: 부모가 결과를 저장해 resume.parsed가 새 객체가 됨). */
   version: unknown;
   onResync: () => Promise<unknown>;
 }) {
@@ -45,9 +46,10 @@ export function ExperienceSection({
     setError(null);
     try {
       await onResync();
-      // 새 목록은 부모가 version을 바꾸면 다시 불러온다. 그 전에는 옛 빈 목록으로 "찾지 못했어요"를 보이지 않게 불러오는 중으로 둔다
+      // 새 목록을 스스로 다시 불러온다(부모가 version을 바꾸든 말든). 그 전엔 "불러오는 중"으로 둬 거짓 "찾지 못했어요"를 막는다
       setItems(null);
       setResynced(true);
+      setReloadKey((k) => k + 1);
     } catch {
       setError("resync");
     } finally {
