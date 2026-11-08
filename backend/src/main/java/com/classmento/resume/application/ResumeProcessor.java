@@ -76,9 +76,15 @@ public class ResumeProcessor {
 
       // 3) 구조화
       ResumeParser.Result result = parser.parse(text);
-      // 4) 경험 단위 분리 + 임베딩 (경험 기반 면접의 재료, ADR 0005)
-      experienceSync.sync(resumeId, result.parsed());
-      update(resumeId, r -> r.markParsed(result.json(), result.model(), result.promptVersion()));
+      // 4) 경험 단위 분리 + 임베딩 (경험 기반 면접의 재료, ADR 0005).
+      //    임베딩은 트랜잭션 밖, 경험 저장과 PARSED 전이는 한 트랜잭션(둘 중 하나만 남지 않게)
+      ExperienceSync.Prepared experiences = experienceSync.prepare(result.parsed());
+      update(
+          resumeId,
+          r -> {
+            experienceSync.save(resumeId, experiences);
+            r.markParsed(result.json(), result.model(), result.promptVersion());
+          });
     } catch (Exception e) {
       log.warn("이력서 처리 실패 id={}", resumeId, e);
       fail(resumeId, "이력서를 읽는 중에 문제가 생겼어요. 다시 올려주세요.");
