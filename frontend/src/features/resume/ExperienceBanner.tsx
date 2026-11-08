@@ -1,3 +1,4 @@
+import { Chip } from "@/components/ui";
 import type { ExperienceView } from "@/lib/api/client";
 
 const TYPE_LABEL: Record<ExperienceView["type"], string> = {
@@ -28,13 +29,20 @@ export function ExperienceBanner({ experience }: ExperienceBannerProps) {
       <h3 className="mt-1 text-body1 font-semibold text-text-strong">{title}</h3>
       {summary && <p className="mt-1 line-clamp-2 text-body2 text-text-sub">{summary}</p>}
       {shown.length > 0 && (
-        <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="사용한 기술">
+        <ul className="mt-3 flex flex-wrap gap-2" aria-label="사용한 기술">
           {shown.map((s) => (
-            <li key={s} className="rounded-full bg-bg px-2.5 py-1 text-caption text-text">
-              {s}
+            <li key={s}>
+              <Chip label={s} size="sm" tone="surface" />
             </li>
           ))}
-          {rest > 0 && <li className="px-1 py-1 text-caption text-text-hint">+{rest}</li>}
+          {rest > 0 && (
+            <li
+              className="flex h-7 items-center px-1 text-caption text-text-hint"
+              aria-label={`외 ${rest}개`}
+            >
+              +{rest}
+            </li>
+          )}
         </ul>
       )}
     </article>
