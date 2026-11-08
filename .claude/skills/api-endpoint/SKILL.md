@@ -9,17 +9,19 @@ description: classmento 백엔드(Spring Boot)에 REST 엔드포인트를 추가
 - `docs/api/README.md`의 경로·에러 규칙 확인. 경로는 `/api/<복수 리소스>`.
 - 오래 걸리는 AI 작업은 `202 Accepted` + 상태 조회로.
 
-## 2. 구현 (`backend/src/main/java/com/classmento/<domain>/`)
-- `XxxController` — `@RestController`, `@RequestMapping("/api/...")`, `@Valid`.
-- 요청/응답 DTO는 `record`. 엔티티 노출 금지. 필수 필드는 Bean Validation.
-- `XxxService` — 유스케이스. AI는 `LlmClient`/`SttClient` 주입.
-- 에러는 도메인 예외 → `GlobalExceptionHandler`에서 `ApiError(code, 한국어 message)`.
-- Spring Boot 4 API가 불확실하면 context7 MCP로 확인.
+## 2. 구현 — DDD 계층 (`backend/src/main/java/com/classmento/<context>/`, 규칙: `docs/conventions/ddd-tdd.md`)
+**TDD 순서로, 각 단계를 red/green 커밋으로 나눈다.**
+1. `domain/` — 규칙 테스트(Spring 없음) → 애그리거트·값 객체·리포지토리 인터페이스. 규칙 위반은 `DomainException`(→ 409).
+2. `application/` — 유스케이스 테스트(가짜 포트) → `XxxService`. 입력은 커맨드 record. AI는 `LlmClient`/`EmbeddingClient` 포트.
+3. `infrastructure/` — Spring Data 구현(`XxxJpaRepository extends JpaRepository, XxxRepository`), 벡터는 JdbcTemplate. 실제 DB 통합 테스트.
+4. `presentation/` — `XxxController`(`@RestController`, `@Valid`)와 요청·응답 DTO record(엔티티 노출 금지, `@Schema(requiredProperties)`). MockMvc 테스트.
+- 새 컨텍스트면 `ArchitectureTest.CONTEXTS`에 추가한다.
+- Spring Boot 4 API가 불확실하면 context7 MCP로 확인한다.
 
 ## 3. 테스트
-- 서비스: 순수 단위 테스트 + `FakeLlmClient`/`FakeSttClient`.
-- 컨트롤러: `@SpringBootTest` + `@AutoConfigureMockMvc`(`org.springframework.boot.webmvc.test.autoconfigure`). 성공 1 + 검증 실패 1 이상.
-- `cd backend && ./gradlew spotlessApply test`
+- domain: 순수 JUnit / application: `FakeLlmClient`·`FakeSttClient` 등 가짜 포트
+- presentation: `IntegrationTest` 상속(`@SpringBootTest` + MockMvc). 성공 1개와 실패(검증·권한·404) 1개 이상.
+- `cd backend && ./gradlew spotlessApply test` (ArchitectureTest 포함)
 
 ## 4. 계약 동기화 (생략 금지)
 1. `cd backend && ./gradlew bootRun` (백그라운드)

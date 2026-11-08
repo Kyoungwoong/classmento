@@ -12,26 +12,33 @@
 - 계약(API 스펙)의 원본은 백엔드가 생성하는 OpenAPI(`/v3/api-docs`)다. 프론트 타입은 여기서 생성한다 → [api/README.md](api/README.md)
 - 결정 기록: [ADR 0002](adr/0002-postgres-pgvector-auth.md)(DB·인증·임베딩), [ADR 0003](adr/0003-credits.md)(크레딧 설계)
 
-## 백엔드 패키지 (`backend/src/main/java/com/classmento`)
-| 패키지 | 책임 | 의존 가능 |
-|---|---|---|
-| `common` | CORS, `ApiError`/`ApiException`/`GlobalExceptionHandler`, `AiProperties`, 헬스 | — |
-| `auth` | 회원(`AppUser`), 로그인·가입·세션(`SecurityConfig`), 소셜(`SocialUserService`), 관리자 시드 | common |
-| `admin` | 관리자 전용 API (`/api/admin/**`, ROLE_ADMIN) | common, auth |
-| `llm` | `LlmClient` 포트 / `ClaudeLlmClient` / `DevFakeLlmClient` / `PromptLoader` | common |
-| `embedding` | `EmbeddingClient` 포트 / `OpenAiEmbeddingClient` / `HashEmbeddingClient`(가짜) / `PgVectors` | common |
-| `speech` | `SttClient` 포트 / `ClovaSttClient` | common |
-| `storage` | `FileStorage` 포트 / `LocalFileStorage` (나중에 S3) | — |
-| `resume` | 업로드 → 추출(PDFBox/POI) → 청크·임베딩 → 구조화, kNN 검색 | common, auth, llm, embedding, storage |
-| `questionbank` | 질문 은행 관리(관리자 CRUD + 임베딩) · 조건/kNN 검색 (예정) | common, embedding |
-| `interview` | 세션(4가지 유형, ADR 0004)·질문 생성·꼬리질문·답변 수신 (예정) | common, llm, speech, resume, questionbank, embedding |
-| `evaluation` | 답변 채점·리포트 (예정) | common, llm, interview |
+## 백엔드 구조 — DDD (규칙: [conventions/ddd-tdd.md](conventions/ddd-tdd.md))
+바운디드 컨텍스트 × 계층. 의존 방향 `presentation → application → domain ← infrastructure`, 컨텍스트끼리 직접 의존 금지. `ArchitectureTest`(ArchUnit)가 강제한다.
+
+| 컨텍스트 | domain | application | infrastructure | presentation |
+|---|---|---|---|---|
+| `identity` 회원 | `AppUser`, `Email`(값 객체), `AppUserRepository` | `SignupService`, `MemberQueryService`, `AdminSeeder` | `persistence.AppUserJpaRepository`, `security.*`(SecurityConfig, 소셜, UserDetails, `AuthUsers`) | `AuthController`, `AdminController` |
+| `resume` 이력서 | `Resume`(상태 전이), `ParsedResume`, `ResumeFileType`, `TextChunker`, `ResumeRepository`, `ResumeChunkRepository` | `ResumeService`, `ResumeProcessor`, `ResumeParser`, `TextExtractor`(포트) | `ResumeJpaRepository`, `JdbcResumeChunkRepository`(pgvector), `PdfDocxTextExtractor`, 실행기 | `ResumeController` |
+| `questionbank` | (예정) | | | |
+| `interview` | (예정, 4유형 ADR 0004) | | | |
+| `evaluation` | (예정) | | | |
+
+| 공용 · 플랫폼 | 내용 |
+|---|---|
+| `common` (공용 커널) | `web`(ApiError/ApiException/GlobalExceptionHandler/CORS/Health), `security.AuthUser`(현재 사용자), `domain.DomainException`, `AiProperties` |
+| `llm` | `LlmClient` 포트 / `ClaudeLlmClient` / `DevFakeLlmClient` / `PromptLoader` |
+| `embedding` | `EmbeddingClient` 포트 / `OpenAiEmbeddingClient` / `HashEmbeddingClient`(가짜) / `PgVectors` |
+| `speech` | `SttClient` 포트 / `ClovaSttClient` |
+| `storage` | `FileStorage` 포트 / `LocalFileStorage` (나중에 S3) |
 
 규칙
-- 도메인 패키지는 포트 **인터페이스만** 의존한다(`LlmClient`, `EmbeddingClient`, `SttClient`, `FileStorage`). 외부 SDK·HTTP 코드는 어댑터 안에만 둔다.
-- 도메인 패키지 내부 구조: `XxxController` → `XxxService` → `XxxRepository`(JPA, 벡터는 JdbcTemplate). DTO는 `record`.
+- **도메인 규칙은 애그리거트 안에 둔다.**
+  - 예: `Resume`의 상태 전이(UPLOADED → EXTRACTED → PARSED, 처리 중 FAILED), `Email` 형식.
+  - 위반하면 `DomainException`을 던지고, 응답은 409 + `code`다.
+- 외부 SDK·HTTP 코드는 플랫폼 어댑터나 각 컨텍스트의 infrastructure 안에만 둔다. application은 포트 인터페이스만 쓴다.
 - 어댑터 선택 우선순위: **실제 키 → (`classmento.ai.fake=true`일 때) 가짜 → `Unavailable*`(503 `AI_UNAVAILABLE`)**.
-- 현재 사용자: 컨트롤러에서 `@AuthenticationPrincipal AuthUser user`. 남의 리소스는 `findByIdAndUserId`로 조회하고, 없으면 404를 준다(존재 여부를 숨김).
+- 현재 사용자: 컨트롤러에서 `@AuthenticationPrincipal AuthUser user`로 받는다(공용 커널). 다른 컨텍스트는 `user.id()`만 쓴다.
+- 남의 리소스는 `findByIdAndUserId`로 조회하고, 없으면 404를 준다(존재 여부를 숨긴다).
 
 ## RAG 흐름
 ```

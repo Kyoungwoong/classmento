@@ -17,11 +17,11 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 - 에러: 항상 `ApiError { code, message }`. `message`는 사용자에게 그대로 보여줄 수 있는 한국어 문장.
   | HTTP | code | 상황 |
   |---|---|---|
-  | 400 | `INVALID_REQUEST` | 검증 실패 (message = 첫 번째 필드 에러 문장) |
+  | 400 | `INVALID_REQUEST` | 입력 형식·검증 실패 (message = 첫 번째 필드 에러 문장. 예: 이메일 형식 `a@b`) |
   | 401 | `LOGIN_FAILED` / (본문 없음) | 로그인 실패 / 로그인 필요 |
   | 403 | (본문 없음) | 권한 없음 또는 CSRF 토큰 누락 |
   | 404 | `NOT_FOUND` | 리소스 없음 (남의 리소스도 404) |
-  | 409 | `EMAIL_TAKEN` | 이미 가입된 이메일 |
+  | 409 | `EMAIL_TAKEN` / `RESUME_NOT_READY` / `RESUME_INVALID_STATE` / 도메인 규칙 코드 | 도메인 규칙 위반(`DomainException`): 이미 가입된 이메일, 파싱 전 이력서 수정 등 |
   | 413 | `FILE_TOO_LARGE` | 업로드 용량 초과 |
   | 503 | `AI_UNAVAILABLE` | Claude/OpenAI/CLOVA 미설정·실패 |
 - 업로드: `multipart/form-data`, 필드명 `file`(이력서), `audio`(답변 녹음).
@@ -46,5 +46,5 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 | POST | `/api/resumes` | 로그인 | multipart `file`(PDF/DOCX ≤20MB) → 202 `ResumeDetail` |
 | GET | `/api/resumes` | 로그인 | 내 이력서 목록 `ResumeSummary[]` |
 | GET | `/api/resumes/{id}` | 본인 | 상태 + `parsed`(PARSED일 때) |
-| PUT | `/api/resumes/{id}/parsed` | 본인 | 수정한 `ParsedResume` 저장 (PARSED 상태에서만) |
+| PUT | `/api/resumes/{id}/parsed` | 본인 | 수정한 `ParsedResume` 저장 (PARSED 상태에서만, 아니면 409 `RESUME_NOT_READY`) |
 | GET | `/api/admin/users` | ADMIN | 최근 가입 순 200명 |

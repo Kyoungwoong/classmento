@@ -11,12 +11,14 @@ Spring Boot 4에서는 3.x와 패키지가 다른 곳이 있다.
 
 확신이 없으면 context7 MCP로 문서를 확인한다.
 
-## 구조
-도메인별 패키지(`resume`, `interview`, `evaluation`) 안에 `Controller → Service → Repository`를 둔다. 외부 연동은 `llm`·`embedding`·`speech`·`storage`의 포트/어댑터로 한다. 상세: [architecture.md](../architecture.md)
+## 구조 — DDD
+바운디드 컨텍스트(`identity`, `resume`, …) × 계층(`domain` / `application` / `infrastructure` / `presentation`).
+외부 기술은 플랫폼 포트(`llm`·`embedding`·`speech`·`storage`)를 쓴다.
+**규칙 전문과 TDD·커밋 방식: [ddd-tdd.md](ddd-tdd.md)**, 구조 그림: [architecture.md](../architecture.md)
 
 ## 규칙
 - DTO·응답은 `record`로 만든다. 엔티티를 API로 직접 내보내지 않는다. 응답 record에는 `@Schema(requiredProperties = {...})`를 붙인다.
-- 요청 검증은 Bean Validation(`@Valid`, `@NotBlank` …)으로 하고, `message`는 사용자에게 보여줄 한국어로 쓴다. 도메인 에러는 `ApiException`을 던진다 → `GlobalExceptionHandler`가 `ApiError`로 바꾼다.
+- 요청 검증은 Bean Validation(`@Valid`, `@NotBlank` …)으로 하고, `message`는 사용자에게 보여줄 한국어로 쓴다. 도메인 규칙 위반은 `DomainException`(→ 409), 입력·조회 오류는 `ApiException`(400·404)이다. 둘 다 `GlobalExceptionHandler`가 `ApiError`로 바꾼다([ddd-tdd.md §3](ddd-tdd.md)).
 - 설정값은 `@ConfigurationProperties` record로 받는다. `@Value` 남발 금지.
 - 비밀값은 환경변수로만 받는다(`.env.example`). `application.yml`에 실제 값 금지. local 프로필의 기본 관리자 비밀번호는 로컬 전용이다.
 - 스키마: Flyway `V{n}__설명.sql` 새 파일로만 바꾼다. 엔티티는 스키마를 따른다(`ddl-auto: validate`).

@@ -1,0 +1,55 @@
+package com.classmento.identity.application;
+
+import com.classmento.identity.domain.AppUser;
+import com.classmento.identity.domain.AppUserRepository;
+import com.classmento.identity.domain.Email;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+
+/**
+ * 앱 시작 시 ADMIN_EMAIL/ADMIN_PASSWORD로 관리자 계정을 한 번 만든다(이미 있으면 건드리지 않음). ADMIN_EMAIL 형식이 틀리면
+ * DomainException(INVALID_EMAIL)으로 기동이 실패한다 — 잘못된 운영 설정을 조용히 넘기지 않으려는 의도(fail-fast).
+ */
+@Component
+public class AdminSeeder implements ApplicationRunner {
+
+  private static final Logger log = LoggerFactory.getLogger(AdminSeeder.class);
+
+  private final AppUserRepository users;
+  private final PasswordEncoder passwordEncoder;
+  private final AdminProperties properties;
+
+  public AdminSeeder(
+      AppUserRepository users, PasswordEncoder passwordEncoder, AdminProperties properties) {
+    this.users = users;
+    this.passwordEncoder = passwordEncoder;
+    this.properties = properties;
+  }
+
+  @Override
+  public void run(ApplicationArguments args) {
+    if (blank(properties.email()) || blank(properties.password())) {
+      return;
+    }
+    Email email = Email.of(properties.email());
+    if (users.existsByEmailIgnoreCase(email.value())) {
+      return;
+    }
+    users.save(
+        AppUser.local(
+            email, passwordEncoder.encode(properties.password()), "관리자", AppUser.Role.ADMIN));
+    log.info("관리자 계정 생성: {}", email.value());
+  }
+
+  private static boolean blank(String s) {
+    return s == null || s.isBlank();
+  }
+
+  @ConfigurationProperties("classmento.admin")
+  public record AdminProperties(String email, String password) {}
+}
