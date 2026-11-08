@@ -34,7 +34,7 @@ Tailwind 기본 팔레트는 꺼져 있다(`--color-*: initial`). `bg-purple-500
 | `BottomCTA` + `Button` | 하단 고정 주요 행동. 버튼 높이 56(lg). 로딩 문구는 `loadingText`로 지금 하는 일("올리고 있어요") |
 | `ButtonLink` | 화면 이동용 버튼(모양은 Button, 실제는 링크) |
 | `TopBar` | `Screen` header 슬롯. 뒤로 가기 + 오른쪽 작은 텍스트 행동 하나(예: 로그아웃) |
-| `Chip` | 기술 같은 짧은 키워드. 회색 면, 지우기 버튼(터치 44px) |
+| `Chip` | 기술 같은 짧은 키워드. `size` md(편집, 지우기 버튼 터치 44px) / sm(읽기 전용), `tone` muted(흰 배경 위) / surface(회색 면 위) |
 | `ListRow` | 정보 나열. 카드 그리드 대신 세로 리스트 |
 | `TextField` | 회색 면 입력창(테두리 없음), 라벨은 위 |
 | `ProgressBar` | 면접 진행도 (얇은 4px 막대) |
