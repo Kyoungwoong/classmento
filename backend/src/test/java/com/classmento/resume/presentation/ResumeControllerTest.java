@@ -5,22 +5,27 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.classmento.common.security.AuthUser;
 import com.classmento.identity.domain.AppUser;
+import com.classmento.resume.domain.Resume;
 import com.classmento.resume.domain.ResumeChunkRepository;
 import com.classmento.resume.domain.ResumeFileType;
+import com.classmento.resume.domain.ResumeRepository;
 import com.classmento.support.IntegrationTest;
 import com.classmento.support.SampleFiles;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 
 class ResumeControllerTest extends IntegrationTest {
 
   @Autowired ResumeChunkRepository chunks;
+  @Autowired ResumeRepository resumes;
 
   @Test
   void uploadPdfIsExtractedEmbeddedAndParsed() throws Exception {
@@ -99,6 +104,24 @@ class ResumeControllerTest extends IntegrationTest {
     mockMvc
         .perform(get("/api/resumes").with(user(other)))
         .andExpect(jsonPath("$.length()").value(0));
+  }
+
+  /** 파싱이 끝나기 전 결과 수정은 도메인 규칙 위반 → 409 RESUME_NOT_READY (API 계약). */
+  @Test
+  void updatingParsedBeforeParsingIsConflict() throws Exception {
+    AuthUser me = createUser("me@test.com", AppUser.Role.USER);
+    Long id =
+        resumes.save(new Resume(me.id(), "cv.pdf", "application/pdf", 10, "resumes/x.pdf")).getId();
+
+    mockMvc
+        .perform(
+            put("/api/resumes/" + id + "/parsed")
+                .with(csrf())
+                .with(user(me))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"skills\":[\"Java\"]}"))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("RESUME_NOT_READY"));
   }
 
   @Test
