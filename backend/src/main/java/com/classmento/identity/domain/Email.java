@@ -10,7 +10,15 @@ public record Email(String value) {
   private static final int MAX_LENGTH = 254;
 
   /** 로컬@도메인.최상위 — 공백·@ 중복 없이, 도메인에 점이 하나 이상. */
-  private static final Pattern FORMAT = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+  private static final String CORE = "[^\\s@]+@[^\\s@]+\\.[^\\s@]+";
+
+  private static final Pattern FORMAT = Pattern.compile("^" + CORE + "$");
+
+  /**
+   * 요청 검증(presentation의 {@code @Email(regexp = ...)})용 정규식. 도메인 규칙과 같고 앞뒤 공백만 허용한다(정규화는 도메인이 함). 입력
+   * 형식 오류를 도메인(409)까지 보내지 않고 400으로 끝내기 위해 공유한다.
+   */
+  public static final String INPUT_REGEX = "\\s*" + CORE + "\\s*";
 
   public Email {
     if (value == null || value.length() > MAX_LENGTH || !FORMAT.matcher(value).matches()) {

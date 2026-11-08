@@ -14,7 +14,11 @@ public final class AuthDtos {
   private AuthDtos() {}
 
   public record SignupRequest(
-      @NotBlank(message = "이메일을 입력해 주세요.") @Email(message = "이메일 형식이 맞지 않아요.") String email,
+      @NotBlank(message = "이메일을 입력해 주세요.")
+          @Email(
+              regexp = com.classmento.identity.domain.Email.INPUT_REGEX,
+              message = "이메일 형식이 맞지 않아요.")
+          String email,
       @NotBlank(message = "비밀번호를 입력해 주세요.") @Size(min = 8, max = 64, message = "비밀번호는 8자 이상이에요.")
           String password,
       @NotBlank(message = "이름을 입력해 주세요.") @Size(max = 30, message = "이름은 30자까지예요.") String name) {}
