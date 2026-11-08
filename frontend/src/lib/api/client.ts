@@ -16,6 +16,7 @@ export type SocialProvider = Schemas["SocialProvider"];
 export type ResumeDetail = Schemas["ResumeDetail"];
 export type ResumeSummary = Schemas["ResumeSummary"];
 export type ParsedResume = Schemas["ParsedResume"];
+export type ExperienceView = Schemas["ExperienceView"];
 export type AdminUserView = Schemas["AdminUserView"];
 export type SignupRequest = Schemas["SignupRequest"];
 export type LoginRequest = Schemas["LoginRequest"];
@@ -101,6 +102,7 @@ export const api = {
   },
   resumes: () => apiFetch<ResumeSummary[]>("/api/resumes"),
   resume: (id: number) => apiFetch<ResumeDetail>(`/api/resumes/${id}`),
+  resumeExperiences: (id: number) => apiFetch<ExperienceView[]>(`/api/resumes/${id}/experiences`),
   updateParsed: (id: number, parsed: ParsedResume) =>
     apiFetch<ResumeDetail>(`/api/resumes/${id}/parsed`, { method: "PUT", body: json(parsed) }),
 
