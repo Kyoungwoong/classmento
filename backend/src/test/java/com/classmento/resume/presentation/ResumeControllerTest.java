@@ -106,6 +106,45 @@ class ResumeControllerTest extends IntegrationTest {
         .andExpect(jsonPath("$.length()").value(0));
   }
 
+  /** 파싱이 끝나면 경력·프로젝트가 경험 단위로 저장되고 임베딩이 채워진다(가짜 응답 v2: 경력 2 + 프로젝트 1). */
+  @Test
+  void parsedResumeIsSplitIntoExperiences() throws Exception {
+    AuthUser me = createUser("me@test.com", AppUser.Role.USER);
+    MockMultipartFile file =
+        new MockMultipartFile(
+            "file", "resume.pdf", "application/pdf", SampleFiles.pdf(SampleFiles.RESUME_TEXT));
+    mockMvc.perform(multipart("/api/resumes").file(file).with(csrf()).with(user(me)));
+
+    mockMvc
+        .perform(get("/api/resumes/1/experiences").with(user(me)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(3))
+        .andExpect(jsonPath("$[0].type").value("WORK"))
+        .andExpect(jsonPath("$[0].title").value("예시커머스 · 백엔드 개발자"))
+        .andExpect(jsonPath("$[0].summary").isNotEmpty())
+        .andExpect(jsonPath("$[2].type").value("PROJECT"))
+        .andExpect(jsonPath("$[2].skills[0]").value("Kafka"));
+
+    Integer withEmbedding =
+        jdbc.queryForObject(
+            "SELECT count(*) FROM resume_experience WHERE embedding IS NOT NULL", Integer.class);
+    assertThat(withEmbedding).isEqualTo(3);
+  }
+
+  @Test
+  void cannotSeeOthersExperiences() throws Exception {
+    AuthUser owner = createUser("owner@test.com", AppUser.Role.USER);
+    AuthUser other = createUser("other@test.com", AppUser.Role.USER);
+    MockMultipartFile file =
+        new MockMultipartFile(
+            "file", "resume.pdf", "application/pdf", SampleFiles.pdf(SampleFiles.RESUME_TEXT));
+    mockMvc.perform(multipart("/api/resumes").file(file).with(csrf()).with(user(owner)));
+
+    mockMvc
+        .perform(get("/api/resumes/1/experiences").with(user(other)))
+        .andExpect(status().isNotFound());
+  }
+
   /** 파싱이 끝나기 전 결과 수정은 도메인 규칙 위반 → 409 RESUME_NOT_READY (API 계약). */
   @Test
   void updatingParsedBeforeParsingIsConflict() throws Exception {
