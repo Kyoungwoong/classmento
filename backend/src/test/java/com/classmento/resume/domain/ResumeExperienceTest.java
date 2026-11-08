@@ -63,6 +63,20 @@ class ResumeExperienceTest {
   }
 
   @Test
+  void 회사명_기간은_길면_말줄임하고_비면_null() {
+    ResumeExperience e =
+        ResumeExperience.create(
+            0, Type.WORK, "제목", "회".repeat(150), "기".repeat(80), "요약", "본문", List.of());
+    assertThat(e.organization()).hasSize(ResumeExperience.ORGANIZATION_MAX).endsWith("…");
+    assertThat(e.period()).hasSize(ResumeExperience.PERIOD_MAX).endsWith("…");
+
+    ResumeExperience blank =
+        ResumeExperience.create(0, Type.WORK, "제목", "  ", "", "요약", "본문", List.of());
+    assertThat(blank.organization()).isNull();
+    assertThat(blank.period()).isNull();
+  }
+
+  @Test
   void 기술_목록이_null이면_빈_목록() {
     assertThat(project("제목", "요약", "본문", null).skills()).isEmpty();
   }

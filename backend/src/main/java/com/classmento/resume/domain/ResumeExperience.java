@@ -27,6 +27,8 @@ public record ResumeExperience(
   public static final int TITLE_MAX = 60;
   public static final int SUMMARY_MAX = 120;
   public static final int SKILLS_MAX = 15;
+  public static final int ORGANIZATION_MAX = 100;
+  public static final int PERIOD_MAX = 50;
 
   public enum Type {
     WORK,
