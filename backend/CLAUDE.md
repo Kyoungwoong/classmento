@@ -2,18 +2,24 @@
 
 규칙 전문: [../docs/conventions/backend.md](../docs/conventions/backend.md) · 구조: [../docs/architecture.md](../docs/architecture.md)
 
+## 구조: DDD (규칙 전문 [../docs/conventions/ddd-tdd.md](../docs/conventions/ddd-tdd.md))
+`<context>/{domain, application, infrastructure, presentation}`
+- 의존 방향: presentation → application → domain ← infrastructure
+- 컨텍스트 간 직접 import 금지
+- `ArchitectureTest`가 검사한다
+
 ## 패키지 (`com.classmento`)
-- `common` — CORS, `ApiError`/`ApiException`/`GlobalExceptionHandler`, `AiProperties`, `HealthController`
-- `auth` — `AppUser`, `AuthUser`(세션 principal), `SecurityConfig`, `AuthController`, `SocialUserService`, `AdminSeeder`
-- `admin` — `/api/admin/**` (ROLE_ADMIN)
+- `common` — `web`(ApiError/ApiException/GlobalExceptionHandler/CORS/Health), `security.AuthUser`(현재 사용자), `domain.DomainException`, `AiProperties`
+- `identity` — 회원·인증·소셜·관리자 (`domain.AppUser`·`Email`, `application.SignupService`, `infrastructure.security.SecurityConfig`, `presentation.AuthController`·`AdminController`)
 - `llm` — `LlmClient` / `ClaudeLlmClient` / `DevFakeLlmClient` / `UnavailableLlmClient` / `PromptLoader`
 - `embedding` — `EmbeddingClient` / `OpenAiEmbeddingClient` / `HashEmbeddingClient` / `PgVectors`
 - `speech` — `SttClient` / `ClovaSttClient` / `UnavailableSttClient`
 - `storage` — `FileStorage` / `LocalFileStorage`
-- `resume` — 업로드·추출·청크·임베딩·구조화, `ResumeChunkRepository.findNearest`(kNN)
+- `resume` — 업로드·추출·청크·임베딩·구조화. `domain.Resume`(상태 전이), `domain.ResumeChunkRepository.findNearest`(kNN, 구현은 infrastructure JDBC)
 - `interview`, `evaluation` — 예정
 
 ## 꼭 지킬 것
+- **TDD:** 도메인 규칙 테스트(Spring 없음)부터 쓴다 → 구현 → 정리. 커밋도 `test(...)`(red) → `feat(...)`(green)으로 나눈다. red 커밋도 컴파일은 돼야 한다.
 - Spring Boot **4.1** / Spring Security 7 / Jackson **3**(`tools.jackson.*`). 패키지가 3.x와 다르니 모르면 context7로 확인한다.
 - DB는 **PostgreSQL 17 + pgvector**(`localhost:5433`). 실행·테스트 전에 `bash ../scripts/db.sh up`.
 - 스키마는 `src/main/resources/db/migration/V{n}__*.sql` **새 파일**로만 바꾼다. `ddl-auto: validate`라 엔티티와 어긋나면 기동이 실패한다.

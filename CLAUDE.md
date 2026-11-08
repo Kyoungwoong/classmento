@@ -17,7 +17,7 @@
 - 화면 작업: [docs/design/design-system.md](docs/design/design-system.md), [docs/design/screens.md](docs/design/screens.md)
 - API 추가·변경: [docs/api/README.md](docs/api/README.md)
 - 프롬프트·평가: [docs/ai/interview-and-rubric.md](docs/ai/interview-and-rubric.md)
-- 코드 규칙: [docs/conventions/frontend.md](docs/conventions/frontend.md), [docs/conventions/backend.md](docs/conventions/backend.md)
+- 코드 규칙: [docs/conventions/frontend.md](docs/conventions/frontend.md), [docs/conventions/backend.md](docs/conventions/backend.md), [DDD·TDD](docs/conventions/ddd-tdd.md), [Git·PR](docs/conventions/git.md)
 - 왜 이 스택인가: [docs/adr/](docs/adr/)
 
 ## 명령
@@ -38,6 +38,7 @@ cd frontend && pnpm gen:api            # 백엔드 실행 중일 때 OpenAPI →
 5. **비밀값 커밋 금지.** 키는 환경변수(`.env.example` 참고). `.env*`는 읽지도 쓰지도 않는다.
 6. **완료 = `bash scripts/verify.sh` 통과.** 화면 변경이면 스크린샷 확인까지(`ui-screen` 스킬).
 7. 여러 단계 기능은 `docs/exec-plans/active/`에 계획부터(`feature` 스킬).
+7-1. **백엔드는 DDD + TDD.** 컨텍스트 × 계층 구조와 의존 방향은 ArchUnit으로 강제한다. 테스트를 먼저 쓰고, 커밋은 red/green 단위로 잘게 나눈다 → [docs/conventions/ddd-tdd.md](docs/conventions/ddd-tdd.md)
 8. **main에 직접 커밋·푸시 금지.** 모든 변경은 브랜치 → PR → 리뷰 → 머지(아래 작업 절차).
 
 ## 작업 절차 (매 요청) — 상세: [docs/conventions/git.md](docs/conventions/git.md), `ship` 스킬

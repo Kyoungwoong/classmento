@@ -15,7 +15,11 @@ description: classmento에 새 기능(이력서 업로드, 면접 세션, 녹음
 API 모양, 화면 경로, 사용할 프롬프트 버전, 단계 체크리스트를 채운다. 애매한 결정은 사용자에게 질문.
 
 ## 3. 구현 순서
-1. **백엔드** — `api-endpoint` 스킬 절차. 서비스 단위 테스트 + 컨트롤러 MockMvc 테스트. AI는 Fake로.
+1. **백엔드 (DDD + TDD, `docs/conventions/ddd-tdd.md`)**
+   - 도메인: 규칙 테스트(red) → 애그리거트·값 객체 구현(green) → 정리
+   - application: 유스케이스 테스트(가짜 포트) → 구현
+   - infrastructure·presentation: `api-endpoint` 스킬 절차(통합 테스트·MockMvc). AI는 가짜로.
+   - 각 red/green을 별도 커밋으로.
 2. **AI** — 프롬프트가 필요하면 `interview-ai` 스킬 절차.
 3. **계약** — 백엔드 실행 후 `cd frontend && pnpm gen:api`.
 4. **프론트** — `ui-screen` 스킬 절차.
