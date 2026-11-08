@@ -1,0 +1,145 @@
+# CI: PR과 main 푸시마다 프론트·백엔드 검사 + Docker 이미지 빌드(푸시 없음)
+# 로컬의 `bash scripts/verify.sh`와 같은 검사를 돈다.
+# 브랜치 보호 규칙에는 마지막 `ci-ok` 잡 하나만 필수로 걸면 된다.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    name: 변경 영역 확인
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+        if: github.event_name == 'pull_request'
+      # PR일 때만 변경 영역을 본다. main 푸시·수동 실행은 전부 검사한다.
+      - id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            frontend:
+              - 'frontend/**'
+              - 'scripts/check-design.sh'
+              - '.github/workflows/**'
+            backend:
+              - 'backend/**'
+              - '.github/workflows/**'
+
+  frontend:
+    name: Frontend (format·lint·type·test·design·build)
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: frontend/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: bash ../scripts/check-design.sh
+      - run: pnpm build
+
+  backend:
+    name: Backend (spotless·test, Postgres 17 + pgvector)
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      # 로컬 docker-compose와 같은 이미지·포트. test 프로필이 localhost:5433/classmento_test 를 쓴다.
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: classmento
+          POSTGRES_PASSWORD: classmento
+          POSTGRES_DB: classmento_test
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U classmento -d classmento_test"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x gradlew
+      - run: ./gradlew spotlessCheck
+      - run: ./gradlew test
+      - name: 테스트 리포트 업로드 (실패 시)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-report
+          path: backend/build/reports/tests/test
+          retention-days: 7
+
+  docker:
+    name: Docker 이미지 빌드 (${{ matrix.service }})
+    needs: [changes, frontend, backend]
+    # 앞 잡이 실패하지 않았고(건너뜀은 허용), 해당 서비스가 바뀌었거나 main 푸시일 때
+    if: >-
+      !failure() && !cancelled() &&
+      (needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' || github.event_name != 'pull_request')
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [backend, frontend]
+    # 재사용 워크플로가 요구하는 권한(OIDC는 push=false라 실제로 쓰지 않음)
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/docker-image.yml
+    with:
+      service: ${{ matrix.service }}
+      push: false
+
+  ci-ok:
+    name: ci-ok
+    needs: [changes, frontend, backend, docker]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: 모든 잡 결과 확인
+        run: |
+          echo '${{ toJSON(needs) }}'
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            echo "실패하거나 취소된 잡이 있습니다"; exit 1
+          fi
+          echo "CI 통과"

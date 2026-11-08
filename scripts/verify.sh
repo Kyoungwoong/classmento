@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # 전체 검증. 사용: bash scripts/verify.sh [--fe | --be]
-# 작업을 "완료"라고 말하기 전에 반드시 통과해야 한다.
+# 작업을 "완료"라고 말하기 전에 반드시 통과해야 한다. CI(.github/workflows/ci.yml)도 같은 검사를 돈다.
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -19,31 +19,13 @@ step() {
   fi
 }
 
-design_tokens_only() {
-  # 디자인 시스템: 임의 색(#hex)·임의 px 클래스 금지 (docs/design/design-system.md 금지 목록)
-  local hits
-  hits=$(grep -rnE '\[#[0-9a-fA-F]{3,8}\]|-\[[0-9.]+px\]' "$ROOT/frontend/src" --include='*.tsx' --include='*.ts' || true)
-  if [ -n "$hits" ]; then
-    echo "토큰 대신 임의값을 쓴 곳이 있습니다:"
-    echo "$hits"
-    return 1
-  fi
-  # 그라데이션 금지
-  hits=$(grep -rnE 'bg-gradient|bg-linear|bg-radial|linear-gradient|backdrop-blur' "$ROOT/frontend/src" || true)
-  if [ -n "$hits" ]; then
-    echo "금지된 그라데이션/블러:"
-    echo "$hits"
-    return 1
-  fi
-}
-
 if [ "$MODE" = "all" ] || [ "$MODE" = "--fe" ]; then
   cd "$ROOT/frontend" || exit 1
   step "FE format"     pnpm -s format:check
   step "FE lint"       pnpm -s lint
   step "FE typecheck"  pnpm -s typecheck
   step "FE test"       pnpm -s test
-  step "FE design"     design_tokens_only
+  step "FE design"     bash "$ROOT/scripts/check-design.sh"
   step "FE build"      pnpm -s build
 fi
 
