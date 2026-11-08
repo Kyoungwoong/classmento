@@ -1,9 +1,24 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:classmento;MODE=PostgreSQL
+    url: jdbc:postgresql://localhost:5433/classmento_test
+    username: classmento
+    password: classmento
+  flyway:
+    clean-disabled: false
 classmento:
+  ai:
+    fake: true
   llm:
+    api-key: ""
+  embedding:
     api-key: ""
   stt:
     invoke-url: ""
     secret: ""
+  storage:
+    root: ./build/test-uploads
+  resume:
+    sync-processing: true
+  admin:
+    email: admin@test.local
+    password: admin1234!

@@ -1,0 +1,88 @@
+package com.classmento.resume;
+
+import com.classmento.embedding.EmbeddingClient;
+import com.classmento.storage.FileStorage;
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
+
+/**
+ * 업로드 이후의 무거운 처리. 각 단계가 끝날 때마다 상태를 저장해 화면이 진행 상황을 폴링할 수 있게 한다.
+ *
+ * <pre>
+ * UPLOADED → (텍스트 추출, 청크, 임베딩) → EXTRACTED → (Claude 구조화) → PARSED
+ *                                  실패 시 어느 단계든 → FAILED + 사용자용 사유
+ * </pre>
+ */
+@Component
+public class ResumeProcessor {
+
+  private static final Logger log = LoggerFactory.getLogger(ResumeProcessor.class);
+
+  private final ResumeRepository resumes;
+  private final ResumeChunkRepository chunks;
+  private final FileStorage storage;
+  private final TextExtractor extractor;
+  private final EmbeddingClient embeddings;
+  private final ResumeParser parser;
+  private final TransactionTemplate tx;
+  private final TextChunker chunker = new TextChunker(800, 100);
+
+  public ResumeProcessor(
+      ResumeRepository resumes,
+      ResumeChunkRepository chunks,
+      FileStorage storage,
+      TextExtractor extractor,
+      EmbeddingClient embeddings,
+      ResumeParser parser,
+      TransactionTemplate tx) {
+    this.resumes = resumes;
+    this.chunks = chunks;
+    this.storage = storage;
+    this.extractor = extractor;
+    this.embeddings = embeddings;
+    this.parser = parser;
+    this.tx = tx;
+  }
+
+  public void process(Long resumeId) {
+    Resume resume = resumes.findById(resumeId).orElseThrow();
+    try {
+      // 1) 텍스트 추출
+      byte[] file = storage.load(resume.getStorageKey());
+      String text =
+          extractor.extract(ResumeFileType.fromContentType(resume.getContentType()), file);
+      if (text.length() < 50) {
+        fail(resumeId, "글자를 읽을 수 없는 파일이에요. 스캔한 이미지 PDF는 아직 지원하지 않아요.");
+        return;
+      }
+
+      // 2) 청크 + 임베딩 (RAG 검색용)
+      List<String> pieces = chunker.chunk(text);
+      List<float[]> vectors = embeddings.embedAll(pieces);
+      chunks.replaceAll(resumeId, pieces, vectors);
+      update(resumeId, r -> r.markExtracted(text));
+
+      // 3) 구조화
+      ResumeParser.Result result = parser.parse(text);
+      update(resumeId, r -> r.markParsed(result.json(), result.model(), result.promptVersion()));
+    } catch (Exception e) {
+      log.warn("이력서 처리 실패 id={}", resumeId, e);
+      fail(resumeId, "이력서를 읽는 중에 문제가 생겼어요. 다시 올려주세요.");
+    }
+  }
+
+  private void fail(Long resumeId, String reason) {
+    update(resumeId, r -> r.markFailed(reason));
+  }
+
+  private void update(Long resumeId, java.util.function.Consumer<Resume> change) {
+    tx.executeWithoutResult(
+        status -> {
+          Resume r = resumes.findById(resumeId).orElseThrow();
+          change.accept(r);
+        });
+  }
+}
