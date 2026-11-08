@@ -22,6 +22,8 @@ ENV SPRING_PROFILES_ACTIVE=prod \
     CLASSMENTO_STORAGE_ROOT=/app/data/uploads \
     JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
 EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD ["sh", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 || exit 1"]
+# 이미지에 curl/wget이 없어서 bash의 /dev/tcp로 /actuator/health를 직접 호출해 "UP"인지 확인한다.
+# (/dev/tcp는 bash 전용이다. sh(dash)로 실행하면 항상 실패한다.)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD ["bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /actuator/health HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && grep -q '\"status\":\"UP\"' <&3"]
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
