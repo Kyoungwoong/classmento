@@ -39,6 +39,6 @@
 - PR #6(화면): 결과 화면 경험 배너, 빈 상태·에러·다시 나누기, Chip sm/surface. design-reviewer 반영.
 - 남은 일:
   - 경험 선택 → 면접(면접 기능)
-  - 중복 인덱스 `ix_resume_chunk_resume` 정리
-  - 동시 저장 잠금(@Version)
-  - 세션 경고 로그 빈도
+  - ~~중복 인덱스 `ix_resume_chunk_resume` 정리~~ → PR #7(V4)
+  - ~~동시 저장 잠금~~ → PR #7. `@Version`(충돌 시 409) 대신 **비관적 잠금**(`PESSIMISTIC_WRITE`)을 골랐다. 경험 DELETE/INSERT가 JDBC로 먼저 실행돼 낙관적 버전 검사보다 앞서 unique 충돌이 나기 때문이다.
+  - ~~세션 경고 로그 빈도~~ → PR #7(DEBUG)
