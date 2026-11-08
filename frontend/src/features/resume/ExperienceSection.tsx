@@ -45,6 +45,8 @@ export function ExperienceSection({
     setError(null);
     try {
       await onResync();
+      // 새 목록은 부모가 version을 바꾸면 다시 불러온다. 그 전에는 옛 빈 목록으로 "찾지 못했어요"를 보이지 않게 불러오는 중으로 둔다
+      setItems(null);
       setResynced(true);
     } catch {
       setError("resync");
@@ -53,7 +55,13 @@ export function ExperienceSection({
     }
   }
 
-  const retry = error === "resync" ? resync : () => setReloadKey((k) => k + 1);
+  function reload() {
+    setError(null);
+    setItems(null);
+    setReloadKey((k) => k + 1);
+  }
+
+  const retry = error === "resync" ? resync : reload;
 
   return (
     <Section
