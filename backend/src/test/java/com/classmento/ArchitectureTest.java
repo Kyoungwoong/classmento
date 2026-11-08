@@ -62,6 +62,26 @@ class ArchitectureTest {
               "com.classmento.*.infrastructure..", "com.classmento.*.presentation..")
           .because("유스케이스는 포트(인터페이스)에만 의존하고 구현은 infrastructure가 맡는다");
 
+  /**
+   * 프레젠테이션은 저장소 구현(persistence·JPA·JDBC)을 직접 쓰지 않는다. 예외: 인증 배관(infrastructure.security의 설정 record
+   * 등)은 컨트롤러가 참조할 수 있다 — docs/conventions/ddd-tdd.md §2.
+   */
+  @ArchTest
+  static final ArchRule 프레젠테이션은_저장소_구현에_의존하지_않는다 =
+      noClasses()
+          .that()
+          .resideInAPackage("com.classmento.*.presentation..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage(
+              "com.classmento.*.infrastructure.persistence..",
+              "org.springframework.data..",
+              "org.springframework.jdbc..")
+          .orShould()
+          .dependOnClassesThat()
+          .haveSimpleNameEndingWith("JpaRepository")
+          .because("데이터 접근은 application 유스케이스를 거친다");
+
   @ArchTest
   static final ArchRule identity는_resume에_의존하지_않는다 =
       noClasses()
