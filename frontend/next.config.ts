@@ -4,6 +4,8 @@ import type { NextConfig } from "next";
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
 
 const nextConfig: NextConfig = {
+  // Docker 이미지용: 실행에 필요한 파일만 .next/standalone에 모은다 (frontend/Dockerfile)
+  output: "standalone",
   cacheComponents: true,
   partialPrefetching: true,
   experimental: {
