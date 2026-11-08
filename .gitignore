@@ -22,3 +22,16 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# --- classmento ---
+.env
+.env.local
+node_modules/
+.DS_Store
+.claude/settings.local.json
+# 로컬 스크린샷·임시 산출물
+.playwright-mcp/
+screenshots/
+
+# 개인 학습용 작업 기록 (CLAUDE.md "작업 기록" 참고)
+study-log/
