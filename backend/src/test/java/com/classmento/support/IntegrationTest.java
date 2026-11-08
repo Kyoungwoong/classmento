@@ -2,7 +2,8 @@ package com.classmento.support;
 
 import com.classmento.auth.AppUser;
 import com.classmento.auth.AppUserRepository;
-import com.classmento.auth.AuthUser;
+import com.classmento.auth.AuthUsers;
+import com.classmento.common.security.AuthUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,6 +35,6 @@ public abstract class IntegrationTest {
   protected AuthUser createUser(String email, AppUser.Role role) {
     AppUser user =
         users.save(AppUser.local(email, passwordEncoder.encode("password123"), "테스터", role));
-    return AuthUser.from(user);
+    return AuthUsers.from(user);
   }
 }

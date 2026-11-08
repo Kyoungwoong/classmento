@@ -1,7 +1,7 @@
 package com.classmento.auth;
 
 import com.classmento.auth.AuthDtos.SignupRequest;
-import com.classmento.common.api.ApiException;
+import com.classmento.common.web.ApiException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

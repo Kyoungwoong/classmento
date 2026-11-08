@@ -1,4 +1,4 @@
-package com.classmento.common.api;
+package com.classmento.common.web;
 
 import com.classmento.common.AiProperties;
 import com.classmento.embedding.EmbeddingClient;

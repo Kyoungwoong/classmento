@@ -1,6 +1,6 @@
 package com.classmento.resume;
 
-import com.classmento.auth.AuthUser;
+import com.classmento.common.security.AuthUser;
 import com.classmento.resume.ResumeDtos.ResumeDetail;
 import com.classmento.resume.ResumeDtos.ResumeSummary;
 import java.util.List;

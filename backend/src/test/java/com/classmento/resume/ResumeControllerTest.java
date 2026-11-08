@@ -9,7 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.classmento.auth.AppUser;
-import com.classmento.auth.AuthUser;
+import com.classmento.common.security.AuthUser;
 import com.classmento.support.IntegrationTest;
 import com.classmento.support.SampleFiles;
 import org.junit.jupiter.api.Test;

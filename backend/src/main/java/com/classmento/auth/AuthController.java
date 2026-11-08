@@ -7,6 +7,7 @@ import com.classmento.auth.AuthDtos.ProvidersResponse;
 import com.classmento.auth.AuthDtos.SignupRequest;
 import com.classmento.auth.AuthDtos.SocialProvider;
 import com.classmento.auth.AuthDtos.UserView;
+import com.classmento.common.security.AuthUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;

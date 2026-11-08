@@ -21,6 +21,6 @@ public class AppUserDetailsService implements UserDetailsService {
             .findByEmailIgnoreCase(email)
             .filter(u -> u.getPasswordHash() != null) // 소셜 전용 계정은 비밀번호 로그인 불가
             .orElseThrow(() -> new UsernameNotFoundException("not found"));
-    return AuthUser.from(user);
+    return AuthUsers.from(user);
   }
 }

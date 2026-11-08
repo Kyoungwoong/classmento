@@ -1,5 +1,6 @@
-package com.classmento.common.api;
+package com.classmento.common.web;
 
+import com.classmento.common.domain.DomainException;
 import com.classmento.embedding.EmbeddingUnavailableException;
 import com.classmento.llm.LlmUnavailableException;
 import com.classmento.speech.SttUnavailableException;
@@ -17,6 +18,12 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(ApiException.class)
   public ResponseEntity<ApiError> handleApi(ApiException e) {
     return ResponseEntity.status(e.status()).body(new ApiError(e.code(), e.getMessage()));
+  }
+
+  /** 도메인 불변식 위반(예: 아직 파싱 중인 이력서 수정) → 409 */
+  @ExceptionHandler(DomainException.class)
+  public ResponseEntity<ApiError> handleDomain(DomainException e) {
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiError(e.code(), e.getMessage()));
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)

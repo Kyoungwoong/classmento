@@ -1,5 +1,6 @@
 package com.classmento.auth;
 
+import com.classmento.common.security.AuthUser;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -25,7 +26,7 @@ public final class AuthDtos {
   public record UserView(Long id, String email, String name, AppUser.Role role) {
 
     static UserView of(AuthUser user) {
-      return new UserView(user.id(), user.email(), user.name(), user.role());
+      return new UserView(user.id(), user.email(), user.name(), AppUser.Role.valueOf(user.role()));
     }
   }
 

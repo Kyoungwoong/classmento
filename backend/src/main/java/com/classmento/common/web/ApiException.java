@@ -1,4 +1,4 @@
-package com.classmento.common.api;
+package com.classmento.common.web;
 
 import org.springframework.http.HttpStatus;
 

@@ -1,6 +1,6 @@
 package com.classmento.resume;
 
-import com.classmento.common.api.ApiException;
+import com.classmento.common.web.ApiException;
 import com.classmento.resume.ResumeDtos.ResumeDetail;
 import com.classmento.resume.ResumeDtos.ResumeSummary;
 import com.classmento.storage.FileStorage;

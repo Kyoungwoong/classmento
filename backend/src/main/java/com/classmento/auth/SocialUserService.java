@@ -30,7 +30,7 @@ public class SocialUserService extends DefaultOAuth2UserService {
         users
             .findByProviderAndProviderId(profile.provider(), profile.providerId())
             .orElseGet(() -> register(profile));
-    return AuthUser.from(user);
+    return AuthUsers.from(user);
   }
 
   private AppUser register(SocialProfile profile) {
