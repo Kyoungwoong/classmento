@@ -131,6 +131,38 @@ class ResumeControllerTest extends IntegrationTest {
     assertThat(withEmbedding).isEqualTo(3);
   }
 
+  /** 사용자가 구조화 결과를 고치면 경험도 새 내용으로 교체된다. */
+  @Test
+  void updatingParsedResyncsExperiences() throws Exception {
+    AuthUser me = createUser("me@test.com", AppUser.Role.USER);
+    MockMultipartFile file =
+        new MockMultipartFile(
+            "file", "resume.pdf", "application/pdf", SampleFiles.pdf(SampleFiles.RESUME_TEXT));
+    mockMvc.perform(multipart("/api/resumes").file(file).with(csrf()).with(user(me)));
+
+    String edited =
+        """
+        {"profile": {"name": "김예시"}, "experiences": [], "skills": ["Go"],
+         "projects": [{"name": "결제 게이트웨이", "summary": "Go로 결제 중계 서버를 만들었습니다.",
+                       "description": "상세", "techStack": ["Go", "gRPC"]}],
+         "educations": []}
+        """;
+    mockMvc
+        .perform(
+            put("/api/resumes/1/parsed")
+                .with(csrf())
+                .with(user(me))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(edited))
+        .andExpect(status().isOk());
+
+    mockMvc
+        .perform(get("/api/resumes/1/experiences").with(user(me)))
+        .andExpect(jsonPath("$.length()").value(1))
+        .andExpect(jsonPath("$[0].title").value("결제 게이트웨이"))
+        .andExpect(jsonPath("$[0].skills[1]").value("gRPC"));
+  }
+
   @Test
   void cannotSeeOthersExperiences() throws Exception {
     AuthUser owner = createUser("owner@test.com", AppUser.Role.USER);
