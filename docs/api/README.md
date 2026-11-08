@@ -38,7 +38,7 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 |---|---|---|---|
 | GET | `/api/health` | 공개 | `{status, llmAvailable, sttAvailable, embeddingAvailable, fakeAi}` |
 | GET | `/api/auth/csrf` | 공개 | CSRF 토큰 발급(쿠키 설정) |
-| POST | `/api/auth/signup` | 공개 | `{email, password(8+), name}` → 201 `UserView` + 로그인 상태 |
+| POST | `/api/auth/signup` | 공개 | `{email(≤254자), password(8+), name}` → 201 `UserView` + 로그인 상태. 형식·길이 오류는 400 |
 | POST | `/api/auth/login` | 공개 | `{email, password}` → `UserView` |
 | POST | `/api/auth/logout` | 공개 | 204 |
 | GET | `/api/auth/me` | 공개 | `{authenticated, user?}` |
@@ -47,5 +47,5 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 | GET | `/api/resumes` | 로그인 | 내 이력서 목록 `ResumeSummary[]` |
 | GET | `/api/resumes/{id}` | 본인 | 상태 + `parsed`(PARSED일 때) |
 | GET | `/api/resumes/{id}/experiences` | 본인 | 경험 목록 `ExperienceView[]`(seq 순: 경력 → 프로젝트) |
-| PUT | `/api/resumes/{id}/parsed` | 본인 | 수정한 `ParsedResume` 저장 (PARSED 상태에서만, 아니면 409 `RESUME_NOT_READY`) |
+| PUT | `/api/resumes/{id}/parsed` | 본인 | 수정한 `ParsedResume` 저장 + 경험 재생성 (PARSED 상태에서만, 아니면 409 `RESUME_NOT_READY`). 임베딩 장애 시 503 `AI_UNAVAILABLE`이고 아무것도 바뀌지 않음. 같은 이력서 동시 저장은 순서대로 처리 |
 | GET | `/api/admin/users` | ADMIN | 최근 가입 순 200명 |
