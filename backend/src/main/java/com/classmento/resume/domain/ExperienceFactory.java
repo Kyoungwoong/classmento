@@ -5,8 +5,8 @@ import com.classmento.resume.domain.ParsedResume.Project;
 import com.classmento.resume.domain.ResumeExperience.Type;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -60,17 +60,22 @@ public class ExperienceFactory {
     return out;
   }
 
-  /** 이력서 전체 기술 중 텍스트에 (대소문자 무시) 등장하는 것만, 원래 순서대로. */
+  /**
+   * 이력서 전체 기술 중 텍스트에 "단어로" 등장하는 것만, 원래 순서대로. 앞뒤가 영문자·숫자가 아니어야 한다(Java ≠ JavaScript, Go ≠ Google).
+   * 한글 조사는 경계로 본다("Kafka로").
+   */
   private static List<String> mentionedSkills(List<String> allSkills, String... texts) {
-    String haystack =
-        Stream.of(texts)
-            .filter(Objects::nonNull)
-            .collect(Collectors.joining(" "))
-            .toLowerCase(Locale.ROOT);
+    String haystack = Stream.of(texts).filter(Objects::nonNull).collect(Collectors.joining(" "));
     return allSkills.stream()
         .filter(s -> s != null && !s.isBlank())
-        .filter(s -> haystack.contains(s.strip().toLowerCase(Locale.ROOT)))
+        .filter(s -> wordPattern(s.strip()).matcher(haystack).find())
         .toList();
+  }
+
+  private static Pattern wordPattern(String skill) {
+    return Pattern.compile(
+        "(?<![A-Za-z0-9])" + Pattern.quote(skill) + "(?![A-Za-z0-9+#])",
+        Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
   }
 
   private static String joinNonBlank(String sep, String... parts) {
