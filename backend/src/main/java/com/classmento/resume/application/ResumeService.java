@@ -1,10 +1,12 @@
 package com.classmento.resume.application;
 
 import com.classmento.common.web.ApiException;
+import com.classmento.resume.application.ResumeDtos.ExperienceView;
 import com.classmento.resume.application.ResumeDtos.ResumeDetail;
 import com.classmento.resume.application.ResumeDtos.ResumeSummary;
 import com.classmento.resume.domain.ParsedResume;
 import com.classmento.resume.domain.Resume;
+import com.classmento.resume.domain.ResumeExperienceRepository;
 import com.classmento.resume.domain.ResumeFileType;
 import com.classmento.resume.domain.ResumeRepository;
 import com.classmento.storage.FileStorage;
@@ -25,18 +27,24 @@ public class ResumeService {
   private final ResumeProcessor processor;
   private final TaskExecutor resumeExecutor;
   private final ObjectMapper json;
+  private final ExperienceSync experienceSync;
+  private final ResumeExperienceRepository experiences;
 
   public ResumeService(
       ResumeRepository resumes,
       FileStorage storage,
       ResumeProcessor processor,
       TaskExecutor resumeExecutor,
-      ObjectMapper json) {
+      ObjectMapper json,
+      ExperienceSync experienceSync,
+      ResumeExperienceRepository experiences) {
     this.resumes = resumes;
     this.storage = storage;
     this.processor = processor;
     this.resumeExecutor = resumeExecutor;
     this.json = json;
+    this.experienceSync = experienceSync;
+    this.experiences = experiences;
   }
 
   /** 파일을 저장하고 즉시 반환한다. 추출·임베딩·구조화는 resumeExecutor에서 이어서 처리한다. */
@@ -69,6 +77,13 @@ public class ResumeService {
     return toDetail(find(userId, id));
   }
 
+  /** 본인 이력서의 경험 목록(seq 순). 남의 이력서는 404. */
+  @Transactional(readOnly = true)
+  public List<ExperienceView> experiences(Long userId, Long id) {
+    Resume resume = find(userId, id);
+    return experiences.findByResumeId(resume.getId()).stream().map(ExperienceView::of).toList();
+  }
+
   @Transactional(readOnly = true)
   public List<ResumeSummary> list(Long userId) {
     return resumes.findByUserIdOrderByCreatedAtDesc(userId).stream()
@@ -81,6 +96,8 @@ public class ResumeService {
     Resume resume = find(userId, id);
     // 파싱 전 수정 금지 규칙은 도메인(Resume.updateParsed)이 지킨다 → 409 RESUME_NOT_READY
     resume.updateParsed(json.writeValueAsString(parsed));
+    // 고친 내용(기술 등)을 경험에도 반영
+    experienceSync.sync(resume.getId(), parsed);
     return toDetail(resume);
   }
 
