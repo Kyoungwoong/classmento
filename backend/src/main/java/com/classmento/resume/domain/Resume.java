@@ -124,8 +124,8 @@ public class Resume {
         return;
       }
     }
-    throw new DomainException(
-        "RESUME_INVALID_STATE", "이력서 처리 상태가 맞지 않아요. 다시 시도해 주세요. (현재: " + status + ")");
+    // 메시지는 사용자용 문장이라 내부 상태 이름(enum)은 넣지 않는다
+    throw new DomainException("RESUME_INVALID_STATE", "이력서 처리 상태가 맞지 않아요. 다시 시도해 주세요.");
   }
 
   public Long getId() {

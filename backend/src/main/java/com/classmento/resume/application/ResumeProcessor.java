@@ -1,5 +1,6 @@
 package com.classmento.resume.application;
 
+import com.classmento.common.domain.DomainException;
 import com.classmento.embedding.EmbeddingClient;
 import com.classmento.resume.domain.Resume;
 import com.classmento.resume.domain.ResumeChunkRepository;
@@ -79,8 +80,16 @@ public class ResumeProcessor {
     }
   }
 
+  /**
+   * 처리 실패 기록. 이미 PARSED/FAILED인 이력서는 도메인 규칙상 실패로 바꿀 수 없으므로(재처리 중복 등) 예외를 실행기 밖으로 흘리지 않고 로그만 남긴다.
+   * 재처리(FAILED → UPLOADED) 전이는 재시도 기능을 만들 때 정한다.
+   */
   private void fail(Long resumeId, String reason) {
-    update(resumeId, r -> r.markFailed(reason));
+    try {
+      update(resumeId, r -> r.markFailed(reason));
+    } catch (DomainException e) {
+      log.warn("이력서 실패 기록 생략 id={} ({})", resumeId, e.code());
+    }
   }
 
   private void update(Long resumeId, java.util.function.Consumer<Resume> change) {
