@@ -25,7 +25,7 @@ class ResumeParserTest {
 
     assertThat(result.parsed().profile().name()).isEqualTo("홍길동");
     assertThat(result.parsed().experiences()).isEmpty();
-    assertThat(result.promptVersion()).isEqualTo("resume-parse.v1");
+    assertThat(result.promptVersion()).isEqualTo("resume-parse.v2");
     assertThat(llm.requests().get(0).userMessage()).contains("<resume>");
   }
 

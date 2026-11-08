@@ -1,0 +1,33 @@
+{
+  "profile": { "name": "김예시", "headline": "백엔드 개발자 (가짜 AI 응답)", "yearsOfExperience": 3 },
+  "experiences": [
+    {
+      "company": "예시커머스",
+      "role": "백엔드 개발자",
+      "period": "2022.03 - 현재",
+      "summary": "주문·결제 백엔드를 맡아 Redis 캐시로 응답 속도를 개선하고 결제 모듈을 분리했습니다.",
+      "highlights": [
+        "주문 API 응답 속도를 Redis 캐시로 40% 개선",
+        "결제 모듈을 모놀리스에서 분리해 장애 범위 축소"
+      ]
+    },
+    {
+      "company": "스타트업랩",
+      "role": "인턴",
+      "period": "2021.07 - 2021.12",
+      "summary": "사내 관리자 페이지의 CRUD 기능을 개발했습니다.",
+      "highlights": ["사내 관리자 페이지 CRUD 개발"]
+    }
+  ],
+  "skills": ["Java", "Spring Boot", "PostgreSQL", "Redis", "Kafka", "AWS"],
+  "projects": [
+    {
+      "name": "실시간 재고 동기화",
+      "period": "2023.01 - 2023.06",
+      "summary": "여러 판매 채널의 재고를 Kafka 이벤트로 실시간 동기화하는 시스템을 설계·구현했습니다.",
+      "description": "판매 채널 5곳의 재고 불일치로 생기던 품절 오류를 줄이기 위해, 주문·입고 이벤트를 Kafka로 발행하고 채널별 컨슈머가 재고를 맞추도록 했습니다. 중복 이벤트는 멱등 키로 처리했습니다.",
+      "techStack": ["Kafka", "Spring Boot", "PostgreSQL"]
+    }
+  ],
+  "educations": [{ "school": "한국대학교", "major": "컴퓨터공학", "period": "2016 - 2022" }]
+}

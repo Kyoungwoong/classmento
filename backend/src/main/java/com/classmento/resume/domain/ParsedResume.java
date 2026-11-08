@@ -28,15 +28,23 @@ public record ParsedResume(
    */
   public record Profile(String name, String headline, Integer yearsOfExperience) {}
 
+  /**
+   * @param summary 한두 문장 요약(resume-parse.v2부터). v1 데이터는 null
+   */
   @Schema(requiredProperties = {"highlights"})
-  public record Experience(String company, String role, String period, List<String> highlights) {
+  public record Experience(
+      String company, String role, String period, String summary, List<String> highlights) {
     public Experience {
       highlights = highlights == null ? List.of() : highlights;
     }
   }
 
+  /**
+   * @param summary 한두 문장 요약(resume-parse.v2부터). v1 데이터는 null
+   */
   @Schema(requiredProperties = {"techStack"})
-  public record Project(String name, String period, String description, List<String> techStack) {
+  public record Project(
+      String name, String period, String summary, String description, List<String> techStack) {
     public Project {
       techStack = techStack == null ? List.of() : techStack;
     }
