@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: classmento
+  profiles:
+    default: local
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+classmento:
+  cors:
+    allowed-origins: ${CLASSMENTO_CORS_ORIGINS:http://localhost:3000}
+  llm:
+    api-key: ${ANTHROPIC_API_KEY:}
+    model: ${CLASSMENTO_LLM_MODEL:claude-sonnet-5-5}
+    max-tokens: 4096
+  stt:
+    invoke-url: ${CLOVA_SPEECH_INVOKE_URL:}
+    secret: ${CLOVA_SPEECH_SECRET:}
+    language: ko-KR
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:h2:file:./data/classmento;MODE=PostgreSQL
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate

@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:classmento;MODE=PostgreSQL
+classmento:
+  llm:
+    api-key: ""
+  stt:
+    invoke-url: ""
+    secret: ""

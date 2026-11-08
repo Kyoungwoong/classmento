@@ -1,0 +1,83 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+/*
+ * Tailwind 기본 팔레트를 끄고 우리 토큰만 노출한다.
+ * → bg-purple-500 같은 임의 색은 클래스 자체가 생성되지 않는다.
+ */
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --color-gray-50: var(--gray-50);
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-gray-700: var(--gray-700);
+  --color-gray-800: var(--gray-800);
+  --color-gray-900: var(--gray-900);
+
+  --color-blue-50: var(--blue-50);
+  --color-blue-100: var(--blue-100);
+  --color-blue-500: var(--blue-500);
+  --color-blue-600: var(--blue-600);
+  --color-blue-700: var(--blue-700);
+
+  --color-bg: var(--bg);
+  --color-bg-subtle: var(--bg-subtle);
+  --color-bg-muted: var(--bg-muted);
+  --color-text-strong: var(--text-strong);
+  --color-text: var(--text);
+  --color-text-sub: var(--text-sub);
+  --color-text-hint: var(--text-hint);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-pressed: var(--primary-pressed);
+  --color-primary-weak: var(--primary-weak);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
+  --font-sans: var(--font-pretendard), system-ui, sans-serif;
+
+  /* 타입 스케일: title1 26 / title2 22 / body1 17 / body2 15 / caption 13 */
+  --text-title1: 26px;
+  --text-title1--line-height: 1.38;
+  --text-title1--font-weight: 700;
+  --text-title2: 22px;
+  --text-title2--line-height: 1.4;
+  --text-title2--font-weight: 700;
+  --text-body1: 17px;
+  --text-body1--line-height: 1.5;
+  --text-body2: 15px;
+  --text-body2--line-height: 1.5;
+  --text-caption: 13px;
+  --text-caption--line-height: 1.4;
+
+  --container-app: 480px;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* 그림자는 1단계만 허용 (토스트·바텀시트 전용) */
+  --shadow-*: initial;
+  --shadow-float: 0 4px 16px rgb(0 0 0 / 0.08);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg-subtle);
+  color: var(--text);
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+  word-break: keep-all;
+}

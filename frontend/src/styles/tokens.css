@@ -1,0 +1,46 @@
+/*
+ * classmento 디자인 토큰 — 원본 문서: docs/design/design-system.md
+ * 여기 없는 색·크기를 컴포넌트에서 임의로 쓰지 않는다. 필요하면 이 파일과 문서를 함께 고친다.
+ */
+:root {
+  /* Gray — 텍스트·배경 계층은 회색 단계로만 표현 */
+  --gray-50: #f9fafb;
+  --gray-100: #f2f4f6;
+  --gray-200: #e5e8eb;
+  --gray-300: #d1d6db;
+  --gray-400: #b0b8c1;
+  --gray-500: #8b95a1;
+  --gray-600: #6b7684;
+  --gray-700: #4e5968;
+  --gray-800: #333d4b;
+  --gray-900: #191f28;
+
+  /* Brand — 단일 블루. 강조는 이 색 하나로만 */
+  --blue-50: #e8f3ff;
+  --blue-100: #c9e2ff;
+  --blue-500: #3182f6;
+  --blue-600: #2272eb;
+  --blue-700: #1b64da;
+
+  /* Status */
+  --green-500: #03b26c;
+  --orange-500: #fe9800;
+  --red-500: #f04452;
+  --red-50: #ffeeee;
+
+  /* Semantic */
+  --bg: #ffffff;
+  --bg-subtle: var(--gray-50);
+  --bg-muted: var(--gray-100);
+  --text-strong: var(--gray-900);
+  --text: var(--gray-800);
+  --text-sub: var(--gray-600);
+  --text-hint: var(--gray-500);
+  --border: var(--gray-200);
+  --primary: var(--blue-500);
+  --primary-pressed: var(--blue-600);
+  --primary-weak: var(--blue-50);
+  --danger: var(--red-500);
+  --success: var(--green-500);
+  --warning: var(--orange-500);
+}
