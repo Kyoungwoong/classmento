@@ -14,4 +14,10 @@ public interface ResumeRepository {
   Optional<Resume> findByIdAndUserId(Long id, Long userId);
 
   List<Resume> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+  /**
+   * 본인 이력서를 행 잠금(SELECT … FOR UPDATE)으로 조회한다. 트랜잭션 안에서만 의미가 있고, 같은 이력서를 동시에 고치는 요청을 순서대로 처리하기 위해
+   * 쓴다.
+   */
+  Optional<Resume> lockByIdAndUserId(Long id, Long userId);
 }

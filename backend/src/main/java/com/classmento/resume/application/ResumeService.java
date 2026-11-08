@@ -106,7 +106,8 @@ public class ResumeService {
     ExperienceSync.Prepared prepared = experienceSync.prepare(parsed);
     return tx.execute(
         status -> {
-          Resume resume = find(userId, id);
+          // 같은 이력서를 동시에 고치면 여기서 순서대로 기다린다(경험 교체가 겹치지 않게)
+          Resume resume = resumes.lockByIdAndUserId(id, userId).orElseThrow(ApiException::notFound);
           // 파싱 전 수정 금지 규칙은 도메인(Resume.updateParsed)이 지킨다 → 409 RESUME_NOT_READY
           resume.updateParsed(json.writeValueAsString(parsed));
           experienceSync.save(resume.getId(), prepared);
