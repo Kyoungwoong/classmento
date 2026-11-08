@@ -11,7 +11,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-/** 앱 시작 시 ADMIN_EMAIL/ADMIN_PASSWORD로 관리자 계정을 한 번 만든다(이미 있으면 건드리지 않음). */
+/**
+ * 앱 시작 시 ADMIN_EMAIL/ADMIN_PASSWORD로 관리자 계정을 한 번 만든다(이미 있으면 건드리지 않음). ADMIN_EMAIL 형식이 틀리면
+ * DomainException(INVALID_EMAIL)으로 기동이 실패한다 — 잘못된 운영 설정을 조용히 넘기지 않으려는 의도(fail-fast).
+ */
 @Component
 public class AdminSeeder implements ApplicationRunner {
 

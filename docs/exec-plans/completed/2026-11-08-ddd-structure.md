@@ -15,7 +15,7 @@
   - 도메인 규칙: 이메일 값 객체, 이력서 상태 전이 불변식
 - **제외:**
   - 공용 AI·스토리지 포트(`llm`, `embedding`, `speech`, `storage`)의 위치 이동 → 이번에는 "플랫폼 포트"로 문서화만 한다
-  - API 동작 변경 → 외부 계약은 유지한다. 단, 잘못된 상태 전이 응답만 409 `INVALID_STATE`로 정리한다.
+  - API 동작 변경 → 외부 계약은 유지한다. 단, 파싱 전 결과 수정은 409 `RESUME_NOT_READY`(상태 전이 위반은 `RESUME_INVALID_STATE`)로 정리한다.
 
 ## 설계
 ```
@@ -27,7 +27,7 @@ com.classmento
     infrastructure/ persistence(JPA 구현), security(SecurityConfig, 소셜, UserDetails)
     presentation/   AuthController, AdminController, DTO
   resume/
-    domain/         Resume(애그리거트, 상태 전이), ResumeFile, ResumeFileType, ParsedResume, TextChunker,
+    domain/         Resume(애그리거트, 상태 전이), ResumeFileType, ParsedResume, TextChunker,
                     ResumeRepository, ResumeChunkRepository(인터페이스)
     application/    ResumeService(업로드·조회·수정), ResumeProcessor, ResumeParser, TextExtractor(포트)
     infrastructure/ JPA·JDBC(pgvector) 구현, PDF/DOCX 추출기, 실행기 설정
@@ -59,6 +59,10 @@ com.classmento
 ## 결과
 - 커밋(이 PR): docs → build → test(arch, red) → refactor(common) → refactor(identity) → test/feat(Email) → refactor(resume) → test/feat(Resume 불변식) → docs
 - 테스트: 기존 통합 테스트 24개 유지 + 도메인 단위(EmailTest, ResumeTest) + ArchitectureTest 5규칙 → 전체 green
-- API 변화: 파싱 전 결과 수정 400 → 409 `RESUME_NOT_READY`. 그 외 동일.
+- API 변화:
+  - 파싱 전 결과 수정: 400 → 409 `RESUME_NOT_READY`
+  - 가입 이메일 형식: 도메인에 점이 없는 주소(`a@b`)는 이제 400 `INVALID_REQUEST`(이전에는 가입됨)
+  - 그 외 동일
+- 리뷰 라운드 1 반영: 이메일 400 정합(red/green), 소셜 이메일 오류 → OAuth2 실패, 409 계약 테스트, 메시지에서 enum 제거, 실패 기록 예외 격리, presentation→persistence 금지 규칙
 - 주의: 세션 principal(AuthUser) 패키지 변경으로 기존 로그인 세션은 무효(재로그인).
 - 남은 일: 플랫폼 포트 위치(llm/embedding/…)를 `platform.*`으로 묶을지 결정, application의 `ApiException`(HTTP 개념) 사용 줄이기

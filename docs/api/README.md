@@ -17,7 +17,7 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 - 에러: 항상 `ApiError { code, message }`. `message`는 사용자에게 그대로 보여줄 수 있는 한국어 문장.
   | HTTP | code | 상황 |
   |---|---|---|
-  | 400 | `INVALID_REQUEST` | 검증 실패 (message = 첫 번째 필드 에러 문장) |
+  | 400 | `INVALID_REQUEST` | 입력 형식·검증 실패 (message = 첫 번째 필드 에러 문장. 예: 이메일 형식 `a@b`) |
   | 401 | `LOGIN_FAILED` / (본문 없음) | 로그인 실패 / 로그인 필요 |
   | 403 | (본문 없음) | 권한 없음 또는 CSRF 토큰 누락 |
   | 404 | `NOT_FOUND` | 리소스 없음 (남의 리소스도 404) |

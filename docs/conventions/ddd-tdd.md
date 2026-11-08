@@ -30,6 +30,8 @@
 - **application:** infrastructure·presentation에 의존하지 않는다. Spring(`@Service`, `@Transactional`)은 허용한다.
 - **infrastructure:** domain·application의 인터페이스를 구현한다.
 - **presentation:** application을 호출한다. 엔티티를 응답으로 직접 내보내지 않는다(DTO로 변환).
+  - 저장소 구현(`infrastructure.persistence`, Spring Data, JDBC)에 의존하지 않는다(ArchUnit).
+  - 예외: 인증 배관(`identity.infrastructure.security`의 설정 record·`SecurityContextRepository` 등)은 컨트롤러가 참조할 수 있다. 로그인은 HTTP 세션과 맞물려 있어서다.
 
 이 규칙은 `ArchitectureTest`(ArchUnit)가 검사한다. 어기면 `./gradlew test`가 실패한다.
 
@@ -46,8 +48,10 @@
   - domain에는 필요한 메서드만 가진 인터페이스를 둔다.
   - infrastructure의 Spring Data 인터페이스가 그것을 함께 상속해 구현한다.
 - **도메인 예외 → HTTP:**
-  - `DomainException(code, message)`은 409로 바꾼다.
-  - 입력 형식 오류는 presentation 검증에서 400으로 처리한다.
+  - `DomainException(code, message)`은 409로 바꾼다. 상태 규칙 위반이나 중복이 여기에 해당한다.
+  - 입력 형식 오류는 presentation 검증(Bean Validation)에서 **400**으로 처리한다.
+  - 같은 형식 규칙이 도메인에도 있으면, 정규식 같은 기준을 도메인 상수로 공유한다(예: `Email.INPUT_REGEX`). 그래야 입력이 409까지 가지 않는다.
+  - `ApiException`(HTTP 상태를 직접 지정)은 application·presentation의 입력·조회 오류(400·404)에만 쓴다. 도메인에서는 쓰지 않는다.
 
 ## 4. TDD
 **사이클:** 실패하는 테스트(red) → 통과시키는 최소 구현(green) → 정리(refactor)
