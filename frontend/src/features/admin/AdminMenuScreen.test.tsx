@@ -4,9 +4,9 @@ import { api } from "@/lib/api/client";
 import { AdminMenuScreen } from "./AdminMenuScreen";
 
 const push = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push, replace: vi.fn(), back: vi.fn(), refresh: vi.fn() }),
-}));
+// 실제 라우터처럼 렌더마다 같은 객체
+const router = { push, replace: vi.fn(), back: vi.fn(), refresh: vi.fn() };
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 afterEach(() => vi.restoreAllMocks());
 

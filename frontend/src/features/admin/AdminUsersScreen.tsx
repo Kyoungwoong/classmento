@@ -22,7 +22,7 @@ export function AdminUsersScreen() {
       .then(setUsers)
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) {
-          router.replace("/login?next=/admin");
+          router.replace("/login?next=/admin/users");
           return;
         }
         setError(
@@ -33,28 +33,9 @@ export function AdminUsersScreen() {
       });
   }, [router]);
 
-  async function logout() {
-    await api.logout().catch(() => undefined);
-    router.replace("/");
-    router.refresh();
-  }
-
   return (
     <Screen
-      header={
-        <TopBar
-          back={false}
-          trailing={
-            <button
-              type="button"
-              onClick={logout}
-              className="-mr-2 h-11 px-2 text-body2 text-text-sub"
-            >
-              로그아웃
-            </button>
-          }
-        />
-      }
+      header={<TopBar />}
       cta={
         error ? (
           <BottomCTA>
