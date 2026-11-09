@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
 
-/** 남색 띠 푸터. 모바일에서는 하단 고정 CTA에 가리지 않게 아래 여백을 넉넉히 둔다. */
+/** 남색 띠 푸터. 화면에 하단 고정 CTA가 있으면(모바일) 가리지 않게 아래 여백을 넉넉히 둔다. */
 export function SiteFooter() {
   return (
-    <footer className="bg-ink pt-12 pb-36 text-on-ink md:pb-12">
+    <footer className="bg-ink pt-12 pb-12 text-on-ink group-has-data-bottom-cta/body:pb-36 md:group-has-data-bottom-cta/body:pb-12">
       <div className="mx-auto flex w-full max-w-site flex-col gap-6 px-5 md:flex-row md:items-start md:justify-between md:px-8">
         <div>
           <Logo tone="on-ink" />

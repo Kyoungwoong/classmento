@@ -12,7 +12,10 @@ interface BottomCTAProps {
  */
 export function BottomCTA({ children, caption }: BottomCTAProps) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-bg px-5 pt-3 pb-[max(--spacing(5),env(safe-area-inset-bottom))] md:static md:mt-10 md:border-0 md:bg-transparent md:p-0">
+    <div
+      data-bottom-cta
+      className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-bg px-5 pt-3 pb-[max(--spacing(5),env(safe-area-inset-bottom))] md:static md:mt-10 md:border-0 md:bg-transparent md:p-0"
+    >
       {caption && (
         <p className="mb-3 text-center text-caption text-text-sub md:text-left">{caption}</p>
       )}

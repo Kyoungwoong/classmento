@@ -35,6 +35,7 @@ export function UploadScreen() {
 
   return (
     <Screen
+      width="narrow"
       header={<TopBar />}
       cta={
         <BottomCTA caption="올린 이력서는 면접 질문을 만드는 데만 써요">

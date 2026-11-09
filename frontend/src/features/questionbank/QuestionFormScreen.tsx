@@ -169,6 +169,7 @@ export function QuestionFormScreen({ id }: { id?: number }) {
   if (loadError) {
     return (
       <Screen
+        width="narrow"
         header={<TopBar />}
         cta={
           <BottomCTA>
@@ -185,6 +186,7 @@ export function QuestionFormScreen({ id }: { id?: number }) {
 
   return (
     <Screen
+      width="narrow"
       header={<TopBar />}
       cta={
         <BottomCTA>

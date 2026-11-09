@@ -26,7 +26,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ko" className={`${pretendard.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col bg-bg">
+      <body className="group/body flex min-h-full flex-col bg-bg">
         {/* usePathname은 cacheComponents에서 Suspense 경계가 필요하다(동적 경로) */}
         <Suspense fallback={<SiteHeaderShell />}>
           <SiteHeader />

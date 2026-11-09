@@ -45,6 +45,7 @@ export function LoginForm() {
 
   return (
     <Screen
+      width="narrow"
       header={<TopBar />}
       cta={
         <BottomCTA>

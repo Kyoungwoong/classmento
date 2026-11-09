@@ -5,6 +5,7 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Toast } from "@/components/ui/Toast";
 import { api, type MeResponse } from "@/lib/api/client";
 import { Logo } from "./Logo";
 
@@ -30,6 +31,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [me, setMe] = useState<MeResponse | null>(null);
   const [open, setOpen] = useState(false);
+  const [logoutFailed, setLogoutFailed] = useState(false);
   const [lastPath, setLastPath] = useState(pathname);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLElement>(null);
@@ -41,10 +43,15 @@ export function SiteHeader() {
   }
 
   useEffect(() => {
+    // 빠르게 옮기면 늦게 온 이전 응답이 최신 상태를 덮지 않게 무시한다
+    let cancelled = false;
     api
       .me()
-      .then(setMe)
-      .catch(() => setMe({ authenticated: false }));
+      .then((m) => !cancelled && setMe(m))
+      .catch(() => !cancelled && setMe({ authenticated: false }));
+    return () => {
+      cancelled = true;
+    };
   }, [pathname]);
 
   // 메뉴를 열면 첫 링크로 초점, Escape면 닫고 메뉴 버튼으로 초점을 돌려준다
@@ -62,7 +69,14 @@ export function SiteHeader() {
   }, [open]);
 
   async function logout() {
-    await api.logout().catch(() => undefined);
+    setLogoutFailed(false);
+    try {
+      await api.logout();
+    } catch {
+      // 실패하면 로그인 상태 그대로 두고 알린다(이동 후 다시 로그인 상태로 보이는 혼란 방지)
+      setLogoutFailed(true);
+      return;
+    }
     setMe({ authenticated: false });
     router.replace("/");
     router.refresh();
@@ -137,6 +151,7 @@ export function SiteHeader() {
           </ul>
         </nav>
       )}
+      <Toast open={logoutFailed} message="로그아웃하지 못했어요. 다시 시도해 주세요." />
     </header>
   );
 }

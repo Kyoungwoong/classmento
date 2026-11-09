@@ -40,6 +40,7 @@ export function SignupForm() {
 
   return (
     <Screen
+      width="narrow"
       header={<TopBar />}
       cta={
         <BottomCTA>
