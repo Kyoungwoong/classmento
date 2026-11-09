@@ -5,9 +5,9 @@ import { QuestionListScreen } from "./QuestionListScreen";
 import { question, tree } from "./testData";
 
 const push = vi.fn();
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push, replace: vi.fn(), back: vi.fn() }),
-}));
+// 실제 라우터처럼 렌더마다 같은 객체
+const router = { push, replace: vi.fn(), back: vi.fn() };
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 afterEach(() => vi.restoreAllMocks());
 
