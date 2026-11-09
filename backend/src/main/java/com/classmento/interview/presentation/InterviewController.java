@@ -1,7 +1,9 @@
 package com.classmento.interview.presentation;
 
 import com.classmento.common.security.AuthUser;
+import com.classmento.interview.application.AnswerService;
 import com.classmento.interview.application.InterviewService;
+import com.classmento.interview.domain.InterviewSession;
 import com.classmento.interview.presentation.InterviewDtos.CreateInterviewRequest;
 import com.classmento.interview.presentation.InterviewDtos.InterviewSummary;
 import com.classmento.interview.presentation.InterviewDtos.InterviewView;
@@ -24,9 +26,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class InterviewController {
 
   private final InterviewService service;
+  private final AnswerService answers;
 
-  public InterviewController(InterviewService service) {
+  public InterviewController(InterviewService service, AnswerService answers) {
     this.service = service;
+    this.answers = answers;
   }
 
   @PostMapping
@@ -46,6 +50,7 @@ public class InterviewController {
   @GetMapping("/{id}")
   @Operation(operationId = "getInterview")
   public InterviewView get(@PathVariable Long id, @AuthenticationPrincipal AuthUser user) {
-    return InterviewView.of(service.get(user.id(), id));
+    InterviewSession s = service.get(user.id(), id);
+    return InterviewView.of(s, answers.answersOf(s.getId()));
   }
 }
