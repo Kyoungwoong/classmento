@@ -68,6 +68,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/interviews/{id}/questions/{seq}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["retryInterviewAnswer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/interviews/{id}/questions/{seq}/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["uploadInterviewAnswer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/signup": {
         parameters: {
             query?: never;
@@ -236,6 +268,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getInterview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/interviews/{id}/questions/{seq}/audio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInterviewAnswerAudio"];
         put?: never;
         post?: never;
         delete?: never;
@@ -428,6 +476,9 @@ export interface components {
             text: string;
             /** @enum {string} */
             kind: "TECH" | "BEHAVIORAL";
+            /** @enum {string} */
+            answerStatus?: "UPLOADED" | "TRANSCRIBED" | "EVALUATED" | "FAILED";
+            failureReason?: string;
         };
         InterviewView: {
             /** Format: int64 */
@@ -447,6 +498,12 @@ export interface components {
             questions: components["schemas"]["InterviewQuestionView"][];
             /** Format: date-time */
             createdAt: string;
+        };
+        AnswerStatusView: {
+            /** Format: int32 */
+            seq: number;
+            /** @enum {string} */
+            status: "UPLOADED" | "TRANSCRIBED" | "EVALUATED" | "FAILED";
         };
         SignupRequest: {
             /** Format: email */
@@ -784,6 +841,59 @@ export interface operations {
             };
         };
     };
+    retryInterviewAnswer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                seq: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AnswerStatusView"];
+                };
+            };
+        };
+    };
+    uploadInterviewAnswer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                seq: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    audio: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AnswerStatusView"];
+                };
+            };
+        };
+    };
     signup: {
         parameters: {
             query?: never;
@@ -1117,6 +1227,29 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["InterviewView"];
+                };
+            };
+        };
+    };
+    getInterviewAnswerAudio: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+                seq: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
                 };
             };
         };

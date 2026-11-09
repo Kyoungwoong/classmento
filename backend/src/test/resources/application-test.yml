@@ -19,6 +19,8 @@ classmento:
     root: ./build/test-uploads
   resume:
     sync-processing: true
+  interview:
+    sync-processing: true
   admin:
     email: admin@test.local
     password: admin1234!

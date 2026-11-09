@@ -67,7 +67,10 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 |---|---|---|
 | POST | `/api/interviews` | `{type, count(3·5·7), level?, jobRole?, resumeId?, experienceId?, narrowByResume?}` → 201 `InterviewView`(질문 포함, 의도는 숨김). 기술·혼합은 직무·연차 필수(409 `CONDITIONS_REQUIRED`), 질문 수 409 `INVALID_QUESTION_COUNT`, 질문 은행이 모자라면 409 `NOT_ENOUGH_QUESTIONS`, 남의 이력서로 좁히면 404. 경험 기반(`EXPERIENCE`)은 `resumeId`·`experienceId` 필수(남의 것이거나 그 이력서의 경험이 아니면 404), 질문은 AI가 만들고 실패하면 질문 은행 후보로 대신 |
 | GET | `/api/interviews` | 내 면접 목록(최신순) `InterviewSummary[]` |
-| GET | `/api/interviews/{id}` | 면접 하나(질문 포함) |
+| GET | `/api/interviews/{id}` | 면접 하나(질문 포함, 질문마다 `answerStatus`·`failureReason`) |
+| POST | `/api/interviews/{id}/questions/{seq}/answer` | multipart `audio`(webm·ogg·m4a·aac·wav·mp3, 10MB) → 202 `{seq, status}`. 같은 질문에 다시 올리면 다시 녹음(글자·평가를 지우고 처음부터). 백그라운드 STT → 평가(혼합은 STT까지, 평가는 끝낸 뒤). 끝난 면접 409 `INTERVIEW_CLOSED`, 없는 질문 404, 오디오 아님·빈 파일 400 |
+| POST | `/api/interviews/{id}/questions/{seq}/retry` | 실패한 답변만(409 `NOT_FAILED`) 같은 녹음으로 다시 처리 → 202. 글자까지 됐으면 평가만 다시 |
+| GET | `/api/interviews/{id}/questions/{seq}/audio` | 내 녹음 듣기(원래 Content-Type, `no-store`, Range 206 지원). 남의 것·답하지 않은 질문 404 |
 - 질문 고르기: 기술은 인성이 아닌 대분류에서 직무(또는 COMMON)·연차(같은 단계, 모자라면 한 단계 아래), 이력서로 좁히면 이력서 기술과 맞는 태그·소분류 먼저, 소분류가 겹치지 않게. 인성은 인성 대분류. 혼합은 기술·인성을 기술부터 번갈아.
 
 ### 질문 CSV 형식 (`POST /api/admin/questions/import`)

@@ -8,6 +8,8 @@ public interface InterviewSessionRepository {
 
   <S extends InterviewSession> S save(S session);
 
+  Optional<InterviewSession> findById(Long id);
+
   Optional<InterviewSession> findByIdAndUserId(Long id, Long userId);
 
   List<InterviewSession> findByUserIdOrderByCreatedAtDescIdDesc(Long userId);

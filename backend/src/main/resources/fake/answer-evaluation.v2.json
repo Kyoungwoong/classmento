@@ -1,0 +1,15 @@
+{
+  "scores": {
+    "accuracy": {"score": 4, "evidence": "먼저 문제 상황을 정리하고 원인을 찾은 다음 해결했습니다"},
+    "depth": {"score": 3, "evidence": "원인을 찾은 다음 해결했습니다"},
+    "problem_solving": {"score": 4, "evidence": "문제 상황을 정리하고 원인을 찾은 다음 해결했습니다"},
+    "communication": {"score": 4, "evidence": "네, 그 부분은 먼저"},
+    "specificity": {"score": 3, "evidence": "문제 상황을 정리하고"},
+    "ownership": {"score": 4, "evidence": "해결했습니다"},
+    "collaboration": {"score": 2, "evidence": ""},
+    "reflection": {"score": 3, "evidence": "원인을 찾은 다음"}
+  },
+  "strength": "문제 → 원인 → 해결 순서로 말해 흐름이 잘 보였어요. (가짜 평가입니다)",
+  "improvement": "어떤 원인이었는지, 결과가 수치로 어떻게 좋아졌는지가 빠졌어요.",
+  "suggestion": "\"응답 시간이 2초에서 300ms로 줄었습니다\"처럼 결과를 숫자로 마무리해 보세요."
+}

@@ -124,6 +124,10 @@ GET  /api/interviews/{id}/report              {status: EVALUATING|READY, overall
 | E5 | `feat/interview-progress-ui` | `useRecorder` + 진행 화면 |
 | E6 | `feat/interview-report-ui` | `ScoreBar` + 리포트·문항 상세 + 홈 "최근 면접" |
 
+**후속 메모(E3a 리뷰)**
+- 다시 녹음할 때마다 예전 녹음 파일이 남는다(UUID 키). `FileStorage`에 삭제를 넣고 보관 기간 정책과 함께 정리한다.
+- 처리 중 예상하지 못한 오류(바깥 catch) 경로는 저장소 오류를 흉내 내는 테스트로 보강한다.
+
 **문서**
 - `docs/exec-plans/active/2026-11-09-interview-session.md`
 - `docs/api/README.md`, `docs/architecture.md`(interview 행, 컨텍스트 의존 규칙)
