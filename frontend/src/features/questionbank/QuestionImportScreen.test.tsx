@@ -17,7 +17,7 @@ function csv(name = "questions.csv", size?: number) {
 }
 
 function choose(file: File) {
-  fireEvent.change(screen.getByLabelText("CSV 파일"), { target: { files: [file] } });
+  fireEvent.change(screen.getByLabelText("CSV 파일 고르기"), { target: { files: [file] } });
 }
 
 describe("QuestionImportScreen", () => {
@@ -57,7 +57,8 @@ describe("QuestionImportScreen", () => {
     expect(
       screen.getByText("아무것도 저장하지 않았어요. 고친 뒤 다시 올려 주세요."),
     ).toBeInTheDocument();
-    expect(screen.getByText("3번째 줄")).toBeInTheDocument();
+    // 화면이 바뀐 것을 스크린리더가 바로 읽도록 오류 목록은 alert 영역 안에
+    expect(screen.getByRole("alert")).toHaveTextContent("3번째 줄");
     expect(screen.getByText("없는 카테고리예요: CS > 양자컴퓨팅")).toBeInTheDocument();
     expect(screen.getByText("7번째 줄")).toBeInTheDocument();
   });
