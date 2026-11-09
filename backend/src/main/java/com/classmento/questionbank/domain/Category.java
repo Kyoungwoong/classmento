@@ -63,6 +63,10 @@ public class Category {
     this.name = validName(name);
   }
 
+  public void reorder(int sortOrder) {
+    this.sortOrder = sortOrder;
+  }
+
   public void hide() {
     this.active = false;
   }
