@@ -85,4 +85,21 @@ describe("ReportItemScreen", () => {
     ).toBeInTheDocument();
     expect(load).not.toHaveBeenCalled();
   });
+  it("답하지 않은 문항(서버 null)이면 '답하지 않았어요'", async () => {
+    vi.spyOn(api, "interviewReport").mockResolvedValue({
+      ...view,
+      items: [
+        {
+          seq: 3,
+          question: "마지막 질문이에요.",
+          kind: "BEHAVIORAL",
+          answerStatus: null as never,
+          scores: [],
+        },
+      ],
+    });
+    const { container } = render(<ReportItemScreen id={7} seq={3} />);
+    expect(await screen.findByText("답하지 않았어요.")).toBeInTheDocument();
+    expect(container.querySelector("audio")).toBeNull();
+  });
 });
