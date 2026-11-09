@@ -18,5 +18,5 @@ export const TYPE_LABEL: Record<InterviewSummary["type"], string> = {
   EXPERIENCE: "경험 기반 면접",
   TECH: "기술 면접",
   BEHAVIORAL: "인성 면접",
-  MIXED: "기술 + 인성",
+  MIXED: "기술 + 인성 면접",
 };

@@ -45,7 +45,7 @@ export function RecentInterviews() {
                     {`${date(s.createdAt)} · 질문 ${s.questionCount}개`}
                   </span>
                 </span>
-                <span className="shrink-0 text-body2 text-primary">
+                <span className="shrink-0 text-body2 text-text-sub">
                   {inProgress ? "이어서 하기" : "리포트 보기"}
                 </span>
               </Link>

@@ -16,7 +16,7 @@
 | 분류 | 값 | Tailwind |
 |---|---|---|
 | 글꼴 | Pretendard Variable | `font-sans`(기본) |
-| 타입 | 26 bold / 22 bold / 17 / 15 / 13 | `text-title1` `text-title2` `text-body1` `text-body2` `text-caption` |
+| 타입 | (40 bold) / 26 bold / 22 bold / 17 / 15 / 13 | (`text-display` 점수 숫자 전용) `text-title1` `text-title2` `text-body1` `text-body2` `text-caption` |
 | 텍스트 색 | gray-900 / 800 / 600 / 500 | `text-text-strong` `text-text` `text-text-sub` `text-text-hint` |
 | 배경 | white / gray-50 / gray-100 | `bg-bg` `bg-bg-subtle` `bg-bg-muted` |
 | 강조 | #3182f6 (pressed #2272eb, weak #e8f3ff) | `bg-primary` `text-primary` `bg-primary-weak` |
@@ -46,7 +46,7 @@ Tailwind 기본 팔레트는 꺼져 있다(`--color-*: initial`). `bg-purple-500
 | `TagInput` | Notion식 태그: 입력하면 후보, Enter·쉼표로 만들기, 칩 지우기, 한글 조합 중 Enter 무시 |
 | `TextField` | 회색 면 입력창(테두리 없음), 라벨은 위 |
 | `ProgressBar` | 면접 진행도 (얇은 4px 막대) |
-| `ScoreBar` | 기준 하나의 점수: 이름 + 숫자 + ProgressBar. 색은 primary 하나(점수로 색을 바꾸지 않는다). 평균은 소수 한 자리 |
+| `ScoreBar` | 기준 하나의 점수: 이름 + 숫자 + ProgressBar. 색은 primary 하나(점수로 색을 바꾸지 않는다). 평균은 `decimals={1}`로 소수 한 자리 |
 | `Toast` | "저장했어요" 같은 짧은 결과 |
 
 새 컴포넌트는 기존 걸로 안 될 때만 만들고, 이 표에 추가한다.

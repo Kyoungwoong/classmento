@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import {
   BottomCTA,
+  Button,
   ButtonLink,
   ListRow,
   Screen,
@@ -16,10 +17,10 @@ import { criterionLabel } from "./labels";
 
 const POLL_MS = 3000;
 
-function itemDescription(it: ReportItemView): string {
+function itemStatus(it: ReportItemView): string | undefined {
   switch (it.answerStatus) {
     case "EVALUATED":
-      return `${it.overall?.toFixed(1)}점`;
+      return undefined; // 점수는 오른쪽 숫자로
     case "FAILED":
       return it.failureReason ?? "평가하지 못했어요.";
     case undefined:
@@ -36,8 +37,9 @@ function itemDescription(it: ReportItemView): string {
 export function ReportScreen({ id }: { id: number }) {
   const router = useRouter();
   const [report, setReport] = useState<ReportView | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; notFound: boolean } | null>(null);
   const [retrying, setRetrying] = useState<number | null>(null);
+  const [retryFailed, setRetryFailed] = useState<number | null>(null);
   const [tick, setTick] = useState(0);
 
   const load = useCallback(
@@ -53,11 +55,13 @@ export function ReportScreen({ id }: { id: number }) {
             router.replace(`/login?next=/interview/${id}/report`);
             return;
           }
-          setError(
-            err instanceof ApiError && err.status === 404
+          const notFound = err instanceof ApiError && err.status === 404;
+          setError({
+            notFound,
+            message: notFound
               ? "리포트를 찾을 수 없어요."
               : "리포트를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",
-          );
+          });
         }),
     [id, router],
   );
@@ -66,33 +70,56 @@ export function ReportScreen({ id }: { id: number }) {
     load();
   }, [load, tick]);
 
-  // 평가 중이면 다시 불러오기
+  // 평가 중이면 다시 불러오기(불러오기가 실패하면 멈추고 안내한다)
   useEffect(() => {
-    if (report?.status !== "EVALUATING") return;
+    if (report?.status !== "EVALUATING" || error) return;
     const t = setTimeout(() => setTick((n) => n + 1), POLL_MS);
     return () => clearTimeout(t);
-  }, [report]);
+  }, [report, error]);
+
+  const reload = () => {
+    setError(null);
+    setTick((n) => n + 1);
+  };
 
   async function retry(seq: number) {
     setRetrying(seq);
+    setRetryFailed(null);
     try {
       await api.retryAnswer(id, seq);
+      setTick((n) => n + 1);
+    } catch {
+      setRetryFailed(seq);
     } finally {
       setRetrying(null);
-      setTick((n) => n + 1);
     }
   }
 
-  const cta = (
+  const header = <TopBar onBack={() => router.push("/")} />;
+  const practice = (
     <BottomCTA>
       <ButtonLink href="/interview/new">다시 연습하기</ButtonLink>
     </BottomCTA>
   );
 
   if (!report) {
+    const failed = error && !error.notFound;
     return (
-      <Screen header={<TopBar onBack={() => router.push("/")} />} cta={cta}>
-        <ScreenTitle title={error ?? "리포트를 불러오고 있어요"} />
+      <Screen
+        header={header}
+        cta={
+          failed ? (
+            <BottomCTA>
+              <Button onClick={reload}>다시 불러오기</Button>
+            </BottomCTA>
+          ) : (
+            practice
+          )
+        }
+      >
+        <div role={error ? "alert" : undefined}>
+          <ScreenTitle title={error?.message ?? "리포트를 불러오고 있어요"} />
+        </div>
       </Screen>
     );
   }
@@ -100,16 +127,33 @@ export function ReportScreen({ id }: { id: number }) {
   const ready = report.status === "READY";
 
   return (
-    <Screen header={<TopBar onBack={() => router.push("/")} />} cta={cta}>
-      <ScreenTitle
-        title={ready ? "면접이 끝났어요" : "답변을 평가하고 있어요"}
-        description={ready ? undefined : "끝나면 이 화면에 바로 보여 드려요."}
-      />
+    <Screen header={header} cta={practice}>
+      <div aria-live="polite">
+        <ScreenTitle
+          title={ready ? "면접이 끝났어요" : "답변을 평가하고 있어요"}
+          description={ready ? undefined : "끝나면 이 화면에 바로 보여 드려요."}
+        />
+      </div>
+
+      {error && (
+        <div role="alert" className="-mt-4 mb-6">
+          <p className="text-body2 text-danger">
+            평가 결과를 불러오지 못했어요. 연결을 확인하고 다시 불러와 주세요.
+          </p>
+          <button
+            type="button"
+            onClick={reload}
+            className="inline-flex h-11 items-center text-body2 text-primary"
+          >
+            다시 불러오기
+          </button>
+        </div>
+      )}
 
       {ready && report.overall !== undefined && (
         <section aria-label="종합 점수">
           <p className="flex items-baseline gap-1">
-            <span className="text-title1 text-text-strong tabular-nums">
+            <span className="text-display text-text-strong tabular-nums">
               {report.overall.toFixed(1)}
             </span>
             <span className="text-body2 text-text-sub">/ 5</span>
@@ -132,7 +176,12 @@ export function ReportScreen({ id }: { id: number }) {
           <h2 className="text-body1 font-semibold text-text-strong">기준별 점수</h2>
           <div className="mt-4 flex flex-col gap-4">
             {report.criteria.map((c) => (
-              <ScoreBar key={c.criterion} label={criterionLabel(c.criterion)} score={c.average} />
+              <ScoreBar
+                key={c.criterion}
+                label={criterionLabel(c.criterion)}
+                score={c.average}
+                decimals={1}
+              />
             ))}
           </div>
         </section>
@@ -146,7 +195,14 @@ export function ReportScreen({ id }: { id: number }) {
               <ListRow
                 title={`${it.seq}. ${it.question}`}
                 titleLines={2}
-                description={itemDescription(it)}
+                description={itemStatus(it)}
+                trailing={
+                  it.answerStatus === "EVALUATED" && it.overall !== undefined ? (
+                    <span className="text-body1 font-semibold text-text-strong tabular-nums">
+                      {`${it.overall.toFixed(1)}점`}
+                    </span>
+                  ) : undefined
+                }
                 onClick={
                   it.answerStatus
                     ? () => router.push(`/interview/${id}/report/${it.seq}`)
@@ -154,15 +210,22 @@ export function ReportScreen({ id }: { id: number }) {
                 }
               />
               {it.answerStatus === "FAILED" && (
-                <button
-                  type="button"
-                  aria-label={`${it.seq}번 다시 평가하기`}
-                  disabled={retrying === it.seq}
-                  onClick={() => retry(it.seq)}
-                  className="-mt-2 inline-flex h-11 items-center text-caption text-primary disabled:text-text-hint"
-                >
-                  {retrying === it.seq ? "다시 평가하고 있어요" : "다시 평가하기"}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    aria-label={`${it.seq}번 다시 평가하기`}
+                    disabled={retrying === it.seq}
+                    onClick={() => retry(it.seq)}
+                    className="-mt-2 inline-flex h-11 items-center text-caption text-primary disabled:text-text-hint"
+                  >
+                    {retrying === it.seq ? "다시 평가하고 있어요" : "다시 평가하기"}
+                  </button>
+                  {retryFailed === it.seq && (
+                    <p role="alert" className="text-caption text-danger">
+                      다시 평가를 시작하지 못했어요. 잠시 후 다시 눌러 주세요.
+                    </p>
+                  )}
+                </>
               )}
             </li>
           ))}

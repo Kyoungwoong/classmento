@@ -2,7 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BottomCTA, ButtonLink, Screen, ScoreBar, ScreenTitle, TopBar } from "@/components/ui";
+import {
+  BottomCTA,
+  Button,
+  ButtonLink,
+  Screen,
+  ScoreBar,
+  ScreenTitle,
+  TopBar,
+} from "@/components/ui";
 import { api, ApiError, type ReportItemView } from "@/lib/api/client";
 import { criterionLabel } from "./labels";
 
@@ -13,6 +21,7 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
   const router = useRouter();
   const [item, setItem] = useState<ReportItemView | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     api
@@ -25,7 +34,7 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
         }
         setError("답변을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.");
       });
-  }, [id, seq, router]);
+  }, [id, seq, router, attempt]);
 
   const back = () => router.push(`/interview/${id}/report`);
   const cta = (
@@ -35,11 +44,30 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
   );
 
   if (item === undefined || item === null) {
+    const title = error ?? (item === null ? "문항을 찾을 수 없어요" : null);
     return (
-      <Screen header={<TopBar onBack={back} />} cta={cta}>
-        <ScreenTitle
-          title={error ?? (item === null ? "문항을 찾을 수 없어요" : "답변을 불러오고 있어요")}
-        />
+      <Screen
+        header={<TopBar onBack={back} />}
+        cta={
+          error ? (
+            <BottomCTA>
+              <Button
+                onClick={() => {
+                  setError(null);
+                  setAttempt((n) => n + 1);
+                }}
+              >
+                다시 불러오기
+              </Button>
+            </BottomCTA>
+          ) : (
+            cta
+          )
+        }
+      >
+        <div role={title ? "alert" : undefined}>
+          <ScreenTitle title={title ?? "답변을 불러오고 있어요"} />
+        </div>
       </Screen>
     );
   }
@@ -49,7 +77,7 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
       <p className="mb-2 text-caption text-text-sub">{`${seq}번 질문`}</p>
       <ScreenTitle
         title={item.question}
-        description={item.intent ? `이 질문은 ${item.intent}을(를) 봐요.` : undefined}
+        description={item.intent ? `이 질문으로 보려는 것: ${item.intent}` : undefined}
       />
 
       {item.answerStatus && (
