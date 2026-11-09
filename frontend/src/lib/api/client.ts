@@ -5,7 +5,7 @@
  * - 브라우저는 같은 출처의 /api 를 부르고 next.config.ts rewrites가 백엔드로 넘긴다.
  * - 로그인은 HttpOnly 세션 쿠키. 변경 요청(POST/PUT/DELETE)에는 CSRF 토큰 헤더를 자동으로 붙인다.
  */
-import type { components } from "./schema";
+import type { components, operations } from "./schema";
 
 type Schemas = components["schemas"];
 
@@ -19,8 +19,15 @@ export type ParsedResume = Schemas["ParsedResume"];
 export type ExperienceView = Schemas["ExperienceView"];
 export type CategoryTreeNode = Schemas["CategoryTreeNode"];
 export type CategoryView = Schemas["CategoryView"];
+export type SubcategoryView = Schemas["SubcategoryView"];
+export type CreateCategoryRequest = Schemas["CreateCategoryRequest"];
+export type UpdateCategoryRequest = Schemas["UpdateCategoryRequest"];
 export type TagView = Schemas["TagView"];
 export type TagResult = Schemas["TagResult"];
+export type QuestionView = Schemas["QuestionView"];
+export type QuestionPage = Schemas["QuestionPage"];
+export type QuestionRequest = Schemas["QuestionRequest"];
+export type QuestionSearchParams = NonNullable<operations["search"]["parameters"]["query"]>;
 export type AdminUserView = Schemas["AdminUserView"];
 export type SignupRequest = Schemas["SignupRequest"];
 export type LoginRequest = Schemas["LoginRequest"];
@@ -86,6 +93,16 @@ function defaultMessage(status: number) {
 
 const json = (body: unknown) => JSON.stringify(body);
 
+/** 값이 있는 항목만 ?a=1&b=2 로. 없으면 빈 문자열. */
+function queryString(params: Record<string, string | number | boolean | undefined>) {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== "") q.set(k, String(v));
+  }
+  const s = q.toString();
+  return s ? `?${s}` : "";
+}
+
 export const api = {
   health: () => apiFetch<HealthResponse>("/api/health"),
 
@@ -115,12 +132,25 @@ export const api = {
 
   // 관리자: 질문 은행 카테고리·태그
   adminCategories: () => apiFetch<CategoryTreeNode[]>("/api/admin/categories"),
-  createCategory: (body: { parentId?: number; name: string }) =>
+  createCategory: (body: CreateCategoryRequest) =>
     apiFetch<CategoryView>("/api/admin/categories", { method: "POST", body: json(body) }),
-  updateCategory: (id: number, body: { name?: string; sortOrder?: number; active?: boolean }) =>
+  updateCategory: (id: number, body: UpdateCategoryRequest) =>
     apiFetch<CategoryView>(`/api/admin/categories/${id}`, { method: "PATCH", body: json(body) }),
   suggestTags: (query: string) =>
     apiFetch<TagView[]>(`/api/admin/tags?query=${encodeURIComponent(query)}`),
   createTag: (name: string) =>
     apiFetch<TagResult>("/api/admin/tags", { method: "POST", body: json({ name }) }),
+
+  // 관리자: 질문 은행 질문
+  adminQuestions: (params: QuestionSearchParams = {}) =>
+    apiFetch<QuestionPage>(`/api/admin/questions${queryString(params)}`),
+  createQuestion: (body: QuestionRequest) =>
+    apiFetch<QuestionView>("/api/admin/questions", { method: "POST", body: json(body) }),
+  updateQuestion: (id: number, body: QuestionRequest) =>
+    apiFetch<QuestionView>(`/api/admin/questions/${id}`, { method: "PUT", body: json(body) }),
+  setQuestionActive: (id: number, active: boolean) =>
+    apiFetch<QuestionView>(`/api/admin/questions/${id}/active`, {
+      method: "PATCH",
+      body: json({ active }),
+    }),
 };
