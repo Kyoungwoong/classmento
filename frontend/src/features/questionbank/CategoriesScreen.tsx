@@ -80,7 +80,7 @@ export function CategoriesScreen() {
               ? "카테고리를 불러오지 못했어요"
               : "카테고리를 불러오고 있어요"
         }
-        description="질문은 소분류에 넣어요. 숨긴 카테고리에는 새 질문을 넣을 수 없어요."
+        description="질문은 소분류에 넣어요. 소분류 이름을 누르면 바꿀 수 있어요."
       />
 
       {loadError && (
