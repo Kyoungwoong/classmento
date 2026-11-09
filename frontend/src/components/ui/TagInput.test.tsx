@@ -41,12 +41,20 @@ describe("TagInput", () => {
     expect(create).toHaveBeenCalledWith("Redis");
   });
 
-  it("쉼표도 확정 키이고, 같은 태그는 두 번 붙지 않는다", async () => {
-    const create = vi.fn().mockResolvedValue({ id: 1, name: "JPA" });
+  it("쉼표도 확정 키다", async () => {
+    const create = vi.fn().mockResolvedValue({ id: 3, name: "트랜잭션" });
+    render(<Harness create={create} />);
+    fireEvent.change(screen.getByLabelText("태그"), { target: { value: "트랜잭션," } });
+    expect(await screen.findByRole("button", { name: "트랜잭션 지우기" })).toBeInTheDocument();
+    expect(screen.getByLabelText("태그")).toHaveValue("");
+  });
+
+  it("이미 붙은 태그(대소문자 무시)는 다시 만들지 않는다", async () => {
+    const create = vi.fn();
     render(<Harness create={create} initial={[{ id: 1, name: "JPA" }]} />);
-    const input = screen.getByLabelText("태그");
-    fireEvent.change(input, { target: { value: "jpa," } });
-    await waitFor(() => expect(create).toHaveBeenCalledWith("jpa"));
+    fireEvent.change(screen.getByLabelText("태그"), { target: { value: "jpa," } });
+    await waitFor(() => expect(screen.getByLabelText("태그")).toHaveValue(""));
+    expect(create).not.toHaveBeenCalled();
     expect(screen.getAllByRole("button", { name: "JPA 지우기" })).toHaveLength(1);
   });
 
