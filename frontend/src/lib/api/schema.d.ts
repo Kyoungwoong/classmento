@@ -107,7 +107,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["search"];
+        get: operations["searchAdminQuestions"];
         put?: never;
         post: operations["create_1"];
         delete?: never;
@@ -701,7 +701,7 @@ export interface operations {
             };
         };
     };
-    search: {
+    searchAdminQuestions: {
         parameters: {
             query?: {
                 topCategoryId?: number;

@@ -9,6 +9,7 @@ import com.classmento.questionbank.presentation.QuestionBankDtos.QuestionPage;
 import com.classmento.questionbank.presentation.QuestionBankDtos.QuestionRequest;
 import com.classmento.questionbank.presentation.QuestionBankDtos.QuestionView;
 import com.classmento.questionbank.presentation.QuestionBankDtos.SetActiveRequest;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -38,6 +39,7 @@ public class AdminQuestionController {
 
   /** 최신순. 조건은 모두 선택이고 함께 쓰면 AND. 숨긴 질문은 includeHidden=true일 때만. */
   @GetMapping
+  @Operation(operationId = "searchAdminQuestions")
   public QuestionPage search(
       @RequestParam(required = false) Long topCategoryId,
       @RequestParam(required = false) Long categoryId,
