@@ -184,7 +184,8 @@ public final class QuestionCsv {
           }
           field.append(c);
         }
-      } else if (c == '"') {
+      } else if (c == '"' && field.isEmpty()) {
+        // 따옴표는 칸 시작에서만 감싸기로 본다. 칸 중간(예: 5" 화면)은 글자 그대로
         quoted = true;
       } else if (c == ',') {
         fields.add(field.toString());
