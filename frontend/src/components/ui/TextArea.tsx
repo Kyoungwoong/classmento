@@ -20,6 +20,7 @@ export function TextArea({
 }: TextAreaProps) {
   const autoId = useId();
   const inputId = id ?? autoId;
+  const errorId = useId();
   const length = typeof value === "string" ? value.length : 0;
   return (
     <div className={className}>
@@ -31,6 +32,7 @@ export function TextArea({
         value={value}
         maxLength={maxLength}
         aria-invalid={!!error || undefined}
+        aria-describedby={error ? errorId : undefined}
         className={clsx(
           "min-h-32 w-full resize-none rounded-md bg-bg-muted px-4 py-3 text-body1 text-text-strong outline-none placeholder:text-text-hint",
           "focus:ring-2 focus:ring-primary",
@@ -39,7 +41,11 @@ export function TextArea({
         {...rest}
       />
       <div className="mt-2 flex gap-2">
-        {error && <p className="flex-1 text-caption text-danger">{error}</p>}
+        {error && (
+          <p id={errorId} className="flex-1 text-caption text-danger">
+            {error}
+          </p>
+        )}
         {maxLength !== undefined && (
           <p className="ml-auto text-caption text-text-hint">
             {length}/{maxLength}
