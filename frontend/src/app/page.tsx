@@ -14,7 +14,7 @@ export default function Home() {
     <Screen
       cta={
         <BottomCTA>
-          {/* 로그인 안 했으면 proxy.ts가 /login?next=/resume/upload 로 보낸다 */}
+          {/* 로그인 안 했으면 proxy.ts가 /login?next=<경로> 로 보낸다 */}
           <ButtonLink href="/interview/new" variant="secondary">
             바로 면접 보기
           </ButtonLink>

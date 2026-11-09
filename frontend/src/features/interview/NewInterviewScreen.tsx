@@ -54,6 +54,10 @@ export function NewInterviewScreen() {
   const [step, setStep] = useState<Step>("type");
   const [type, setType] = useState<Type | null>(null);
   const [resumes, setResumes] = useState<ResumeSummary[] | null>(null);
+  const [resumesError, setResumesError] = useState(false);
+  const [resumesTry, setResumesTry] = useState(0);
+  const [experiencesError, setExperiencesError] = useState(false);
+  const [experiencesTry, setExperiencesTry] = useState(0);
   const [resumeId, setResumeId] = useState<number | null>(null);
   const [experiences, setExperiences] = useState<ExperienceView[] | null>(null);
   const [experienceId, setExperienceId] = useState<number | null>(null);
@@ -70,6 +74,7 @@ export function NewInterviewScreen() {
     api
       .resumes()
       .then((list) => {
+        setResumesError(false);
         setResumes(list);
         const first = list.find((r) => r.status === "PARSED");
         if (first) setResumeId(first.id);
@@ -79,9 +84,9 @@ export function NewInterviewScreen() {
           router.replace("/login?next=/interview/new");
           return;
         }
-        setResumes([]);
+        setResumesError(true);
       });
-  }, [router]);
+  }, [router, resumesTry]);
 
   // 경험 기반: 고른 이력서의 경험을 불러온다
   useEffect(() => {
@@ -89,12 +94,16 @@ export function NewInterviewScreen() {
     let alive = true;
     api
       .resumeExperiences(resumeId)
-      .then((list) => alive && setExperiences(list))
-      .catch(() => alive && setExperiences([]));
+      .then((list) => {
+        if (!alive) return;
+        setExperiencesError(false);
+        setExperiences(list);
+      })
+      .catch(() => alive && setExperiencesError(true));
     return () => {
       alive = false;
     };
-  }, [type, resumeId]);
+  }, [type, resumeId, experiencesTry]);
 
   function goNext() {
     setError(null);
@@ -152,7 +161,11 @@ export function NewInterviewScreen() {
         router.replace("/login?next=/interview/new");
         return;
       }
-      setError(err instanceof ApiError ? err.message : "잠시 후 다시 시도해 주세요.");
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "면접을 만들지 못했어요. 잠시 후 다시 시도해 주세요.",
+      );
       setCreating(false);
     }
   }
@@ -188,17 +201,39 @@ export function NewInterviewScreen() {
           <ScreenTitle title="어떤 면접을 볼까요?" description="질문은 모두 말로 답해요." />
           <div role="radiogroup" aria-label="면접 종류" className="-mx-4 flex flex-col gap-2">
             {TYPES.map((t) => {
-              const needsResume = t.value === "EXPERIENCE" && parsed.length === 0;
+              const isExperience = t.value === "EXPERIENCE";
+              const loading = isExperience && resumes === null && !resumesError;
+              const failed = isExperience && resumesError;
+              const needsResume = isExperience && resumes !== null && parsed.length === 0;
+              const description = loading
+                ? "이력서를 불러오고 있어요"
+                : failed
+                  ? "이력서를 불러오지 못했어요"
+                  : needsResume
+                    ? "이력서가 필요해요"
+                    : t.description;
               return (
                 <div key={t.value}>
                   <ChoiceRow
                     title={t.title}
-                    description={needsResume ? "이력서가 필요해요" : t.description}
+                    description={description}
                     selected={type === t.value}
-                    disabled={needsResume}
+                    disabled={loading || failed || needsResume}
                     onSelect={() => setType(t.value)}
                   />
-                  {needsResume && resumes !== null && (
+                  {failed && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResumesError(false);
+                        setResumesTry((n) => n + 1);
+                      }}
+                      className="-mt-2 inline-flex h-11 items-center px-4 text-caption text-primary"
+                    >
+                      다시 불러오기
+                    </button>
+                  )}
+                  {needsResume && (
                     <Link
                       href="/resume/upload"
                       className="-mt-2 inline-flex h-11 items-center px-4 text-caption text-primary"
@@ -237,13 +272,38 @@ export function NewInterviewScreen() {
               </ChipGroup>
             </div>
           )}
-          {experiences === null && (
-            <p className="text-body2 text-text-hint">경험을 불러오고 있어요</p>
+          {experiencesError ? (
+            <div role="alert">
+              <p className="text-body2 text-text-sub">경험을 불러오지 못했어요.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setExperiencesError(false);
+                  setExperiences(null);
+                  setExperiencesTry((n) => n + 1);
+                }}
+                className="-ml-2 inline-flex h-11 items-center px-2 text-caption text-primary"
+              >
+                다시 불러오기
+              </button>
+            </div>
+          ) : (
+            experiences === null && (
+              <p className="text-body2 text-text-hint">경험을 불러오고 있어요</p>
+            )
           )}
           {experiences?.length === 0 && (
-            <p className="text-body2 text-text-sub">
-              이 이력서에서 경험을 찾지 못했어요. 이력서 화면에서 경험으로 나눠 주세요.
-            </p>
+            <div>
+              <p className="text-body2 text-text-sub">
+                경험을 찾지 못했어요. 이력서 화면에서 경험을 나눈 뒤 다시 와 주세요.
+              </p>
+              <Link
+                href={`/resume/${resumeId}`}
+                className="-ml-2 inline-flex h-11 items-center px-2 text-caption text-primary"
+              >
+                이력서 화면으로 가기
+              </Link>
+            </div>
           )}
           {experiences && experiences.length > 0 && (
             <div role="radiogroup" aria-label="경험" className="flex flex-col gap-3">
