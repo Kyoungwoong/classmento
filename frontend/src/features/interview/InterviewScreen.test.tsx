@@ -129,6 +129,67 @@ describe("InterviewScreen", () => {
     );
   });
 
+  it("모두 올린 뒤 다시 열면 다시 녹음하지 않고 바로 끝낼 수 있다", async () => {
+    vi.spyOn(api, "interview").mockResolvedValue(interview([1, 2, 3]));
+    const upload = vi.spyOn(api, "uploadAnswer");
+    const finish = vi.spyOn(api, "finishInterview").mockResolvedValue(interview([1, 2, 3]));
+    render(<InterviewScreen id={7} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "면접 끝내기" }));
+
+    await waitFor(() => expect(finish).toHaveBeenCalledWith(7));
+    expect(upload).not.toHaveBeenCalled();
+    expect(push).toHaveBeenCalledWith("/interview/7/report");
+  });
+
+  it("아직 정리 중이면 잠시 뒤 다시 끝낸다", async () => {
+    vi.spyOn(api, "interview").mockResolvedValue(interview([1, 2, 3]));
+    const finish = vi
+      .spyOn(api, "finishInterview")
+      .mockRejectedValueOnce(new ApiError(409, "ANSWERS_PROCESSING", "x"))
+      .mockResolvedValueOnce(interview([1, 2, 3]));
+    render(<InterviewScreen id={7} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "면접 끝내기" }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/interview/7/report"), {
+      timeout: 4000,
+    });
+    expect(finish).toHaveBeenCalledTimes(2);
+  });
+
+  it("실패한 답변을 다시 불러오지 못해도 멈추지 않고 [다시 끝내기]", async () => {
+    vi.spyOn(api, "interview")
+      .mockResolvedValueOnce(interview([1, 2, 3]))
+      .mockRejectedValueOnce(new Error("network"));
+    vi.spyOn(api, "finishInterview").mockRejectedValue(new ApiError(409, "ANSWERS_FAILED", "x"));
+    render(<InterviewScreen id={7} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "면접 끝내기" }));
+
+    expect(await screen.findByRole("button", { name: "다시 끝내기" })).toBeEnabled();
+  });
+
+  it("올리기 실패 뒤 다시 녹음하면 [다시 올리기]가 아니라 원래 버튼", async () => {
+    vi.spyOn(api, "interview").mockResolvedValue(interview());
+    vi.spyOn(api, "uploadAnswer").mockRejectedValue(new Error("network"));
+    Object.assign(recorder, { state: "recorded", blob: new Blob(["v"]), url: "blob:x" });
+    render(<InterviewScreen id={7} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "다음 질문" }));
+    fireEvent.click(await screen.findByRole("button", { name: "다시 녹음" }));
+
+    expect(await screen.findByRole("button", { name: "다음 질문" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("숫자가 아닌 주소면 부르지 않고 없는 면접으로 안내한다", async () => {
+    const get = vi.spyOn(api, "interview");
+    render(<InterviewScreen id={NaN} />);
+    expect(await screen.findByRole("link", { name: "새 면접 만들기" })).toBeInTheDocument();
+    expect(get).not.toHaveBeenCalled();
+  });
+
   it("다시 녹음해야 하는 답변이 있으면 그 질문으로 돌아간다", async () => {
     const failed = interview([1, 2, 3]);
     failed.questions[1] = {

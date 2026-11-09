@@ -106,4 +106,12 @@ describe("useRecorder", () => {
     expect(result.current.state).toBe("idle");
     expect(result.current.blob).toBeNull();
   });
+  it("시작 중에 또 누르면 마이크를 한 번만 연다", async () => {
+    const { result } = renderHook(() => useRecorder());
+    await act(async () => {
+      await Promise.all([result.current.start(), result.current.start()]);
+    });
+    expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
+    expect(result.current.state).toBe("recording");
+  });
 });
