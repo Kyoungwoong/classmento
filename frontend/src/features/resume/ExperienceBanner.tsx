@@ -11,7 +11,9 @@ const MAX_SKILLS = 4;
 
 interface ExperienceBannerProps {
   experience: ExperienceView;
-  /** 경험 기반 면접에서 골랐을 때(연한 블루 면) */
+  /** 고르는 목록에 쓸 때: 체크 자리를 미리 잡아 고를 때 제목 폭이 흔들리지 않게 */
+  selectable?: boolean;
+  /** 골랐을 때(연한 블루 면 + 체크) */
   selected?: boolean;
 }
 
@@ -19,7 +21,11 @@ interface ExperienceBannerProps {
  * 경험 하나(경력·프로젝트). 경험 기반 면접에서 고르는 단위(ADR 0005).
  * 회색 면(bg-bg-muted) 한 장으로 묶고, 테두리·그림자는 쓰지 않는다.
  */
-export function ExperienceBanner({ experience, selected = false }: ExperienceBannerProps) {
+export function ExperienceBanner({
+  experience,
+  selectable = false,
+  selected = false,
+}: ExperienceBannerProps) {
   const { type, period, title, summary, skills } = experience;
   const shown = skills.slice(0, MAX_SKILLS);
   const rest = skills.length - shown.length;
@@ -36,7 +42,7 @@ export function ExperienceBanner({ experience, selected = false }: ExperienceBan
       </p>
       <div className="mt-1 flex items-start gap-3">
         <h3 className="min-w-0 flex-1 text-body1 font-semibold text-text-strong">{title}</h3>
-        {selected && <CheckMark shown />}
+        {selectable && <CheckMark shown={selected} />}
       </div>
       {summary && <p className="mt-1 line-clamp-2 text-body2 text-text-sub">{summary}</p>}
       {shown.length > 0 && (

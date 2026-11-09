@@ -205,13 +205,17 @@ export function NewInterviewScreen() {
               const loading = isExperience && resumes === null && !resumesError;
               const failed = isExperience && resumesError;
               const needsResume = isExperience && resumes !== null && parsed.length === 0;
+              // 올렸지만 아직 정리 중이면 다시 올리라고 하지 않는다
+              const preparing = needsResume && resumes.length > 0;
               const description = loading
                 ? "이력서를 불러오고 있어요"
                 : failed
                   ? "이력서를 불러오지 못했어요"
-                  : needsResume
-                    ? "이력서가 필요해요"
-                    : t.description;
+                  : preparing
+                    ? "이력서를 정리하고 있어요. 끝나면 고를 수 있어요"
+                    : needsResume
+                      ? "이력서가 필요해요"
+                      : t.description;
               return (
                 <div key={t.value}>
                   <ChoiceRow
@@ -233,7 +237,7 @@ export function NewInterviewScreen() {
                       다시 불러오기
                     </button>
                   )}
-                  {needsResume && (
+                  {needsResume && !preparing && (
                     <Link
                       href="/resume/upload"
                       className="-mt-2 inline-flex h-11 items-center px-4 text-caption text-primary"
@@ -264,6 +268,7 @@ export function NewInterviewScreen() {
                     selected={r.id === resumeId}
                     onClick={() => {
                       setResumeId(r.id);
+                      setExperiencesError(false);
                       setExperiences(null);
                       setExperienceId(null);
                     }}
@@ -317,7 +322,7 @@ export function NewInterviewScreen() {
                   onClick={() => setExperienceId(e.id)}
                   className="rounded-lg text-left"
                 >
-                  <ExperienceBanner experience={e} selected={e.id === experienceId} />
+                  <ExperienceBanner experience={e} selectable selected={e.id === experienceId} />
                 </button>
               ))}
             </div>
