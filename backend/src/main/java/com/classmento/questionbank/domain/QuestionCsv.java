@@ -69,7 +69,7 @@ public final class QuestionCsv {
     if (rows.isEmpty() && errors.isEmpty()) {
       errors.add(new LineError(2, "질문이 한 줄도 없어요."));
     }
-    return new Parsed(errors.isEmpty() ? rows : List.of(), errors);
+    return new Parsed(rows, errors);
   }
 
   private static Row toRow(Record r) {
@@ -243,7 +243,7 @@ public final class QuestionCsv {
 
   public record LineError(int line, String message) {}
 
-  /** 오류가 하나라도 있으면 rows는 비운다(전부 아니면 0건). */
+  /** rows: 형식이 맞는 행(오류가 있어도 남겨 둔다 → 카테고리 확인까지 한 번에). ok()가 아니면 저장하지 않는다. */
   public record Parsed(List<Row> rows, List<LineError> errors) {
 
     public boolean ok() {
