@@ -58,7 +58,10 @@ export function QuestionListScreen() {
 
   // 검색어는 입력이 멈춘 뒤에 반영
   useEffect(() => {
-    const timer = setTimeout(() => setFilter((f) => ({ ...f, q: query.trim() })), SEARCH_DELAY_MS);
+    const timer = setTimeout(
+      () => setFilter((f) => (f.q === query.trim() ? f : { ...f, q: query.trim() })),
+      SEARCH_DELAY_MS,
+    );
     return () => clearTimeout(timer);
   }, [query]);
 
@@ -119,7 +122,7 @@ export function QuestionListScreen() {
       />
 
       <div className="flex flex-col gap-4">
-        <div className="-mx-5 flex gap-2 overflow-x-auto px-5">
+        <div className="-mx-5 scrollbar-none flex gap-2 overflow-x-auto px-5">
           <SelectChip
             label="전체"
             selected={filter.topCategoryId === undefined}
@@ -139,7 +142,7 @@ export function QuestionListScreen() {
           ))}
         </div>
         {top && (
-          <div className="-mx-5 flex gap-2 overflow-x-auto px-5">
+          <div className="-mx-5 scrollbar-none flex gap-2 overflow-x-auto px-5">
             <SelectChip
               label={`${top.name} 전체`}
               selected={filter.categoryId === undefined}
@@ -193,6 +196,7 @@ export function QuestionListScreen() {
               <li key={q.id}>
                 <ListRow
                   title={q.text}
+                  titleLines={2}
                   description={describe(q)}
                   onClick={() => router.push(`/admin/questions/${q.id}`)}
                 />
