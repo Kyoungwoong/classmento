@@ -62,6 +62,19 @@ describe("QuestionImportScreen", () => {
     expect(screen.getByText("7번째 줄")).toBeInTheDocument();
   });
 
+  it("오류 화면에서 [다른 파일 고르기]를 누르면 파일 고르기 창을 연다", async () => {
+    vi.spyOn(api, "importQuestions").mockResolvedValue({
+      imported: 0,
+      errors: [{ line: 2, message: "질문은 5~300자로 입력해 주세요." }],
+    });
+    const open = vi.spyOn(HTMLInputElement.prototype, "click").mockImplementation(() => {});
+    render(<QuestionImportScreen />);
+    choose(csv());
+    fireEvent.click(screen.getByRole("button", { name: "올리기" }));
+    fireEvent.click(await screen.findByRole("button", { name: "다른 파일 고르기" }));
+    expect(open).toHaveBeenCalledTimes(1);
+  });
+
   it("2MB가 넘거나 CSV가 아니면 올리기 전에 알려준다", () => {
     const upload = vi.spyOn(api, "importQuestions");
     render(<QuestionImportScreen />);
