@@ -94,6 +94,8 @@ export function TagInput({ label, value, onChange, suggest, create, max = 10 }: 
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    // 한글 조합 중 Enter는 글자 확정용이라 태그로 만들지 않는다
+    if (e.nativeEvent.isComposing) return;
     if (e.key === "Enter") {
       e.preventDefault();
       const name = text;
