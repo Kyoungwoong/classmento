@@ -89,7 +89,7 @@ export function LoginForm() {
         처음이신가요?{" "}
         <Link
           href={`/signup?next=${encodeURIComponent(next)}`}
-          className="inline-flex h-11 items-center font-semibold text-primary"
+          className="inline-flex h-11 items-center font-semibold text-accent"
         >
           회원가입
         </Link>

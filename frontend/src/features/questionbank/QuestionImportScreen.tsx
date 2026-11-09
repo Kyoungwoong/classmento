@@ -158,7 +158,7 @@ export function QuestionImportScreen() {
             <button
               type="button"
               onClick={downloadSampleCsv}
-              className="mt-2 -ml-2 inline-flex h-11 items-center px-2 text-body2 text-primary"
+              className="mt-2 -ml-2 inline-flex h-11 items-center px-2 text-body2 text-accent"
             >
               예시 파일 받기
             </button>

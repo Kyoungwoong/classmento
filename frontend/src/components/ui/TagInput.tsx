@@ -123,7 +123,7 @@ export function TagInput({ label, value, onChange, suggest, create, max = 10 }: 
       <label htmlFor={inputId} className="mb-2 block text-caption text-text-sub">
         {label}
       </label>
-      <div className="flex flex-wrap items-center gap-2 rounded-md bg-bg-muted px-3 py-2 focus-within:ring-2 focus-within:ring-primary">
+      <div className="flex flex-wrap items-center gap-2 rounded-md bg-bg-muted px-3 py-2 focus-within:ring-2 focus-within:ring-accent">
         {value.map((t) => (
           <Chip
             key={t.id}

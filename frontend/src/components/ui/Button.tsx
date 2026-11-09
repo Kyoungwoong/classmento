@@ -18,8 +18,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, St
 }
 
 const variantClass: Record<Variant, string> = {
-  primary: "bg-primary text-white active:bg-primary-pressed",
-  secondary: "bg-primary-weak text-primary active:bg-blue-100",
+  primary: "bg-primary text-on-primary active:bg-primary-pressed",
+  secondary: "bg-navy-100 text-ink active:bg-navy-50",
   ghost: "bg-transparent text-text-sub active:bg-bg-muted",
   danger: "bg-danger text-white",
 };

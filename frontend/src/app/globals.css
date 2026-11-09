@@ -22,15 +22,26 @@
   --color-gray-800: var(--gray-800);
   --color-gray-900: var(--gray-900);
 
-  --color-blue-50: var(--blue-50);
-  --color-blue-100: var(--blue-100);
-  --color-blue-500: var(--blue-500);
-  --color-blue-600: var(--blue-600);
-  --color-blue-700: var(--blue-700);
+  --color-lime-50: var(--lime-50);
+  --color-lime-100: var(--lime-100);
+  --color-lime-200: var(--lime-200);
+  --color-lime-400: var(--lime-400);
+  --color-lime-500: var(--lime-500);
+  --color-lime-700: var(--lime-700);
+
+  --color-navy-50: var(--navy-50);
+  --color-navy-100: var(--navy-100);
+  --color-navy-600: var(--navy-600);
+  --color-navy-800: var(--navy-800);
+  --color-navy-900: var(--navy-900);
+
+  --color-yellow-100: var(--yellow-100);
+  --color-yellow-400: var(--yellow-400);
 
   --color-bg: var(--bg);
   --color-bg-subtle: var(--bg-subtle);
   --color-bg-muted: var(--bg-muted);
+  --color-bg-tint: var(--bg-tint);
   --color-text-strong: var(--text-strong);
   --color-text: var(--text);
   --color-text-sub: var(--text-sub);
@@ -38,17 +49,31 @@
   --color-border: var(--border);
   --color-primary: var(--primary);
   --color-primary-pressed: var(--primary-pressed);
+  --color-on-primary: var(--on-primary);
   --color-primary-weak: var(--primary-weak);
+  --color-accent: var(--accent);
+  --color-ink: var(--ink);
+  --color-on-ink: var(--on-ink);
+  --color-highlight: var(--highlight);
+  --color-highlight-weak: var(--highlight-weak);
   --color-danger: var(--danger);
   --color-success: var(--success);
   --color-warning: var(--warning);
 
   --font-sans: var(--font-pretendard), system-ui, sans-serif;
 
-  /* 타입 스케일: display 40(점수 숫자 전용) / title1 26 / title2 22 / body1 17 / body2 15 / caption 13 */
+  /* 타입 스케일
+   * hero 52(데스크톱 히어로) / display 40(점수·타이머 숫자, 모바일 히어로)
+   * title1 26 → md 이상 title1-lg 32 / title2 22 / body1 17 / body2 15 / caption 13 */
+  --text-hero: 52px;
+  --text-hero--line-height: 1.2;
+  --text-hero--font-weight: 800;
   --text-display: 40px;
   --text-display--line-height: 1.2;
-  --text-display--font-weight: 700;
+  --text-display--font-weight: 800;
+  --text-title1-lg: 32px;
+  --text-title1-lg--line-height: 1.32;
+  --text-title1-lg--font-weight: 700;
   --text-title1: 26px;
   --text-title1--line-height: 1.38;
   --text-title1--font-weight: 700;
@@ -62,13 +87,16 @@
   --text-caption: 13px;
   --text-caption--line-height: 1.4;
 
-  --container-app: 480px;
+  /* 본문 폭: site(일반 화면) / narrow(로그인·폼) */
+  --container-site: 1120px;
+  --container-narrow: 560px;
 
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
+  --radius-xl: 20px;
 
-  /* 그림자는 1단계만 허용 (토스트·바텀시트 전용) */
+  /* 그림자는 1단계만 허용 (토스트·시트·헤더 메뉴처럼 띄운 요소 전용) */
   --shadow-*: initial;
   --shadow-float: 0 4px 16px rgb(0 0 0 / 0.08);
 }
@@ -78,7 +106,7 @@ html {
 }
 
 body {
-  background: var(--bg-subtle);
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
   letter-spacing: -0.01em;

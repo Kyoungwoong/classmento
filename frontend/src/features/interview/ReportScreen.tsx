@@ -159,7 +159,7 @@ export function ReportScreen({ id }: { id: number }) {
           <button
             type="button"
             onClick={reload}
-            className="inline-flex h-11 items-center text-body2 text-primary"
+            className="inline-flex h-11 items-center text-body2 text-accent"
           >
             다시 불러오기
           </button>
@@ -232,7 +232,7 @@ export function ReportScreen({ id }: { id: number }) {
                     aria-label={`${it.seq}번 다시 평가하기`}
                     disabled={retrying === it.seq}
                     onClick={() => retry(it.seq)}
-                    className="-mt-2 inline-flex h-11 items-center text-caption text-primary disabled:text-text-hint"
+                    className="-mt-2 inline-flex h-11 items-center text-caption text-accent disabled:text-text-hint"
                   >
                     {retrying === it.seq ? "다시 평가하고 있어요" : "다시 평가하기"}
                   </button>

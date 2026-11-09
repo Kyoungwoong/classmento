@@ -34,7 +34,7 @@ export default function Home() {
               leading={
                 <span
                   aria-hidden
-                  className="flex size-8 items-center justify-center rounded-full bg-primary-weak text-body2 font-semibold text-primary"
+                  className="flex size-8 items-center justify-center rounded-full bg-primary-weak text-body2 font-semibold text-accent"
                 >
                   {i + 1}
                 </span>

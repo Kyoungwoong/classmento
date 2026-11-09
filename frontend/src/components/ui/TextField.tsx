@@ -19,7 +19,7 @@ export function TextField({ label, error, className, id, ...rest }: TextFieldPro
         aria-invalid={!!error || undefined}
         className={clsx(
           "h-14 w-full rounded-md bg-bg-muted px-4 text-body1 text-text-strong outline-none placeholder:text-text-hint",
-          "focus:ring-2 focus:ring-primary",
+          "focus:ring-2 focus:ring-accent",
           error && "ring-2 ring-danger",
         )}
         {...rest}

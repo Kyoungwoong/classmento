@@ -9,7 +9,7 @@ export function Toast({ message, open }: ToastProps) {
   return (
     <div
       role="status"
-      className="fixed inset-x-5 bottom-28 z-50 mx-auto max-w-app rounded-md bg-gray-800 px-5 py-4 text-body2 text-white shadow-float"
+      className="fixed inset-x-5 bottom-28 z-50 mx-auto max-w-narrow rounded-md bg-ink px-5 py-4 text-body2 text-on-ink shadow-float"
     >
       {message}
     </div>

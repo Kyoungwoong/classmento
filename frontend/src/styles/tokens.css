@@ -1,9 +1,10 @@
 /*
  * classmento 디자인 토큰 — 원본 문서: docs/design/design-system.md
  * 여기 없는 색·크기를 컴포넌트에서 임의로 쓰지 않는다. 필요하면 이 파일과 문서를 함께 고친다.
+ * 팔레트: 연두(메인 면·버튼) · 남색(글자·제목·헤더) · 연한 연두 면, 포인트 노랑. ADR 0006
  */
 :root {
-  /* Gray — 텍스트·배경 계층은 회색 단계로만 표현 */
+  /* Gray — 본문 글자·구분선·회색 면 */
   --gray-50: #f9fafb;
   --gray-100: #f2f4f6;
   --gray-200: #e5e8eb;
@@ -15,12 +16,24 @@
   --gray-800: #333d4b;
   --gray-900: #191f28;
 
-  /* Brand — 단일 블루. 강조는 이 색 하나로만 */
-  --blue-50: #e8f3ff;
-  --blue-100: #c9e2ff;
-  --blue-500: #3182f6;
-  --blue-600: #2272eb;
-  --blue-700: #1b64da;
+  /* Lime — 메인. 400은 면·버튼 전용(흰 바탕 글자로 쓰지 않는다), 글자 강조는 700 */
+  --lime-50: #f7fee7;
+  --lime-100: #ecfccb;
+  --lime-200: #d9f99d;
+  --lime-400: #a3e635;
+  --lime-500: #84cc16;
+  --lime-700: #4d7c0f;
+
+  /* Navy — 제목·헤더·푸터, 연두 위 글자 */
+  --navy-50: #f3f5f9;
+  --navy-100: #e6eaf2;
+  --navy-600: #4a5a7e;
+  --navy-800: #22325a;
+  --navy-900: #14213d;
+
+  /* Yellow — 포인트(배지·하이라이트)만 조금 */
+  --yellow-100: #fef9c3;
+  --yellow-400: #facc15;
 
   /* Status */
   --green-500: #03b26c;
@@ -32,14 +45,21 @@
   --bg: #ffffff;
   --bg-subtle: var(--gray-50);
   --bg-muted: var(--gray-100);
-  --text-strong: var(--gray-900);
+  --bg-tint: #f4fce3;
+  --text-strong: var(--navy-900);
   --text: var(--gray-800);
   --text-sub: var(--gray-600);
   --text-hint: var(--gray-500);
   --border: var(--gray-200);
-  --primary: var(--blue-500);
-  --primary-pressed: var(--blue-600);
-  --primary-weak: var(--blue-50);
+  --primary: var(--lime-400);
+  --primary-pressed: var(--lime-500);
+  --on-primary: var(--navy-900);
+  --primary-weak: var(--bg-tint);
+  --accent: var(--lime-700);
+  --ink: var(--navy-900);
+  --on-ink: #ffffff;
+  --highlight: var(--yellow-400);
+  --highlight-weak: var(--yellow-100);
   --danger: var(--red-500);
   --success: var(--green-500);
   --warning: var(--orange-500);
