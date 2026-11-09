@@ -111,9 +111,10 @@ export function CategoriesScreen() {
             renameForm(top.id, top.name)
           ) : (
             <div className="flex items-center gap-2">
-              <h2 className="text-title2 text-text-strong">{top.name}</h2>
-              {!top.active && <span className="text-body2 text-text-hint">숨김</span>}
-              <span className="flex-1" />
+              <h2 className="min-w-0 flex-1 truncate text-title2 text-text-strong">
+                {top.name}
+                {!top.active && <span className="ml-2 text-body2 text-text-hint">숨김</span>}
+              </h2>
               <button
                 type="button"
                 aria-label={`${top.name} 이름 바꾸기`}
@@ -136,7 +137,7 @@ export function CategoriesScreen() {
 
           <ul className="mt-2">
             {top.children.map((sub) => (
-              <li key={sub.id} aria-label={sub.name}>
+              <li key={sub.id}>
                 {isRenaming(sub.id) ? (
                   renameForm(sub.id, sub.name)
                 ) : (

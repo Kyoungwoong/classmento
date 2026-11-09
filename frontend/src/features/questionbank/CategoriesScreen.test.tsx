@@ -39,7 +39,7 @@ describe("CategoriesScreen", () => {
     vi.spyOn(api, "updateCategory").mockRejectedValue(new Error("x"));
     render(<CategoriesScreen />);
     fireEvent.click(await screen.findByRole("button", { name: "보안 숨기기" }));
-    const row = screen.getByRole("listitem", { name: "보안" });
+    const row = screen.getByRole("button", { name: "보안 이름 바꾸기" }).closest("li")!;
     expect(await within(row).findByText("잠시 후 다시 시도해 주세요.")).toBeInTheDocument();
   });
 

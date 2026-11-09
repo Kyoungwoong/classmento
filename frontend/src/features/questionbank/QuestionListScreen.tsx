@@ -137,7 +137,7 @@ export function QuestionListScreen() {
               ? "질문을 불러오지 못했어요"
               : "질문을 불러오고 있어요"
         }
-        description="최근에 넣은 순서예요."
+        description={error && !items ? undefined : "최근에 넣은 순서예요."}
       />
 
       <div className="flex flex-col gap-4">
