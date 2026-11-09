@@ -45,7 +45,10 @@
 
   --font-sans: var(--font-pretendard), system-ui, sans-serif;
 
-  /* 타입 스케일: title1 26 / title2 22 / body1 17 / body2 15 / caption 13 */
+  /* 타입 스케일: display 40(점수 숫자 전용) / title1 26 / title2 22 / body1 17 / body2 15 / caption 13 */
+  --text-display: 40px;
+  --text-display--line-height: 1.2;
+  --text-display--font-weight: 700;
   --text-title1: 26px;
   --text-title1--line-height: 1.38;
   --text-title1--font-weight: 700;

@@ -1,4 +1,5 @@
 import { BottomCTA, ButtonLink, ListRow, Screen, ScreenTitle } from "@/components/ui";
+import { RecentInterviews } from "@/features/interview/RecentInterviews";
 
 const steps = [
   {
@@ -44,6 +45,8 @@ export default function Home() {
           </li>
         ))}
       </ol>
+      {/* 로그인했고 면접이 있을 때만 보인다 */}
+      <RecentInterviews />
     </Screen>
   );
 }
