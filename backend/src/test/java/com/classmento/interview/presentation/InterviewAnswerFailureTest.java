@@ -14,6 +14,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.classmento.common.security.AuthUser;
 import com.classmento.identity.domain.AppUser;
+import com.classmento.llm.LlmClient;
+import com.classmento.llm.LlmResponse;
 import com.classmento.speech.SttClient;
 import com.classmento.speech.SttUnavailableException;
 import com.classmento.speech.Transcript;
@@ -88,6 +90,38 @@ class InterviewAnswerFailureTest extends IntegrationTest {
         .perform(get("/api/interviews/" + id).with(user(me)))
         .andExpect(jsonPath("$.questions[0].answerStatus").value("FAILED"))
         .andExpect(jsonPath("$.questions[0].failureReason").value("답변이 들리지 않았어요. 다시 녹음해 주세요."));
+  }
+
+  @MockitoSpyBean LlmClient llm;
+
+  @Test
+  void 평가가_두_번_깨지면_실패로_두고_다시_시도하면_STT없이_평가만() throws Exception {
+    doReturn(new LlmResponse("평가할 수 없어요", "m", 0, 0)).when(llm).generate(any());
+    answer();
+    mockMvc
+        .perform(get("/api/interviews/" + id).with(user(me)))
+        .andExpect(jsonPath("$.questions[0].answerStatus").value("FAILED"))
+        .andExpect(jsonPath("$.questions[0].failureReason").value("답변을 평가하지 못했어요. 다시 시도해 주세요."));
+
+    Mockito.reset(llm);
+    Mockito.clearInvocations(stt);
+    mockMvc
+        .perform(post("/api/interviews/" + id + "/questions/1/retry").with(csrf()).with(user(me)))
+        .andExpect(status().isAccepted());
+    Mockito.verify(stt, Mockito.never()).transcribe(any(), anyString());
+    mockMvc
+        .perform(get("/api/interviews/" + id).with(user(me)))
+        .andExpect(jsonPath("$.questions[0].answerStatus").value("EVALUATED"));
+  }
+
+  @Test
+  void 처리_중_예상하지_못한_오류가_나도_실패로_남겨_다시_시도할_수_있다() throws Exception {
+    doThrow(new IllegalStateException("boom")).when(llm).generate(any());
+    doThrow(new IllegalStateException("db?")).when(stt).transcribe(any(), anyString());
+    answer();
+    mockMvc
+        .perform(get("/api/interviews/" + id).with(user(me)))
+        .andExpect(jsonPath("$.questions[0].answerStatus").value("FAILED"));
   }
 
   @Test

@@ -95,6 +95,18 @@ class AnswerTest {
   }
 
   @Test
+  void 평가만_실패했으면_글자를_남기고_평가부터_다시() {
+    Answer a = Answer.recorded(session(), 1, "k", "audio/webm");
+    a.transcribed("답변 글자", 1000);
+    a.failed("평가 실패");
+
+    a.retry();
+
+    assertThat(a.getStatus()).isEqualTo(AnswerStatus.TRANSCRIBED);
+    assertThat(a.getTranscript()).isEqualTo("답변 글자");
+  }
+
+  @Test
   void 실패가_아니면_다시_시도할_수_없다() {
     Answer a = Answer.recorded(session(), 1, "k", "audio/webm");
     assertThatThrownBy(a::retry)

@@ -145,5 +145,32 @@ class InterviewAnswerApiTest extends IntegrationTest {
     answer(id, 1, AUDIO, "text/plain", me).andExpect(status().isBadRequest());
     answer(id, 1, new byte[0], "audio/webm", me).andExpect(status().isBadRequest());
     answer(id, 9).andExpect(status().isNotFound());
+    answer(id, 1, new byte[10 * 1024 * 1024 + 1], "audio/webm", me)
+        .andExpect(status().isBadRequest());
+    answer(id, 1, AUDIO, "audio/" + "x".repeat(120), me).andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void 남의_답변은_다시_시도할_수_없다() throws Exception {
+    long id = techInterview();
+    answer(id, 1);
+    AuthUser other = createUser("other@test.com", AppUser.Role.USER);
+    mockMvc
+        .perform(
+            post("/api/interviews/" + id + "/questions/1/retry").with(csrf()).with(user(other)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void 녹음은_일부만_요청해도_받을_수_있다() throws Exception {
+    long id = techInterview();
+    answer(id, 1);
+    mockMvc
+        .perform(
+            get("/api/interviews/" + id + "/questions/1/audio")
+                .header("Range", "bytes=0-3")
+                .with(user(me)))
+        .andExpect(status().isPartialContent())
+        .andExpect(content().bytes("webm".getBytes()));
   }
 }
