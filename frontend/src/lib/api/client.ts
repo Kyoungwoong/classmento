@@ -27,7 +27,9 @@ export type TagResult = Schemas["TagResult"];
 export type QuestionView = Schemas["QuestionView"];
 export type QuestionPage = Schemas["QuestionPage"];
 export type QuestionRequest = Schemas["QuestionRequest"];
-export type QuestionSearchParams = NonNullable<operations["searchAdminQuestions"]["parameters"]["query"]>;
+export type QuestionSearchParams = NonNullable<
+  operations["searchAdminQuestions"]["parameters"]["query"]
+>;
 export type AdminUserView = Schemas["AdminUserView"];
 export type SignupRequest = Schemas["SignupRequest"];
 export type LoginRequest = Schemas["LoginRequest"];
