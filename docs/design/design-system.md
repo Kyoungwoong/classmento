@@ -11,7 +11,7 @@
    - 연두(`primary`)는 버튼·막대·선택 면에 쓴다. 흰 바탕 위 **글자로 쓰지 않는다**(대비 1.5:1). 글자 강조는 `text-accent`(진한 연두)로 한다.
    - 남색(`ink`)은 제목, 헤더 버튼, 푸터 면에 쓴다.
    - 노랑(`highlight`)은 배지·밑줄처럼 한 화면에 한두 군데만 쓴다.
-3. **섹션은 배경 띠로 나눈다.** `Section tone="plain | tint | muted | ink"`. 같은 톤을 연달아 두지 않는다.
+3. **섹션은 배경 띠로 나눈다.** `Section tone="plain | tint | subtle | ink"`(흰색 · 연한 연두 · 아주 연한 회색 · 남색). 같은 톤을 연달아 두지 않는다. 띠 안 제목은 `SectionHeading tone`을 같이 넘겨 대비를 맞춘다.
 4. **묶음은 패널로.**
    - `Panel`: 흰 면, 1px 테두리, 둥근 20px. 그림자는 없다.
    - 패널 안에 패널을 넣지 않는다. 한 화면에 2~3개까지.
@@ -33,12 +33,12 @@
 | 메인(연두) | lime-400 `#A3E635`, pressed lime-500 | `bg-primary` `active:bg-primary-pressed` |
 | 연두 위 글자 | navy-900 `#14213D` | `text-on-primary` |
 | 글자 강조 | lime-700 `#4D7C0F` | `text-accent` (링크·체크·단계 번호) |
-| 남색 | navy-900 / 800 / 600 / 100 / 50 | `bg-ink` `text-ink` `text-on-ink` `bg-navy-100` |
+| 남색 | navy-900 / 800 / 600 / 200 / 100 / 50 | `bg-ink` `text-ink` `text-on-ink` `bg-navy-100`(secondary 버튼, 눌림 `navy-200`) |
 | 포인트 | yellow-400 / 100 | `bg-highlight` `bg-highlight-weak` |
 | 배경 | white / 연한 연두 `#F4FCE3` / gray-50 / gray-100 | `bg-bg` `bg-bg-tint`(=`bg-primary-weak`) `bg-bg-subtle` `bg-bg-muted` |
 | 글자 | navy-900 / gray-800 / 600 / 500 | `text-text-strong` `text-text` `text-text-sub` `text-text-hint` |
 | 테두리 | gray-200 | `border-border` |
-| 상태 | green / orange / red | `text-success` `text-warning` `text-danger` |
+| 상태 | green / orange / red-600 `#D22030` | `text-success` `text-warning` `text-danger`(흰색 대비 5.3, danger 버튼도 AA) |
 | 모서리 | 8 / 12 / 16 / 20 | `rounded-sm` `rounded-md`(버튼·입력) `rounded-lg` `rounded-xl`(패널) |
 | 폭 | 1120 / 560 | `max-w-site` `max-w-narrow` |
 | 간격 | 4의 배수 | 본문 좌우 `px-5 md:px-8`, 섹션 위아래 `py-14 md:py-24` |
@@ -55,16 +55,20 @@ Tailwind 기본 팔레트는 꺼져 있다(`--color-*: initial`). `bg-purple-500
 | accent / 연한 면 | 4.7 |
 | 남색 / 흰색 | 16.0 |
 | 연한 남색 / 남색 면 | 13.3 |
+| 연두 글자 / 남색 면 | 10.6 |
+| danger / 흰색 | 5.3 |
 | `text-sub` / 연한 면 | 4.4 |
+| accent / 남색 면 | 3.2 |
 
-`text-sub` / 연한 면은 기준에 모자라므로, 연한 면 위 본문은 `text-text`로 쓴다.
+- `text-sub` / 연한 면은 기준에 모자라므로, 연한 면 위 본문은 `text-text`로 쓴다(`StepList onTint`).
+- accent / 남색 면도 기준에 모자란다. 남색 면 위 강조 글자는 연두(`text-primary`)를 쓴다. 연두를 글자로 쓰는 곳은 **남색 면 위뿐**이다.
 
 ## 컴포넌트
 **사이트** (`frontend/src/components/site`)
 
 | 컴포넌트 | 언제 |
 |---|---|
-| `SiteHeader` | 루트 레이아웃. 로고 · 메뉴(면접 보기·이력서 올리기·관리자면 관리) · 로그인/로그아웃. 모바일은 메뉴 버튼과 펼침 목록. 페이지가 바뀌면 로그인 상태를 다시 확인한다 |
+| `SiteHeader` | 루트 레이아웃. 로고 · 메뉴(면접 보기·이력서 올리기·관리자면 관리, 지금 페이지는 `aria-current`) · 로그인/로그아웃(로그인·회원가입 화면에서는 숨김). 모바일은 메뉴 버튼과 펼침 목록(열면 첫 링크로 초점, Escape로 닫기). 페이지가 바뀌면 로그인 상태를 다시 확인한다 |
 | `SiteFooter` | 루트 레이아웃. 남색 띠 |
 | `Logo` | 연두 말풍선 마크 + "classmento". 홈 링크 |
 
@@ -73,10 +77,10 @@ Tailwind 기본 팔레트는 꺼져 있다(`--color-*: initial`). `bg-purple-500
 | 컴포넌트 | 언제 |
 |---|---|
 | `Screen`, `ScreenTitle` | 페이지 본문 뼈대(`width`)와 큰 제목. 제목 위에 단계 라벨(`eyebrow`)을 붙일 수 있다 |
-| `Section`, `SectionHeading` | 홈·소개처럼 띠로 나누는 페이지. 띠 안 제목은 h2 |
-| `Panel` | 관련된 것을 한 덩어리로(녹음 패널, 점수 요약, 업로드 영역). `tone="tint"`는 강조 묶음 하나 |
+| `Section`, `SectionHeading` | 홈·소개처럼 띠로 나누는 페이지. 띠 안 제목은 h2, `tone`을 띠와 같게 넘긴다 |
+| `Panel` | 관련된 것을 한 덩어리로(녹음 패널, 점수 요약, 업로드 영역). `tone="tint"`는 강조 묶음 하나(연한 면 띠 안에는 두지 않는다) |
 | `TwoColumn` | 데스크톱 2단(왼쪽 5/12 · 오른쪽 7/12, `ratio="even"`이면 반반) |
-| `StepList` | "01 · 제목 · 설명" 번호 단계 행 |
+| `StepList` | "01 · 제목 · 설명" 번호 단계 행. 연한 면 띠 안이면 `onTint` |
 | `BottomCTA` + `Button` | 주요 행동. 버튼 높이 56(lg). primary = 연두 면 + 남색 글자, secondary = 연한 남색 면. 로딩 문구는 `loadingText`로 지금 하는 일("올리고 있어요") |
 | `ButtonLink` | 화면 이동용 버튼(모양은 Button, 실제는 링크) |
 | `TopBar` | `Screen` header 슬롯. 뒤로 가기 + 오른쪽 작은 텍스트 행동 하나 |
@@ -92,7 +96,7 @@ Tailwind 기본 팔레트는 꺼져 있다(`--color-*: initial`). `bg-purple-500
 | `TagInput` | Notion식 태그: 입력하면 후보, Enter·쉼표로 만들기, 한글 조합 중 Enter 무시 |
 | `ProgressBar` | 진행도 (얇은 4px 연두 막대) |
 | `ScoreBar` | 기준 하나의 점수: 이름 + 숫자 + ProgressBar. 점수로 색을 바꾸지 않는다. 평균은 `decimals={1}` |
-| `Toast` | "저장했어요" 같은 짧은 결과(남색 면) |
+| `Toast` | "저장했어요" 같은 짧은 결과(남색 면). live region은 늘 두고 내용만 바꾼다 |
 
 아이콘: `lucide-react`. 버튼, 목록 행, 섹션 제목 앞에만 쓰고 크기는 20~24, 장식이면 `aria-hidden`이다.
 새 컴포넌트는 기존 걸로 안 될 때만 만들고, 이 표에 추가한다.
