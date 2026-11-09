@@ -66,7 +66,7 @@ export function SignupForm() {
           <Mascot mood="idle" size={72} className="mb-8 shrink-0 md:mb-10" />
         </div>
         <NoteSheet>
-          <HandNote className="mb-2 block -rotate-1">첫 장을 펼쳐요</HandNote>
+          <HandNote className="mb-4 block -rotate-1">첫 장을 펼쳐요</HandNote>
           <form id="signup-form" onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
             <TextField
               label="이름"

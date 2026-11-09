@@ -3,7 +3,6 @@ import { ButtonLink } from "@/components/ui";
 import {
   CheckList,
   GridPaper,
-  HandNote,
   Highlight,
   NoteSheet,
   Scribble,
@@ -44,7 +43,7 @@ const TYPES = [
   },
   {
     tab: "기술",
-    tabClass: "bg-highlight text-ink",
+    tabClass: "bg-highlight-weak text-ink",
     title: "기술 면접",
     description: "Language·Framework·CS 질문 은행에서 직무와 연차에 맞게 골라요.",
   },
@@ -91,7 +90,7 @@ function NotePreview() {
         className="absolute -top-14 -left-4 z-10 md:-top-16 md:-left-10 md:size-28"
       />
       <NoteSheet>
-        <p className="font-hand text-title2 text-accent">Q2.</p>
+        <p className="text-caption font-semibold text-accent">질문 2</p>
         <p className="mt-1 text-body1 font-semibold text-text-strong md:text-title2">
           최근 프로젝트에서 가장 어려웠던 문제는 무엇이었나요?
         </p>
@@ -107,8 +106,8 @@ function NotePreview() {
           <span className="text-caption text-text-sub tabular-nums">0:42</span>
         </div>
         <p className="mt-5 pr-24 text-body2 text-text md:pr-28">
-          <span className="font-semibold text-text-strong">잘한 점</span> · 원인부터 결과까지{" "}
-          <Highlight>순서대로</Highlight> 말했어요.
+          <span className="font-semibold text-text-strong">잘한 점</span> · 원인부터 결과까지
+          순서대로 말했어요.
         </p>
         <Stamp score={4.2} className="absolute -right-3 -bottom-8 bg-paper md:-right-8" />
       </NoteSheet>
@@ -122,12 +121,13 @@ export function HomeLanding() {
     <main>
       <section aria-labelledby="hero-heading" className="relative isolate bg-paper">
         <GridPaper />
-        <div className="mx-auto grid w-full max-w-site gap-16 px-5 pt-12 pb-20 md:grid-cols-12 md:items-center md:gap-12 md:px-8 md:pt-20 md:pb-28">
-          <div className="md:col-span-6">
-            <HandNote className="inline-block -rotate-2">말로 답하는 모의면접</HandNote>
+        {/* 2단은 lg부터: md에서 6칸에 hero 글자를 넣으면 4줄로 끊긴다 */}
+        <div className="mx-auto grid w-full max-w-site gap-16 px-5 pt-12 pb-20 md:px-8 md:pt-20 md:pb-28 lg:grid-cols-12 lg:items-center lg:gap-12">
+          <div className="lg:col-span-6">
+            <p className="text-caption font-semibold text-accent">말로 답하는 모의면접</p>
             <h1
               id="hero-heading"
-              className="mt-3 text-display whitespace-pre-line text-ink md:text-hero"
+              className="mt-3 text-display whitespace-pre-line text-ink lg:text-hero"
             >
               면접은 말로 하니까,
               <br />
@@ -145,7 +145,7 @@ export function HomeLanding() {
               </ButtonLink>
             </div>
           </div>
-          <div className="pt-6 md:col-span-6 md:pt-0">
+          <div className="pt-6 lg:col-span-6 lg:pt-0">
             <NotePreview />
           </div>
         </div>
@@ -155,9 +155,9 @@ export function HomeLanding() {
       </section>
 
       <section aria-labelledby="prep-heading" className="py-16 md:py-24">
-        <div className="relative mx-auto w-full max-w-3xl px-5 md:px-8">
-          <NoteSheet>
-            <HandNote>to do</HandNote>
+        {/* 노트 8칸 + 포스트잇 4칸. 음수 위치로 밖에 붙이지 않는다(좁은 폭에서 가로 넘침) */}
+        <div className="mx-auto grid w-full max-w-site gap-8 px-5 md:px-8 lg:grid-cols-12 lg:gap-10">
+          <NoteSheet className="lg:col-span-8">
             <h2 id="prep-heading" className="text-title1 text-text-strong md:text-title1-lg">
               오늘의 면접 준비
             </h2>
@@ -168,7 +168,7 @@ export function HomeLanding() {
           </NoteSheet>
           <StickyNote
             title="처음이라면"
-            className="mx-auto mt-8 max-w-64 md:absolute md:top-10 md:-right-40 md:mt-0 md:w-56"
+            className="mx-auto w-full max-w-64 self-start lg:col-span-4 lg:mx-0 lg:mt-12"
           >
             질문 세 개면 10분 안에 끝나요.
           </StickyNote>
@@ -178,9 +178,9 @@ export function HomeLanding() {
       <section aria-labelledby="types-heading" className="bg-bg-subtle py-16 md:py-24">
         <div className="mx-auto w-full max-w-site px-5 md:px-8">
           <h2 id="types-heading" className="text-title1 text-text-strong md:text-title1-lg">
-            <span className="inline-block">
+            <span className="relative inline-block">
               네 가지 면접
-              <Scribble />
+              <Scribble className="absolute inset-x-0 -bottom-3" />
             </span>{" "}
             중에 골라요
           </h2>
@@ -219,8 +219,9 @@ export function HomeLanding() {
                 <h2 id="board-heading" className="font-hand text-display text-on-ink">
                   오늘은 질문 세 개만 답해 볼까요?
                 </h2>
-                <Scribble className="mt-1 max-w-sm" />
-                <p className="mt-4 text-body1 text-navy-100">질문 세 개면 10분 안에 끝나요.</p>
+                <p className="mt-4 text-body1 text-navy-100">
+                  이력서가 없어도 바로 시작할 수 있어요.
+                </p>
               </div>
               {/* 히어로에 주요 버튼이 있으니 여기는 보조 모양(주요 버튼은 화면에 하나) */}
               <ButtonLink href="/interview/new" variant="secondary" className="md:min-w-56">

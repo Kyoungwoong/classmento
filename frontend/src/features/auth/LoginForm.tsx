@@ -71,7 +71,7 @@ export function LoginForm() {
           <Mascot mood="idle" size={72} className="mb-8 shrink-0 md:mb-10" />
         </div>
         <NoteSheet>
-          <HandNote className="mb-2 block -rotate-1">다시 왔네요!</HandNote>
+          <HandNote className="mb-4 block -rotate-1">다시 왔네요!</HandNote>
           <form id="login-form" onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
             <TextField
               label="이메일"

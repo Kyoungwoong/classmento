@@ -41,7 +41,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense fallback={<SiteHeaderShell />}>
           <SiteHeader />
         </Suspense>
-        <div className="flex flex-1 flex-col">{children}</div>
+        {/* 기울인 노트·도장 같은 장식이 어떤 폭에서도 페이지를 넓히지 못하게 가로로 자른다.
+            clip은 스크롤 상자를 만들지 않아 sticky가 그대로 동작한다 */}
+        <div className="flex flex-1 flex-col overflow-x-clip">{children}</div>
         <SiteFooter />
       </body>
     </html>
