@@ -243,5 +243,104 @@ class QuestionAdminApiTest extends IntegrationTest {
     mockMvc
         .perform(get("/api/admin/questions").with(user(normal)))
         .andExpect(status().isForbidden());
+
+    long id = idOf(create(body(categoryId("CS", "보안"), "권한 확인용 질문입니다", "")));
+    String json = body(categoryId("CS", "보안"), "권한 확인용 질문입니다", "");
+    mockMvc
+        .perform(
+            post("/api/admin/questions")
+                .with(csrf())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+        .andExpect(status().isUnauthorized());
+    mockMvc
+        .perform(
+            post("/api/admin/questions")
+                .with(csrf())
+                .with(user(normal))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+        .andExpect(status().isForbidden());
+    mockMvc
+        .perform(
+            put("/api/admin/questions/" + id)
+                .with(csrf())
+                .with(user(normal))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json))
+        .andExpect(status().isForbidden());
+    mockMvc
+        .perform(
+            patch("/api/admin/questions/" + id + "/active")
+                .with(csrf())
+                .with(user(normal))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"active\":false}"))
+        .andExpect(status().isForbidden());
+  }
+
+  private ResultActions setActive(long id, boolean active) throws Exception {
+    return mockMvc.perform(
+        patch("/api/admin/questions/" + id + "/active")
+            .with(csrf())
+            .with(user(admin))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("{\"active\":" + active + "}"));
+  }
+
+  @Test
+  void 없는_질문의_수정_숨김은_404() throws Exception {
+    mockMvc
+        .perform(
+            put("/api/admin/questions/999999")
+                .with(csrf())
+                .with(user(admin))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body(categoryId("CS", "보안"), "없는 질문을 고치려는 요청", "")))
+        .andExpect(status().isNotFound());
+    setActive(999999, false).andExpect(status().isNotFound());
+  }
+
+  @Test
+  void 숨긴_질문을_다시_보이게_한다() throws Exception {
+    long id = idOf(create(body(categoryId("CS", "보안"), "다시 보일 질문입니다", "")));
+    setActive(id, false).andExpect(jsonPath("$.active").value(false));
+    setActive(id, true).andExpect(status().isOk()).andExpect(jsonPath("$.active").value(true));
+    mockMvc
+        .perform(get("/api/admin/questions").param("q", "다시 보일 질문").with(user(admin)))
+        .andExpect(jsonPath("$.total").value(1));
+  }
+
+  @Test
+  void 다른_숨긴_카테고리로_옮기면_409() throws Exception {
+    long id = idOf(create(body(categoryId("CS", "보안"), "옮기려는 질문입니다", "")));
+    long hidden = categoryId("CS", "네트워크");
+    jdbc.update("UPDATE qb_category SET active = FALSE WHERE id = ?", hidden);
+    mockMvc
+        .perform(
+            put("/api/admin/questions/" + id)
+                .with(csrf())
+                .with(user(admin))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body(hidden, "옮기려는 질문입니다", "")))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("CATEGORY_HIDDEN"));
+  }
+
+  @Test
+  void 직무_태그에_null이_섞이면_400() throws Exception {
+    long cat = categoryId("CS", "보안");
+    create(
+            """
+            {"categoryId": %d, "text": "null 직무가 섞인 질문", "level": "NEW", "jobRoles": [null], "tagIds": []}
+            """
+                .formatted(cat))
+        .andExpect(status().isBadRequest());
+    create(
+            """
+            {"categoryId": %d, "text": "null 태그가 섞인 질문", "level": "NEW", "jobRoles": ["BACKEND"], "tagIds": [null]}
+            """
+                .formatted(cat))
+        .andExpect(status().isBadRequest());
   }
 }
