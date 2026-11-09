@@ -27,6 +27,7 @@ export type TagResult = Schemas["TagResult"];
 export type QuestionView = Schemas["QuestionView"];
 export type QuestionPage = Schemas["QuestionPage"];
 export type QuestionRequest = Schemas["QuestionRequest"];
+export type ImportResult = Schemas["ImportResult"];
 export type QuestionSearchParams = NonNullable<
   operations["searchAdminQuestions"]["parameters"]["query"]
 >;
@@ -151,6 +152,11 @@ export const api = {
     apiFetch<QuestionView>("/api/admin/questions", { method: "POST", body: json(body) }),
   updateQuestion: (id: number, body: QuestionRequest) =>
     apiFetch<QuestionView>(`/api/admin/questions/${id}`, { method: "PUT", body: json(body) }),
+  importQuestions: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiFetch<ImportResult>("/api/admin/questions/import", { method: "POST", body: form });
+  },
   setQuestionActive: (id: number, active: boolean) =>
     apiFetch<QuestionView>(`/api/admin/questions/${id}/active`, {
       method: "PATCH",
