@@ -8,6 +8,7 @@ import com.classmento.questionbank.domain.QuestionCandidateRepository;
 import com.classmento.questionbank.domain.QuestionPicker.Candidate;
 import com.classmento.support.IntegrationTest;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,12 @@ class JdbcQuestionCandidateRepositoryTest extends IntegrationTest {
 
   @BeforeEach
   void fill() {
+    backfill.fillMissing();
+  }
+
+  /** 시드 질문의 임베딩을 지운 테스트가 다른 테스트에 영향을 주지 않게 다시 채운다. */
+  @AfterEach
+  void refill() {
     backfill.fillMissing();
   }
 
@@ -72,7 +79,9 @@ class JdbcQuestionCandidateRepositoryTest extends IntegrationTest {
 
     jdbc.update(
         "UPDATE qb_question SET embedding = NULL WHERE text = ?", "데드락이 생기는 조건과 막는 방법을 설명해 주세요.");
-    jdbc.update("UPDATE qb_category SET active = TRUE WHERE name = '운영체제'");
+    jdbc.update(
+        "UPDATE qb_category SET active = TRUE WHERE name = '운영체제'"
+            + " AND parent_id = (SELECT id FROM qb_category WHERE name = 'CS' AND parent_id IS NULL)");
     assertThat(nearestTexts(q, 46)).doesNotContain("데드락이 생기는 조건과 막는 방법을 설명해 주세요.");
   }
 }
