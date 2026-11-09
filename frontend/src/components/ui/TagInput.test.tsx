@@ -83,5 +83,6 @@ describe("TagInput", () => {
     expect(
       await screen.findByText("태그를 만들지 못했어요. 다시 시도해 주세요."),
     ).toBeInTheDocument();
+    expect(input).toHaveAccessibleDescription("태그를 만들지 못했어요. 다시 시도해 주세요.");
   });
 });

@@ -65,6 +65,28 @@ describe("QuestionListScreen", () => {
     expect(tree$).toHaveBeenCalledTimes(2);
   });
 
+  it("더 보기 사이에 새 질문이 들어와 겹쳐도 한 번만 보여준다", async () => {
+    vi.spyOn(api, "adminCategories").mockResolvedValue(tree);
+    vi.spyOn(api, "adminQuestions")
+      .mockResolvedValueOnce({
+        items: [question({ id: 1 }), question({ id: 2 })],
+        total: 4,
+        page: 0,
+        size: 2,
+      })
+      .mockResolvedValueOnce({
+        items: [question({ id: 2 }), question({ id: 3 })],
+        total: 4,
+        page: 1,
+        size: 2,
+      });
+    render(<QuestionListScreen />);
+    fireEvent.click(await screen.findByRole("button", { name: "더 보기" }));
+    await waitFor(() =>
+      expect(screen.getAllByRole("button", { name: /TCP와 UDP/ })).toHaveLength(3),
+    );
+  });
+
   it("조건에 맞는 질문이 없으면 알려준다", async () => {
     vi.spyOn(api, "adminCategories").mockResolvedValue(tree);
     vi.spyOn(api, "adminQuestions").mockResolvedValue({ items: [], total: 0, page: 0, size: 20 });

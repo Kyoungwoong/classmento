@@ -101,6 +101,26 @@ describe("QuestionFormScreen", () => {
     );
   });
 
+  it("없는 질문이면 원인을 알려준다", async () => {
+    vi.spyOn(api, "adminCategories").mockResolvedValue(tree);
+    vi.spyOn(api, "adminQuestion").mockRejectedValue(
+      new ApiError(404, "NOT_FOUND", "찾을 수 없어요."),
+    );
+    render(<QuestionFormScreen id={999} />);
+    expect(
+      await screen.findByText("질문을 찾을 수 없어요. 목록에서 다시 골라 주세요."),
+    ).toBeInTheDocument();
+  });
+
+  it("저장하는 동안에는 숨기기를 누를 수 없다", async () => {
+    vi.spyOn(api, "adminCategories").mockResolvedValue(tree);
+    vi.spyOn(api, "adminQuestion").mockResolvedValue(question());
+    vi.spyOn(api, "updateQuestion").mockReturnValue(new Promise(() => {}));
+    render(<QuestionFormScreen id={100} />);
+    fireEvent.click(await screen.findByRole("button", { name: "저장하기" }));
+    expect(screen.getByRole("button", { name: "숨기기" })).toBeDisabled();
+  });
+
   it("수정 화면에서 숨기기", async () => {
     vi.spyOn(api, "adminCategories").mockResolvedValue(tree);
     vi.spyOn(api, "adminQuestion").mockResolvedValue(question());

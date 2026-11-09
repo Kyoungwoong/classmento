@@ -243,6 +243,10 @@ class QuestionAdminApiTest extends IntegrationTest {
     mockMvc
         .perform(get("/api/admin/questions").with(user(normal)))
         .andExpect(status().isForbidden());
+    mockMvc.perform(get("/api/admin/questions/1")).andExpect(status().isUnauthorized());
+    mockMvc
+        .perform(get("/api/admin/questions/1").with(user(normal)))
+        .andExpect(status().isForbidden());
 
     long id = idOf(create(body(categoryId("CS", "보안"), "권한 확인용 질문입니다", "")));
     String json = body(categoryId("CS", "보안"), "권한 확인용 질문입니다", "");
