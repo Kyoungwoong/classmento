@@ -12,6 +12,9 @@ export default function Home() {
       cta={
         <BottomCTA caption="PDF, DOCX 파일 · 최대 20MB">
           {/* 로그인 안 했으면 proxy.ts가 /login?next=/resume/upload 로 보낸다 */}
+          <ButtonLink href="/interview/new" variant="secondary">
+            면접 바로 보기
+          </ButtonLink>
           <ButtonLink href="/resume/upload">이력서 올리기</ButtonLink>
         </BottomCTA>
       }

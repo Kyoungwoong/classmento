@@ -152,13 +152,13 @@ function ParsedView({
     <Screen
       header={<TopBar />}
       cta={
-        <BottomCTA caption={dirty ? undefined : "면접 질문 만들기는 곧 열려요"}>
+        <BottomCTA>
           {dirty ? (
             <Button onClick={save} loading={saving} loadingText="저장하고 있어요">
               고친 내용 저장하기
             </Button>
           ) : (
-            <Button disabled>면접 준비하기</Button>
+            <ButtonLink href="/interview/new">면접 준비하기</ButtonLink>
           )}
         </BottomCTA>
       }
