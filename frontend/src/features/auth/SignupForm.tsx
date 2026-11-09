@@ -41,7 +41,7 @@ export function SignupForm() {
 
   return (
     // 회색 바탕 위 흰 패널 — 면 대비로 폼을 한 덩어리로 보이게
-    <div className="bg-bg-subtle">
+    <div className="flex-1 bg-bg-subtle">
       <Screen
         width="narrow"
         header={<TopBar />}

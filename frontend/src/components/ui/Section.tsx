@@ -16,6 +16,8 @@ interface SectionProps {
   className?: string;
   /** 스크린리더용 이름(제목이 없을 때) */
   "aria-label"?: string;
+  /** 띠 제목(`SectionHeading id`)으로 섹션 이름을 붙일 때 */
+  "aria-labelledby"?: string;
   id?: string;
 }
 
@@ -38,7 +40,7 @@ interface SectionHeadingProps {
   eyebrow?: ReactNode;
   /** 띠 톤. ink(남색) 띠 위에서는 글자를 밝게 바꾼다(대비) */
   tone?: SectionTone;
-  /** h2 id — Section의 aria-labelledby로 이어 섹션 이름을 제목만으로 읽히게 */
+  /** h2 id — `Section aria-labelledby`로 이어 섹션 이름을 제목만으로 읽히게 */
   id?: string;
   /** 아래 여백을 없앤다(띠 안에서 버튼과 한 줄로 둘 때) */
   flush?: boolean;

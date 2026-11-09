@@ -22,7 +22,7 @@ export function Mascot({ mood = "idle", size = 120, label, className }: MascotPr
       width={size}
       height={size}
       viewBox="0 0 120 120"
-      className={clsx("shrink-0", className)}
+      className={clsx("shrink-0", !label && "pointer-events-none", className)}
       {...(label ? { role: "img", "aria-label": label } : { "aria-hidden": true })}
       data-mood={mood}
     >
