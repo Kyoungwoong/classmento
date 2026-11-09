@@ -126,14 +126,16 @@ export function QuestionImportScreen() {
         ref={inputRef}
         type="file"
         accept=".csv,text/csv"
-        aria-invalid={!!fileError || undefined}
-        aria-describedby={fileError ? errorId : undefined}
+        aria-label="CSV 파일 고르기"
+        // 보이는 [파일 고르기] 버튼이 탭 순서를 맡는다(두 번 멈추지 않게)
+        tabIndex={-1}
         onChange={(e) => choose(e.target.files?.[0])}
         className="sr-only"
       />
 
       {errors.length > 0 ? (
-        <ul>
+        // 결과가 오면 화면이 바뀐 것을 스크린리더가 바로 읽게
+        <ul role="alert">
           {errors.map((e) => (
             <li key={`${e.line}-${e.message}`}>
               <ListRow title={`${e.line}번째 줄`} description={e.message} />
@@ -145,8 +147,13 @@ export function QuestionImportScreen() {
           <section>
             <h2 className="text-body1 font-semibold text-text-strong">이렇게 만들어 주세요</h2>
             <ul className="mt-3 flex list-disc flex-col gap-2 pl-5 text-body2 text-text-sub">
-              <li>첫 줄은 대분류,소분류,질문,난이도,직무,태그,의도 그대로</li>
-              <li>대분류·소분류는 이미 있는 이름으로</li>
+              <li>
+                첫 줄에는 아래 이름을 그대로 써요
+                <span className="mt-1 block text-caption text-text-hint">
+                  대분류, 소분류, 질문, 난이도, 직무, 태그, 의도 (쉼표로 구분)
+                </span>
+              </li>
+              <li>대분류·소분류는 이미 있는 이름을 써요</li>
               <li>직무·태그가 여러 개면 | 로 나눠요. 태그는 없으면 새로 만들어요</li>
               <li>엑셀에서는 &lsquo;CSV UTF-8&rsquo;로 저장해요. 1000줄, 2MB까지</li>
             </ul>
@@ -160,15 +167,17 @@ export function QuestionImportScreen() {
           </section>
 
           <section>
-            <label htmlFor={inputId} className="mb-2 block text-caption text-text-sub">
-              CSV 파일
-            </label>
-
+            <p className="mb-2 text-caption text-text-sub">CSV 파일</p>
             <div className="flex items-center gap-3 rounded-md bg-bg-muted px-4 py-3">
               <p className="min-w-0 flex-1 truncate text-body1 text-text-strong">
                 {file ? file.name : <span className="text-text-hint">파일을 골라 주세요</span>}
               </p>
-              <Button variant="secondary" size="md" onClick={() => inputRef.current?.click()}>
+              <Button
+                variant="secondary"
+                size="md"
+                aria-describedby={fileError ? errorId : undefined}
+                onClick={() => inputRef.current?.click()}
+              >
                 {file ? "바꾸기" : "파일 고르기"}
               </Button>
             </div>
