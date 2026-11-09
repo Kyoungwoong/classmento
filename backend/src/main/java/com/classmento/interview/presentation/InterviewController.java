@@ -3,10 +3,12 @@ package com.classmento.interview.presentation;
 import com.classmento.common.security.AuthUser;
 import com.classmento.interview.application.AnswerService;
 import com.classmento.interview.application.InterviewService;
+import com.classmento.interview.application.ReportQuery;
 import com.classmento.interview.domain.InterviewSession;
 import com.classmento.interview.presentation.InterviewDtos.CreateInterviewRequest;
 import com.classmento.interview.presentation.InterviewDtos.InterviewSummary;
 import com.classmento.interview.presentation.InterviewDtos.InterviewView;
+import com.classmento.interview.presentation.InterviewDtos.ReportView;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -27,10 +29,27 @@ public class InterviewController {
 
   private final InterviewService service;
   private final AnswerService answers;
+  private final ReportQuery reports;
 
-  public InterviewController(InterviewService service, AnswerService answers) {
+  public InterviewController(InterviewService service, AnswerService answers, ReportQuery reports) {
     this.service = service;
     this.answers = answers;
+    this.reports = reports;
+  }
+
+  /** 모든 질문에 답했으면 끝낸다. 평가·종합은 백그라운드(진행은 GET …/report). */
+  @PostMapping("/{id}/finish")
+  @ResponseStatus(HttpStatus.ACCEPTED)
+  @Operation(operationId = "finishInterview")
+  public InterviewView finish(@PathVariable Long id, @AuthenticationPrincipal AuthUser user) {
+    InterviewSession s = answers.finish(user.id(), id);
+    return InterviewView.of(s, answers.answersOf(s.getId()));
+  }
+
+  @GetMapping("/{id}/report")
+  @Operation(operationId = "getInterviewReport")
+  public ReportView report(@PathVariable Long id, @AuthenticationPrincipal AuthUser user) {
+    return ReportView.of(reports.report(user.id(), id));
   }
 
   @PostMapping
