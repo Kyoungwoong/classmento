@@ -12,5 +12,8 @@ public interface InterviewSessionRepository {
 
   Optional<InterviewSession> findByIdAndUserId(Long id, Long userId);
 
+  /** 끝내기·종합처럼 상태를 바꿀 때 잠그고 읽는다(트랜잭션 안에서만). */
+  Optional<InterviewSession> lockById(Long id);
+
   List<InterviewSession> findByUserIdOrderByCreatedAtDescIdDesc(Long userId);
 }
