@@ -29,8 +29,11 @@ public class Tag {
   public static final int NAME_MAX = 20;
 
   public static Tag of(String raw) {
-    String name = raw == null ? "" : raw.strip().replaceAll("\\s+", " ");
-    if (name.isEmpty() || name.length() > NAME_MAX || name.contains(",")) {
+    String name = raw == null ? "" : raw.strip().replaceAll("(?U)\\s+", " ");
+    if (name.isEmpty()
+        || name.length() > NAME_MAX
+        || keyOf(name).length() > NAME_MAX // 소문자 변환으로 길어지는 글자(예: İ) 대비
+        || name.contains(",")) {
       throw new DomainException("INVALID_TAG", "태그는 쉼표 없이 1~20자로 입력해 주세요.");
     }
     Tag t = new Tag();
@@ -41,7 +44,7 @@ public class Tag {
 
   /** 대소문자 무시 중복 판단용 키. */
   public static String keyOf(String name) {
-    return name == null ? "" : name.strip().replaceAll("\\s+", " ").toLowerCase(Locale.ROOT);
+    return name == null ? "" : name.strip().replaceAll("(?U)\\s+", " ").toLowerCase(Locale.ROOT);
   }
 
   public Long getId() {

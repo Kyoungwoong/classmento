@@ -43,8 +43,11 @@ public class GlobalExceptionHandler {
         .body(new ApiError("LOGIN_FAILED", "이메일 또는 비밀번호가 맞지 않아요."));
   }
 
+  /** 서비스 검사와 저장 사이 경쟁 등으로 DB 제약에 걸린 경우. 원인은 로그로만 남기고 사용자에게는 다시 시도를 안내한다. */
+  @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<ApiError> handleDataIntegrity(DataIntegrityViolationException e) {
-    throw new UnsupportedOperationException("TODO");
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(new ApiError("CONFLICT", "이미 있는 값과 겹쳐요. 확인 후 다시 시도해 주세요."));
   }
 
   @ExceptionHandler(MaxUploadSizeExceededException.class)

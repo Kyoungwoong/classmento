@@ -40,8 +40,11 @@ public class TagService {
             () -> {
               try {
                 return new Result(tags.save(candidate), true);
-              } catch (DataIntegrityViolationException raced) {
-                return new Result(tags.findByKey(candidate.getKey()).orElseThrow(), false);
+              } catch (DataIntegrityViolationException e) {
+                // 동시에 같은 태그가 만들어졌으면 그것을 돌려주고, 아니면 원래 원인을 그대로 던진다
+                return tags.findByKey(candidate.getKey())
+                    .map(raced -> new Result(raced, false))
+                    .orElseThrow(() -> e);
               }
             });
   }
