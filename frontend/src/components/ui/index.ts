@@ -7,3 +7,8 @@ export { Screen, ScreenTitle } from "./Screen";
 export { TextField } from "./TextField";
 export { Toast } from "./Toast";
 export { TopBar } from "./TopBar";
+export { SegmentedControl, type SegmentOption } from "./SegmentedControl";
+export { SelectChip } from "./SelectChip";
+export { TagInput, type TagItem } from "./TagInput";
+export { TextArea } from "./TextArea";
+export { Toggle } from "./Toggle";
