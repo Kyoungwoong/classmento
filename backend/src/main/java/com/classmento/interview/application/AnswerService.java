@@ -4,12 +4,15 @@ import com.classmento.common.domain.DomainException;
 import com.classmento.common.web.ApiException;
 import com.classmento.interview.domain.Answer;
 import com.classmento.interview.domain.AnswerRepository;
+import com.classmento.interview.domain.AnswerStatus;
 import com.classmento.interview.domain.InterviewSession;
 import com.classmento.interview.domain.InterviewSessionRepository;
 import com.classmento.storage.FileStorage;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.core.task.TaskRejectedException;
@@ -29,6 +32,7 @@ public class AnswerService {
   private final AnswerProcessor processor;
   private final TaskExecutor interviewExecutor;
   private final TransactionTemplate tx;
+  private final ReportWriter reports;
 
   public AnswerService(
       InterviewSessionRepository sessions,
@@ -36,13 +40,15 @@ public class AnswerService {
       FileStorage storage,
       AnswerProcessor processor,
       TaskExecutor interviewExecutor,
-      TransactionTemplate tx) {
+      TransactionTemplate tx,
+      ReportWriter reports) {
     this.sessions = sessions;
     this.answers = answers;
     this.storage = storage;
     this.processor = processor;
     this.interviewExecutor = interviewExecutor;
     this.tx = tx;
+    this.reports = reports;
   }
 
   /** 녹음을 받아 저장하고 처리를 시작한다. 같은 질문에 다시 올리면 다시 녹음으로 본다. */
@@ -105,6 +111,37 @@ public class AnswerService {
     sessionWithQuestion(userId, sessionId, seq);
     Answer a = answers.findBySessionIdAndSeq(sessionId, seq).orElseThrow(ApiException::notFound);
     return new Audio(storage.load(a.getAudioKey()), a.getContentType());
+  }
+
+  /** 면접 끝내기: 모든 질문에 답했어야 한다. 끝나면 글자까지 된 답변(혼합)을 평가하고, 모두 평가되면 종합을 만든다. */
+  public InterviewSession finish(Long userId, Long sessionId) {
+    sessions.findByIdAndUserId(sessionId, userId).orElseThrow(ApiException::notFound);
+    InterviewSession finished =
+        tx.execute(
+            s -> {
+              InterviewSession locked = sessions.lockById(sessionId).orElseThrow();
+              Set<Integer> answered = new HashSet<>();
+              answers.findBySessionIdOrderBySeq(sessionId).forEach(a -> answered.add(a.getSeq()));
+              locked.finish(answered);
+              return locked;
+            });
+    for (Answer a : answers.findBySessionIdOrderBySeq(sessionId)) {
+      if (a.getStatus() == AnswerStatus.TRANSCRIBED) {
+        Long id = a.getId();
+        int version = a.getAudioVersion();
+        submit(() -> processor.evaluateIfDue(id, version));
+      }
+    }
+    submit(() -> reports.maybeReport(sessionId));
+    return finished;
+  }
+
+  private void submit(Runnable task) {
+    try {
+      interviewExecutor.execute(task);
+    } catch (TaskRejectedException e) {
+      // 거절돼도 답변 처리·평가가 끝날 때 다시 종합을 시도한다
+    }
   }
 
   public List<Answer> answersOf(Long sessionId) {

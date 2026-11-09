@@ -38,6 +38,7 @@ public class AnswerProcessor {
   private final SttClient stt;
   private final AnswerEvaluator evaluator;
   private final TransactionTemplate tx;
+  private final ReportWriter reports;
 
   public AnswerProcessor(
       AnswerRepository answers,
@@ -45,13 +46,15 @@ public class AnswerProcessor {
       FileStorage storage,
       SttClient stt,
       AnswerEvaluator evaluator,
-      TransactionTemplate tx) {
+      TransactionTemplate tx,
+      ReportWriter reports) {
     this.answers = answers;
     this.sessions = sessions;
     this.storage = storage;
     this.stt = stt;
     this.evaluator = evaluator;
     this.tx = tx;
+    this.reports = reports;
   }
 
   /** 어떤 예외가 나도 답변을 처리 중 상태로 남기지 않는다(FAILED로 두어 다시 시도할 수 있게). */
@@ -105,7 +108,9 @@ public class AnswerProcessor {
       save(answerId, version, a -> a.failed(EVAL_FAILED));
       return;
     }
-    save(answerId, version, a -> a.evaluated(evaluation));
+    if (save(answerId, version, a -> a.evaluated(evaluation))) {
+      reports.maybeReport(answer.getSessionId());
+    }
   }
 
   private boolean transcribe(Answer answer, int version) {
