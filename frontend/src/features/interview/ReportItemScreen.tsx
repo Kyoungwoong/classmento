@@ -6,6 +6,7 @@ import {
   BottomCTA,
   Button,
   ButtonLink,
+  Panel,
   Screen,
   ScoreBar,
   ScreenTitle,
@@ -74,17 +75,19 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
     );
   }
 
-  return (
-    <Screen header={<TopBar onBack={back} />} cta={cta}>
-      <p className="mb-2 text-caption text-text-sub">{`${seq}번 질문`}</p>
+  // 왼쪽: 질문 · 녹음 · 내 답변
+  const aside = (
+    <div>
       <ScreenTitle
+        eyebrow={`${seq}번 질문`}
         title={item.question}
         description={item.intent ? `이 질문으로 보려는 것: ${item.intent}` : undefined}
       />
-
       {item.answerStatus && (
-        <section>
-          <h2 className="text-body1 font-semibold text-text-strong">내 답변</h2>
+        <section aria-labelledby="answer-heading">
+          <h2 id="answer-heading" className="text-body1 font-semibold text-text-strong">
+            내 답변
+          </h2>
           {/* 녹음은 본인만 받을 수 있다(세션 쿠키) */}
           <audio
             controls
@@ -93,53 +96,67 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
             className="mt-3 w-full"
           />
           {item.transcript && (
-            <p className="mt-4 rounded-md bg-bg-muted px-4 py-3 text-body2 whitespace-pre-line text-text">
+            <p className="mt-4 rounded-lg bg-bg-subtle px-4 py-3 text-body2 whitespace-pre-line text-text">
               {item.transcript}
             </p>
           )}
         </section>
       )}
+    </div>
+  );
 
-      {item.scores.length > 0 && (
-        <section className="mt-10">
-          <h2 className="text-body1 font-semibold text-text-strong">기준별 점수</h2>
-          <ul className="mt-4 flex flex-col gap-5">
-            {item.scores.map((s) => (
-              <li key={s.criterion}>
-                <ScoreBar label={criterionLabel(s.criterion)} score={s.score} />
-                {s.evidence && (
-                  <p className="mt-2 text-caption text-text-sub">{`“${s.evidence}”`}</p>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+  return (
+    <Screen header={<TopBar onBack={back} />} aside={aside} cta={cta}>
+      {/* 오른쪽: 점수 · 근거 · 피드백 */}
+      <div className="flex flex-col gap-4">
+        {item.scores.length > 0 && (
+          <Panel>
+            <h2 className="text-body1 font-semibold text-text-strong">기준별 점수</h2>
+            <ul className="mt-5 flex flex-col gap-5">
+              {item.scores.map((s) => (
+                <li key={s.criterion}>
+                  <ScoreBar label={criterionLabel(s.criterion)} score={s.score} />
+                  {s.evidence && (
+                    <p className="mt-2 text-caption text-text-sub">{`“${s.evidence}”`}</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        )}
 
-      {item.answerStatus === "EVALUATED" ? (
-        <dl className="mt-10 flex flex-col gap-5">
-          <div>
-            <dt className="text-caption text-text-sub">잘한 점</dt>
-            <dd className="mt-1 text-body1 text-text">{item.strength}</dd>
-          </div>
-          <div>
-            <dt className="text-caption text-text-sub">고칠 점</dt>
-            <dd className="mt-1 text-body1 text-text">{item.improvement}</dd>
-          </div>
-          <div>
-            <dt className="text-caption text-text-sub">이렇게 답해 보세요</dt>
-            <dd className="mt-1 text-body1 text-text">{item.suggestion}</dd>
-          </div>
-        </dl>
-      ) : (
-        <p className="mt-10 text-body2 text-text-sub">
-          {item.answerStatus == null
-            ? "답하지 않았어요."
-            : item.answerStatus === "FAILED"
-              ? (item.failureReason ?? "평가하지 못했어요.")
-              : "평가하고 있어요. 끝나면 점수와 피드백이 보여요."}
-        </p>
-      )}
+        {item.answerStatus === "EVALUATED" ? (
+          <>
+            <Panel>
+              <dl className="flex flex-col gap-5">
+                <div>
+                  <dt className="text-caption font-semibold text-accent">잘한 점</dt>
+                  <dd className="mt-1 text-body1 text-text">{item.strength}</dd>
+                </div>
+                <div>
+                  <dt className="text-caption font-semibold text-accent">고칠 점</dt>
+                  <dd className="mt-1 text-body1 text-text">{item.improvement}</dd>
+                </div>
+              </dl>
+            </Panel>
+            {/* 다음에 바로 써먹을 예시 하나만 연한 연두 면으로 강조 */}
+            <Panel tone="tint">
+              <h2 className="text-caption font-semibold text-accent">이렇게 답해 보세요</h2>
+              <p className="mt-1 text-body1 text-text">{item.suggestion}</p>
+            </Panel>
+          </>
+        ) : (
+          <Panel>
+            <p className="text-body2 text-text-sub">
+              {item.answerStatus == null
+                ? "답하지 않았어요."
+                : item.answerStatus === "FAILED"
+                  ? (item.failureReason ?? "평가하지 못했어요.")
+                  : "평가하고 있어요. 끝나면 점수와 피드백이 보여요."}
+            </p>
+          </Panel>
+        )}
+      </div>
     </Screen>
   );
 }
