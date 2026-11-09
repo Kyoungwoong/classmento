@@ -22,8 +22,10 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
   const [item, setItem] = useState<ReportItemView | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const invalid = !Number.isInteger(id) || id <= 0 || !Number.isInteger(seq) || seq <= 0;
 
   useEffect(() => {
+    if (invalid) return;
     api
       .interviewReport(id)
       .then((r) => setItem(r.items.find((it) => it.seq === seq) ?? null))
@@ -34,7 +36,7 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
         }
         setError("답변을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.");
       });
-  }, [id, seq, router, attempt]);
+  }, [id, seq, router, attempt, invalid]);
 
   const back = () => router.push(`/interview/${id}/report`);
   const cta = (
@@ -43,8 +45,8 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
     </BottomCTA>
   );
 
-  if (item === undefined || item === null) {
-    const title = error ?? (item === null ? "문항을 찾을 수 없어요" : null);
+  if (invalid || item === undefined || item === null) {
+    const title = error ?? (invalid || item === null ? "문항을 찾을 수 없어요" : null);
     return (
       <Screen
         header={<TopBar onBack={back} />}

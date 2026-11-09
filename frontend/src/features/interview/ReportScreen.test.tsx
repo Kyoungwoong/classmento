@@ -124,7 +124,11 @@ describe("ReportScreen", () => {
 
   it("평가 중에 다시 불러오지 못하면 알리고 다시 불러올 수 있다", async () => {
     vi.useFakeTimers();
-    const evaluating = report({ status: "EVALUATING", overall: undefined });
+    const evaluating = report({
+      status: "EVALUATING",
+      overall: undefined,
+      items: [{ ...report().items[0], answerStatus: "TRANSCRIBED", overall: undefined }],
+    });
     const load = vi
       .spyOn(api, "interviewReport")
       .mockResolvedValueOnce(evaluating)

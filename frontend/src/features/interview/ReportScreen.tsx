@@ -17,17 +17,30 @@ import { criterionLabel } from "./labels";
 
 const POLL_MS = 3000;
 
+/** 서버는 빈 값을 null로 보낸다(TS 타입은 optional) — null·undefined를 함께 본다 */
 function itemStatus(it: ReportItemView): string | undefined {
+  if (it.answerStatus == null) return "답하지 않았어요";
   switch (it.answerStatus) {
     case "EVALUATED":
       return undefined; // 점수는 오른쪽 숫자로
     case "FAILED":
       return it.failureReason ?? "평가하지 못했어요.";
-    case undefined:
-      return "답하지 않았어요";
     default:
       return "평가하고 있어요";
   }
+}
+
+/**
+ * 다시 불러올 가치가 있을 때만 폴링한다: 평가 중인 답변이 있거나, 모두 평가됐는데 종합만 아직일 때.
+ * (답하지 않은 문항·다시 평가할 문항만 남았으면 기다려도 바뀌지 않는다)
+ */
+function shouldPoll(r: ReportView): boolean {
+  if (r.status !== "EVALUATING") return false;
+  const inFlight = r.items.some(
+    (it) => it.answerStatus === "UPLOADED" || it.answerStatus === "TRANSCRIBED",
+  );
+  const allEvaluated = r.items.every((it) => it.answerStatus === "EVALUATED");
+  return inFlight || allEvaluated;
 }
 
 /**
@@ -41,6 +54,7 @@ export function ReportScreen({ id }: { id: number }) {
   const [retrying, setRetrying] = useState<number | null>(null);
   const [retryFailed, setRetryFailed] = useState<number | null>(null);
   const [tick, setTick] = useState(0);
+  const invalidId = !Number.isInteger(id) || id <= 0;
 
   const load = useCallback(
     () =>
@@ -67,12 +81,13 @@ export function ReportScreen({ id }: { id: number }) {
   );
 
   useEffect(() => {
+    if (invalidId) return;
     load();
-  }, [load, tick]);
+  }, [load, tick, invalidId]);
 
   // 평가 중이면 다시 불러오기(불러오기가 실패하면 멈추고 안내한다)
   useEffect(() => {
-    if (report?.status !== "EVALUATING" || error) return;
+    if (!report || !shouldPoll(report) || error) return;
     const t = setTimeout(() => setTick((n) => n + 1), POLL_MS);
     return () => clearTimeout(t);
   }, [report, error]);
@@ -102,8 +117,9 @@ export function ReportScreen({ id }: { id: number }) {
     </BottomCTA>
   );
 
-  if (!report) {
-    const failed = error && !error.notFound;
+  if (invalidId || !report) {
+    const shown = invalidId ? { message: "리포트를 찾을 수 없어요.", notFound: true } : error;
+    const failed = shown && !shown.notFound;
     return (
       <Screen
         header={header}
@@ -117,8 +133,8 @@ export function ReportScreen({ id }: { id: number }) {
           )
         }
       >
-        <div role={error ? "alert" : undefined}>
-          <ScreenTitle title={error?.message ?? "리포트를 불러오고 있어요"} />
+        <div role={shown ? "alert" : undefined}>
+          <ScreenTitle title={shown?.message ?? "리포트를 불러오고 있어요"} />
         </div>
       </Screen>
     );
@@ -150,7 +166,7 @@ export function ReportScreen({ id }: { id: number }) {
         </div>
       )}
 
-      {ready && report.overall !== undefined && (
+      {ready && report.overall != null && (
         <section aria-label="종합 점수">
           <p className="flex items-baseline gap-1">
             <span className="text-display text-text-strong tabular-nums">
@@ -197,7 +213,7 @@ export function ReportScreen({ id }: { id: number }) {
                 titleLines={2}
                 description={itemStatus(it)}
                 trailing={
-                  it.answerStatus === "EVALUATED" && it.overall !== undefined ? (
+                  it.answerStatus === "EVALUATED" && it.overall != null ? (
                     <span className="text-body1 font-semibold text-text-strong tabular-nums">
                       {`${it.overall.toFixed(1)}점`}
                     </span>
