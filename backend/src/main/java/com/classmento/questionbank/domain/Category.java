@@ -33,6 +33,9 @@ public class Category {
 
   public static final int NAME_MAX = 30;
 
+  /** 인성 질문이 들어 있는 대분류 이름(면접에서 기술/인성을 나누는 기준, V5 시드). */
+  public static final String BEHAVIORAL_TOP = "인성";
+
   /** 대분류 */
   public static Category top(String name, int sortOrder) {
     Category c = new Category();

@@ -1,0 +1,51 @@
+package com.classmento.interview.presentation;
+
+import com.classmento.common.security.AuthUser;
+import com.classmento.interview.application.InterviewService;
+import com.classmento.interview.presentation.InterviewDtos.CreateInterviewRequest;
+import com.classmento.interview.presentation.InterviewDtos.InterviewSummary;
+import com.classmento.interview.presentation.InterviewDtos.InterviewView;
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
+import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+/** 면접 세션 (로그인 사용자, 본인 것만 · 남의 것은 404). */
+@RestController
+@RequestMapping("/api/interviews")
+public class InterviewController {
+
+  private final InterviewService service;
+
+  public InterviewController(InterviewService service) {
+    this.service = service;
+  }
+
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  @Operation(operationId = "createInterview")
+  public InterviewView create(
+      @Valid @RequestBody CreateInterviewRequest body, @AuthenticationPrincipal AuthUser user) {
+    return InterviewView.of(service.create(user.id(), body.toCommand()));
+  }
+
+  @GetMapping
+  @Operation(operationId = "listInterviews")
+  public List<InterviewSummary> list(@AuthenticationPrincipal AuthUser user) {
+    return service.list(user.id()).stream().map(InterviewSummary::of).toList();
+  }
+
+  @GetMapping("/{id}")
+  @Operation(operationId = "getInterview")
+  public InterviewView get(@PathVariable Long id, @AuthenticationPrincipal AuthUser user) {
+    return InterviewView.of(service.get(user.id(), id));
+  }
+}

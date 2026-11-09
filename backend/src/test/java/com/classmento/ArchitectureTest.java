@@ -18,7 +18,7 @@ import com.tngtech.archunit.lang.ArchRule;
 @AnalyzeClasses(packages = "com.classmento", importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureTest {
 
-  private static final String[] CONTEXTS = {"identity", "resume", "questionbank"};
+  private static final String[] CONTEXTS = {"identity", "resume", "questionbank", "interview"};
 
   private static String[] contextPackages() {
     String[] packages = new String[CONTEXTS.length];
@@ -110,4 +110,49 @@ class ArchitectureTest {
           .dependOnClassesThat()
           .resideInAnyPackage("com.classmento.identity..", "com.classmento.resume..")
           .because("질문 은행은 독립 컨텍스트다(작성자는 userId로만 기록)");
+
+  @ArchTest
+  static final ArchRule interview는_infrastructure_어댑터에서만_다른_컨텍스트를_부른다 =
+      noClasses()
+          .that()
+          .resideInAnyPackage(
+              "com.classmento.interview.domain..",
+              "com.classmento.interview.application..",
+              "com.classmento.interview.presentation..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage(
+              "com.classmento.identity..",
+              "com.classmento.resume..",
+              "com.classmento.questionbank..")
+          .because("면접은 자기 포트(ExperienceSource·QuestionSource)만 알고, 구현은 infrastructure 어댑터가 맡는다");
+
+  @ArchTest
+  static final ArchRule interview_어댑터는_다른_컨텍스트의_application만_쓴다 =
+      noClasses()
+          .that()
+          .resideInAPackage("com.classmento.interview.infrastructure..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage(
+              "com.classmento.identity..",
+              "com.classmento.resume.domain..",
+              "com.classmento.resume.infrastructure..",
+              "com.classmento.resume.presentation..",
+              "com.classmento.questionbank.domain..",
+              "com.classmento.questionbank.infrastructure..",
+              "com.classmento.questionbank.presentation..")
+          .because("다른 컨텍스트는 공개 조회 서비스(application)로만 쓴다");
+
+  @ArchTest
+  static final ArchRule resume과_questionbank는_interview에_의존하지_않는다 =
+      noClasses()
+          .that()
+          .resideInAnyPackage(
+              "com.classmento.identity..",
+              "com.classmento.resume..",
+              "com.classmento.questionbank..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAPackage("com.classmento.interview..");
 }

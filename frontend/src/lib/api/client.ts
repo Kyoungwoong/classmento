@@ -32,6 +32,9 @@ export type QuestionSearchParams = NonNullable<
   operations["searchAdminQuestions"]["parameters"]["query"]
 >;
 export type AdminUserView = Schemas["AdminUserView"];
+export type InterviewView = Schemas["InterviewView"];
+export type InterviewSummary = Schemas["InterviewSummary"];
+export type CreateInterviewRequest = Schemas["CreateInterviewRequest"];
 export type SignupRequest = Schemas["SignupRequest"];
 export type LoginRequest = Schemas["LoginRequest"];
 
@@ -129,6 +132,12 @@ export const api = {
   resumeExperiences: (id: number) => apiFetch<ExperienceView[]>(`/api/resumes/${id}/experiences`),
   updateParsed: (id: number, parsed: ParsedResume) =>
     apiFetch<ResumeDetail>(`/api/resumes/${id}/parsed`, { method: "PUT", body: json(parsed) }),
+
+  // 면접
+  createInterview: (body: CreateInterviewRequest) =>
+    apiFetch<InterviewView>("/api/interviews", { method: "POST", body: json(body) }),
+  interviews: () => apiFetch<InterviewSummary[]>("/api/interviews"),
+  interview: (id: number) => apiFetch<InterviewView>(`/api/interviews/${id}`),
 
   // 관리자
   adminUsers: () => apiFetch<AdminUserView[]>("/api/admin/users"),
