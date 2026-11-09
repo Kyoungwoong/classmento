@@ -38,6 +38,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class QuestionImportService {
 
   public static final int MAX_BYTES = 2 * 1024 * 1024;
+  private static final int EMBED_BATCH = 100;
   private static final Logger log = LoggerFactory.getLogger(QuestionImportService.class);
 
   private final CategoryRepository categories;
@@ -148,7 +149,14 @@ public class QuestionImportService {
                             .toList()))
             .toList();
     try {
-      return embeddingClient.embedAll(texts);
+      // 한 요청이 너무 커지지 않게(토큰 한도·시간) 나눠 부른다
+      List<float[]> vectors = new ArrayList<>(texts.size());
+      for (int from = 0; from < texts.size(); from += EMBED_BATCH) {
+        vectors.addAll(
+            embeddingClient.embedAll(
+                texts.subList(from, Math.min(from + EMBED_BATCH, texts.size()))));
+      }
+      return vectors;
     } catch (RuntimeException e) {
       log.warn(
           "CSV 질문 임베딩 생성 실패(비워 두고 나중에 채움): {}: {}", e.getClass().getSimpleName(), e.getMessage());
