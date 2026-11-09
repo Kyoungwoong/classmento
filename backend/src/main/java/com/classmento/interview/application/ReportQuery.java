@@ -15,8 +15,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.core.task.TaskRejectedException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /** 면접 리포트 조회: 종합(끝났을 때) + 기준별 평균 + 문항별(내 답변 글자·점수·피드백). 본인 것만. */
 @Service
@@ -24,13 +25,20 @@ public class ReportQuery {
 
   private final InterviewSessionRepository sessions;
   private final AnswerRepository answers;
+  private final ReportWriter writer;
+  private final TaskExecutor interviewExecutor;
 
-  public ReportQuery(InterviewSessionRepository sessions, AnswerRepository answers) {
+  public ReportQuery(
+      InterviewSessionRepository sessions,
+      AnswerRepository answers,
+      ReportWriter writer,
+      TaskExecutor interviewExecutor) {
     this.sessions = sessions;
     this.answers = answers;
+    this.writer = writer;
+    this.interviewExecutor = interviewExecutor;
   }
 
-  @Transactional(readOnly = true)
   public Report report(Long userId, Long sessionId) {
     InterviewSession s =
         sessions.findByIdAndUserId(sessionId, userId).orElseThrow(ApiException::notFound);
@@ -65,6 +73,15 @@ public class ReportQuery {
     }
     SessionReport report = s.getReport();
     boolean ready = s.getStatus() == SessionStatus.REPORTED;
+    boolean allEvaluated = items.stream().allMatch(it -> it.evaluation() != null);
+    if (s.getStatus() == SessionStatus.FINISHED && allEvaluated) {
+      // 끝내기 직후 종합 작업이 거절·실패했으면 여기서 다시 시도한다(잠금·상태 확인으로 한 번만 저장)
+      try {
+        interviewExecutor.execute(() -> writer.maybeReport(sessionId));
+      } catch (TaskRejectedException e) {
+        // 다음 조회에서 다시 시도
+      }
+    }
     return new Report(s, ready, report, criteria, items);
   }
 

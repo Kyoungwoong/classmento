@@ -137,7 +137,7 @@ public class AnswerService {
     try {
       interviewExecutor.execute(() -> reports.maybeReport(sessionId));
     } catch (TaskRejectedException e) {
-      // 남은 평가가 끝날 때마다 종합을 다시 시도한다. 모두 끝났다면 리포트 조회 때 다시 시도한다
+      // 남은 평가가 끝날 때, 그리고 리포트를 조회할 때(ReportQuery) 다시 시도한다
     }
     return finished;
   }
