@@ -133,9 +133,11 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
         </dl>
       ) : (
         <p className="mt-10 text-body2 text-text-sub">
-          {item.answerStatus === "FAILED"
-            ? (item.failureReason ?? "평가하지 못했어요.")
-            : "평가하고 있어요. 끝나면 점수와 피드백이 보여요."}
+          {item.answerStatus == null
+            ? "답하지 않았어요."
+            : item.answerStatus === "FAILED"
+              ? (item.failureReason ?? "평가하지 못했어요.")
+              : "평가하고 있어요. 끝나면 점수와 피드백이 보여요."}
         </p>
       )}
     </Screen>
