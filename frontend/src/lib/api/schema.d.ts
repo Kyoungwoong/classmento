@@ -116,6 +116,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/questions/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["importAdminQuestions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/categories": {
         parameters: {
             query?: never;
@@ -383,6 +399,16 @@ export interface components {
         TagResult: {
             tag: components["schemas"]["TagView"];
             created: boolean;
+        };
+        ImportError: {
+            /** Format: int32 */
+            line: number;
+            message: string;
+        };
+        ImportResult: {
+            /** Format: int32 */
+            imported: number;
+            errors: components["schemas"]["ImportError"][];
         };
         CreateCategoryRequest: {
             /** Format: int64 */
@@ -773,6 +799,33 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["QuestionView"];
+                };
+            };
+        };
+    };
+    importAdminQuestions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ImportResult"];
                 };
             };
         };

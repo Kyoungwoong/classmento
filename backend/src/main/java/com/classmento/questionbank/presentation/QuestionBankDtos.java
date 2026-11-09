@@ -1,6 +1,7 @@
 package com.classmento.questionbank.presentation;
 
 import com.classmento.questionbank.application.CategoryService.CategoryNode;
+import com.classmento.questionbank.application.QuestionImportService;
 import com.classmento.questionbank.application.QuestionService.Command;
 import com.classmento.questionbank.application.QuestionService.Details;
 import com.classmento.questionbank.application.QuestionService.Page;
@@ -169,4 +170,18 @@ public final class QuestionBankDtos {
   /** created: 새로 만들었으면 true, 이미 있던 태그면 false. */
   @Schema(requiredProperties = {"tag", "created"})
   public record TagResult(TagView tag, boolean created) {}
+
+  /** CSV 가져오기 결과. 오류가 하나라도 있으면 imported=0(아무것도 저장하지 않음). line은 파일의 줄 번호(헤더 = 1). */
+  @Schema(requiredProperties = {"imported", "errors"})
+  public record ImportResult(int imported, List<ImportError> errors) {
+
+    static ImportResult of(QuestionImportService.Result r) {
+      return new ImportResult(
+          r.imported(),
+          r.errors().stream().map(e -> new ImportError(e.line(), e.message())).toList());
+    }
+  }
+
+  @Schema(requiredProperties = {"line", "message"})
+  public record ImportError(int line, String message) {}
 }

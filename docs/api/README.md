@@ -59,3 +59,19 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 | POST | `/api/admin/questions` | ADMIN | `{categoryId, text(5~300), level, jobRoles[1+], tagIds[≤10], intent?(≤200)}` → 201 `QuestionView`(대분류·소분류·태그 이름 포함). 대분류 409 `QUESTION_NEEDS_SUBCATEGORY`, 숨긴 카테고리 409 `CATEGORY_HIDDEN`, 없는 카테고리 404, 없는 태그 400, 직무·태그 목록에 null이 섞이면 400. 저장하면 임베딩도 만든다(키가 없거나 외부 호출이 실패해도 질문은 저장하고 임베딩만 비운 뒤 기동 시 채운다) |
 | PUT | `/api/admin/questions/{id}` | ADMIN | 같은 본문으로 전체 수정(임베딩 다시 만듦). 지금 있는 숨긴 카테고리 안에서는 고칠 수 있지만 다른 숨긴 카테고리로는 못 옮김 |
 | PATCH | `/api/admin/questions/{id}/active` | ADMIN | `{active}` 숨기기/다시 보이기(삭제 없음) |
+| POST | `/api/admin/questions/import` | ADMIN | CSV 대량 등록(multipart `file`, UTF-8, 2MB, 1000줄). 전부 검사한 뒤 한 번에 저장하고, 오류가 하나라도 있으면 0건 저장 → 200 `{imported, errors[{line, message}]}`. 2MB 초과·UTF-8 아님은 400 |
+
+### 질문 CSV 형식 (`POST /api/admin/questions/import`)
+```
+대분류,소분류,질문,난이도,직무,태그,의도
+CS,네트워크,TCP와 UDP의 차이를 설명해 주세요.,신입,백엔드|공통,TCP|UDP,기본기 확인
+Framework,Spring,"JPA에서 N+1 문제가 생기는 이유와, 해결 방법을 설명해 주세요.",주니어,BACKEND,JPA,
+```
+- 첫 줄(헤더)은 위와 똑같아야 한다. UTF-8(BOM 있어도 됨). 엑셀에서는 "CSV UTF-8"로 저장한다.
+- 쉼표·줄바꿈이 들어간 칸은 큰따옴표로 감싼다(`""`는 따옴표 한 개). 빈 줄은 건너뛴다.
+- 대분류·소분류는 이미 있는 이름(공백·대소문자 무시). 없거나 숨긴 카테고리는 오류다(오타로 카테고리가 생기지 않게).
+- 난이도: 신입·주니어·미들·시니어 또는 NEW·JUNIOR·MIDDLE·SENIOR
+- 직무(1개 이상, `|`로 구분): 백엔드·프론트엔드·풀스택·모바일·데이터·DevOps·공통 또는 영문 코드
+- 태그(선택, `|`, 최대 10개): 없으면 새로 만들고, 있으면 그 태그를 쓴다(대소문자 무시)
+- 의도(선택): 200자까지
+- 오류는 행마다 첫 번째 하나만 알려준다. line은 파일의 줄 번호(헤더 = 1, 여러 줄 칸은 그 행이 시작한 줄)
