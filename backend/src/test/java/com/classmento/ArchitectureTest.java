@@ -18,7 +18,7 @@ import com.tngtech.archunit.lang.ArchRule;
 @AnalyzeClasses(packages = "com.classmento", importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureTest {
 
-  private static final String[] CONTEXTS = {"identity", "resume"};
+  private static final String[] CONTEXTS = {"identity", "resume", "questionbank"};
 
   private static String[] contextPackages() {
     String[] packages = new String[CONTEXTS.length];
@@ -100,4 +100,14 @@ class ArchitectureTest {
           .dependOnClassesThat()
           .resideInAPackage("com.classmento.identity..")
           .because("다른 컨텍스트의 사용자 정보는 common.security.AuthUser와 userId로만 받는다");
+
+  @ArchTest
+  static final ArchRule questionbank는_다른_컨텍스트에_의존하지_않는다 =
+      noClasses()
+          .that()
+          .resideInAPackage("com.classmento.questionbank..")
+          .should()
+          .dependOnClassesThat()
+          .resideInAnyPackage("com.classmento.identity..", "com.classmento.resume..")
+          .because("질문 은행은 독립 컨텍스트다(작성자는 userId로만 기록)");
 }

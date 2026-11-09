@@ -49,3 +49,8 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 | GET | `/api/resumes/{id}/experiences` | 본인 | 경험 목록 `ExperienceView[]`(seq 순: 경력 → 프로젝트) |
 | PUT | `/api/resumes/{id}/parsed` | 본인 | 수정한 `ParsedResume` 저장 + 경험 재생성 (PARSED 상태에서만, 아니면 409 `RESUME_NOT_READY`). 임베딩 장애 시 503 `AI_UNAVAILABLE`이고 아무것도 바뀌지 않음. 같은 이력서 동시 저장은 순서대로 처리 |
 | GET | `/api/admin/users` | ADMIN | 최근 가입 순 200명 |
+| GET | `/api/admin/categories` | ADMIN | 질문 은행 카테고리 트리(대분류 → 소분류, 정렬순, 숨김 포함) |
+| POST | `/api/admin/categories` | ADMIN | `{parentId?, name(1~30)}` → 201. 형제 이름 중복 409 `CATEGORY_DUPLICATE`, 소분류 아래 409 `CATEGORY_TOO_DEEP`, 숨긴 대분류 아래 409 `CATEGORY_HIDDEN`, 없는 부모 404 |
+| PATCH | `/api/admin/categories/{id}` | ADMIN | `{name?, sortOrder?, active?}` 바꿀 것만. 삭제는 없고 숨김(`active:false`) |
+| GET | `/api/admin/tags?query=` | ADMIN | 태그 자동완성(대소문자 무시, 앞부분 일치 먼저, 최대 10개) |
+| POST | `/api/admin/tags` | ADMIN | `{name(1~20, 쉼표 불가)}` → 새로 만들면 201, 같은 태그(대소문자·공백 무시)가 있으면 200 + 기존 것 `{tag, created}` |

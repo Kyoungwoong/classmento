@@ -19,7 +19,7 @@
 |---|---|---|---|---|
 | `identity` 회원 | `AppUser`, `Email`(값 객체), `AppUserRepository` | `SignupService`, `MemberQueryService`, `AdminSeeder` | `persistence.AppUserJpaRepository`, `security.*`(SecurityConfig, 소셜, UserDetails, `AuthUsers`) | `AuthController`, `AdminController` |
 | `resume` 이력서 | `Resume`(상태 전이), `ResumeExperience`, `ExperienceFactory`, `ParsedResume`, `ResumeFileType`, `TextChunker`, `ResumeRepository`, `ResumeChunkRepository`, `ResumeExperienceRepository` | `ResumeService`, `ResumeProcessor`, `ResumeParser`, `ExperienceSync`, `TextExtractor`(포트) | `ResumeJpaRepository`, `JdbcResumeChunkRepository`·`JdbcResumeExperienceRepository`(pgvector), `PdfDocxTextExtractor`, 실행기 | `ResumeController` |
-| `questionbank` | (예정) | | | |
+| `questionbank` 질문 은행 | `Category`(2단계·숨김), `Tag`, `CategoryRepository`, `TagRepository` (질문은 다음 PR) | `CategoryService`, `TagService` | `CategoryJpaRepository`, `TagJpaRepository`(자동완성 native query) | `AdminCategoryController`, `AdminTagController` |
 | `interview` | (예정, 4유형 ADR 0004) | | | |
 | `evaluation` | (예정) | | | |
 
@@ -90,7 +90,9 @@ spring_session, spring_session_attributes      -- 로그인 세션
 ```
 예정:
 ```
-question_bank(id, category[CS|STACK|ROLE|BEHAVIORAL], job_role, level, tags[], text, intent, eval_points, embedding, created_by)
+qb_category(id, parent_id?, name, sort_order, active, seeded)   -- V5, 대분류 → 소분류 2단계, 형제 이름 유니크(공백·대소문자 무시)
+qb_tag(id, name, name_key UNIQUE, seeded)                         -- V5
+qb_question(…, embedding vector(1536) + HNSW)                       -- 예정(PR B)
 interview_session(id, user_id, mode[TECH|RESUME_TECH|DEEP_DIVE|BEHAVIORAL], resume_id?, config(jsonb), status)
 question(id, session_id, seq, parent_question_id?, depth, text, intent, source)
 answer(id, question_id, audio_key, transcript, duration_ms) / evaluation(..., model, prompt_version)

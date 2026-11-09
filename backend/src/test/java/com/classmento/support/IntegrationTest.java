@@ -31,6 +31,11 @@ public abstract class IntegrationTest {
     jdbc.execute(
         "TRUNCATE resume_chunk, resume, app_user, spring_session_attributes, spring_session"
             + " RESTART IDENTITY CASCADE");
+    // 질문 은행은 기본 데이터(seeded)를 남기고 테스트가 만든 것만 지운다(소분류 → 대분류 순)
+    jdbc.update("DELETE FROM qb_category WHERE NOT seeded AND parent_id IS NOT NULL");
+    jdbc.update("DELETE FROM qb_category WHERE NOT seeded");
+    jdbc.update("UPDATE qb_category SET active = TRUE WHERE seeded");
+    jdbc.update("DELETE FROM qb_tag WHERE NOT seeded");
   }
 
   protected AuthUser createUser(String email, AppUser.Role role) {

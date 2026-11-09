@@ -17,6 +17,10 @@ export type ResumeDetail = Schemas["ResumeDetail"];
 export type ResumeSummary = Schemas["ResumeSummary"];
 export type ParsedResume = Schemas["ParsedResume"];
 export type ExperienceView = Schemas["ExperienceView"];
+export type CategoryTreeNode = Schemas["CategoryTreeNode"];
+export type CategoryView = Schemas["CategoryView"];
+export type TagView = Schemas["TagView"];
+export type TagResult = Schemas["TagResult"];
 export type AdminUserView = Schemas["AdminUserView"];
 export type SignupRequest = Schemas["SignupRequest"];
 export type LoginRequest = Schemas["LoginRequest"];
@@ -108,4 +112,15 @@ export const api = {
 
   // 관리자
   adminUsers: () => apiFetch<AdminUserView[]>("/api/admin/users"),
+
+  // 관리자: 질문 은행 카테고리·태그
+  adminCategories: () => apiFetch<CategoryTreeNode[]>("/api/admin/categories"),
+  createCategory: (body: { parentId?: number; name: string }) =>
+    apiFetch<CategoryView>("/api/admin/categories", { method: "POST", body: json(body) }),
+  updateCategory: (id: number, body: { name?: string; sortOrder?: number; active?: boolean }) =>
+    apiFetch<CategoryView>(`/api/admin/categories/${id}`, { method: "PATCH", body: json(body) }),
+  suggestTags: (query: string) =>
+    apiFetch<TagView[]>(`/api/admin/tags?query=${encodeURIComponent(query)}`),
+  createTag: (name: string) =>
+    apiFetch<TagResult>("/api/admin/tags", { method: "POST", body: json({ name }) }),
 };
