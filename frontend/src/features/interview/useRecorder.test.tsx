@@ -77,6 +77,25 @@ describe("useRecorder", () => {
     expect(result.current.state).toBe("denied");
   });
 
+  it("녹음기를 만들지 못하면 녹음할 수 없음 상태로 두고 마이크를 끈다", async () => {
+    vi.stubGlobal(
+      "MediaRecorder",
+      Object.assign(
+        function () {
+          throw new Error("NotSupportedError");
+        },
+        { isTypeSupported: () => true },
+      ),
+    );
+    track.stop.mockClear();
+    const { result } = renderHook(() => useRecorder());
+    await act(async () => {
+      await result.current.start();
+    });
+    expect(result.current.state).toBe("unsupported");
+    expect(track.stop).toHaveBeenCalled();
+  });
+
   it("다시 녹음하면 처음 상태로", async () => {
     const { result } = renderHook(() => useRecorder());
     await act(async () => {
