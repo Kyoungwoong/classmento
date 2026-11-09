@@ -29,6 +29,11 @@ class TagServiceTest {
       }
 
       @Override
+      public List<Tag> findAllById(Iterable<Long> ids) {
+        return List.of();
+      }
+
+      @Override
       public List<Tag> search(String likeEscapedKey, int limit) {
         return List.of();
       }
