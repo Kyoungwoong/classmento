@@ -42,9 +42,10 @@ describe("SiteHeader", () => {
     expect(await screen.findByRole("link", { name: "관리" })).toHaveAttribute("href", "/admin");
     fireEvent.click(screen.getByRole("button", { name: "로그아웃" }));
 
-    await waitFor(() => expect(logout).toHaveBeenCalled());
-    expect(replace).toHaveBeenCalledWith("/");
-    expect(screen.queryByRole("link", { name: "로그인" })).toBeInTheDocument();
+    // 로그아웃 요청이 끝난 뒤 홈으로 보내고 로그인 버튼으로 바뀐다
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
+    expect(logout).toHaveBeenCalled();
+    expect(await screen.findByRole("link", { name: "로그인" })).toBeInTheDocument();
   });
 
   it("모바일 메뉴는 버튼으로 열고 닫는다", async () => {
@@ -59,6 +60,7 @@ describe("SiteHeader", () => {
     );
     expect(screen.getByRole("navigation", { name: "모바일 메뉴" })).toBeInTheDocument();
   });
+
   it("모바일 메뉴는 Escape로 닫히고, 열면 첫 링크로 초점이 간다", async () => {
     vi.spyOn(api, "me").mockResolvedValue({ authenticated: false });
     render(<SiteHeader />);
