@@ -18,9 +18,10 @@ import {
   type TagItem,
 } from "@/components/ui";
 import { actionError, adminError } from "@/features/admin/adminError";
-import { api, type CategoryTreeNode, type QuestionView } from "@/lib/api/client";
+import { api, ApiError, type CategoryTreeNode, type QuestionView } from "@/lib/api/client";
 import { JOB_ROLES, LEVELS, type JobRole, type Level } from "./labels";
 
+const NOT_FOUND = "질문을 찾을 수 없어요. 목록에서 다시 골라 주세요.";
 const TEXT_MIN = 5;
 const TEXT_MAX = 300;
 const INTENT_MAX = 200;
@@ -75,6 +76,10 @@ export function QuestionFormScreen({ id }: { id?: number }) {
         }
       })
       .catch((err) => {
+        if (err instanceof ApiError && (err.status === 404 || err.status === 400)) {
+          setLoadError(NOT_FOUND);
+          return;
+        }
         const message = adminError(err, router, here);
         if (message) setLoadError(message);
       });
@@ -188,12 +193,18 @@ export function QuestionFormScreen({ id }: { id?: number }) {
               variant="secondary"
               loading={toggling}
               loadingText="바꾸고 있어요"
+              disabled={saving}
               onClick={toggleActive}
             >
               {original.active ? "숨기기" : "다시 보이기"}
             </Button>
           )}
-          <Button loading={saving} loadingText="저장하고 있어요" disabled={!ready} onClick={save}>
+          <Button
+            loading={saving}
+            loadingText="저장하고 있어요"
+            disabled={!ready || toggling}
+            onClick={save}
+          >
             저장하기
           </Button>
         </BottomCTA>
