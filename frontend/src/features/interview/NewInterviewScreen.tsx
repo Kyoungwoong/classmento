@@ -313,17 +313,24 @@ export function NewInterviewScreen() {
           {experiences && experiences.length > 0 && (
             <div role="radiogroup" aria-label="경험" className="flex flex-col gap-3">
               {experiences.map((e) => (
-                <button
+                // button 안에는 제목·목록 같은 블록 요소를 둘 수 없어 div에 radio 역할과 키보드를 준다
+                <div
                   key={e.id}
-                  type="button"
                   role="radio"
+                  tabIndex={0}
                   aria-checked={e.id === experienceId}
                   aria-label={`${e.title}. ${e.summary}`}
                   onClick={() => setExperienceId(e.id)}
-                  className="rounded-lg text-left"
+                  onKeyDown={(ev) => {
+                    if (ev.key === "Enter" || ev.key === " ") {
+                      ev.preventDefault();
+                      setExperienceId(e.id);
+                    }
+                  }}
+                  className="cursor-pointer rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <ExperienceBanner experience={e} selectable selected={e.id === experienceId} />
-                </button>
+                </div>
               ))}
             </div>
           )}
@@ -349,7 +356,11 @@ export function NewInterviewScreen() {
             </ChipGroup>
             <SegmentedControl label="연차" options={LEVELS} value={level} onChange={setLevel} />
             {type === "TECH" && parsed.length > 0 && (
-              <Toggle label="내 이력서 기술로 좁히기" checked={narrow} onChange={setNarrow} />
+              <Toggle
+                label={`${parsed.find((r) => r.id === resumeId)?.filename ?? "내 이력서"} 기술로 좁히기`}
+                checked={narrow}
+                onChange={setNarrow}
+              />
             )}
           </div>
         </>
