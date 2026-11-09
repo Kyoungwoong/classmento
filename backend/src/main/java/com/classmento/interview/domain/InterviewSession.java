@@ -123,6 +123,22 @@ public class InterviewSession {
     return s;
   }
 
+  /** 진행 중인 면접의 있는 질문인지 확인하고 그 질문을 돌려준다. */
+  public InterviewQuestion requireAnswerable(int seq) {
+    if (status != SessionStatus.IN_PROGRESS) {
+      throw new DomainException("INTERVIEW_CLOSED", "끝난 면접에는 답할 수 없어요.");
+    }
+    return question(seq);
+  }
+
+  /** seq번 질문(없으면 QUESTION_NOT_FOUND). */
+  public InterviewQuestion question(int seq) {
+    return questions.stream()
+        .filter(q -> q.getSeq() == seq)
+        .findFirst()
+        .orElseThrow(() -> new DomainException("QUESTION_NOT_FOUND", "없는 질문이에요."));
+  }
+
   public Long getId() {
     return id;
   }
