@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.hibernate.annotations.BatchSize;
 
 /**
  * 질문 하나에 대한 답변(녹음 → STT → 평가). 세션과 따로 저장한다(STT·평가가 백그라운드에서 답변마다 따로 끝나기 때문).
@@ -82,6 +83,7 @@ public class Answer {
   private String model;
 
   @ElementCollection(fetch = FetchType.EAGER)
+  @BatchSize(size = 20) // 면접 조회 시 답변마다 점수를 따로 읽지 않게
   @CollectionTable(name = "interview_answer_score", joinColumns = @JoinColumn(name = "answer_id"))
   @MapKeyColumn(name = "criterion")
   private Map<String, ScoreEntry> scores = new HashMap<>();
@@ -145,12 +147,17 @@ public class Answer {
     this.status = AnswerStatus.FAILED;
   }
 
-  /** 실패한 답변만 같은 녹음으로 다시 처리한다. */
+  /** 실패한 답변만 같은 녹음으로 다시 처리한다. 글자까지 됐으면(평가만 실패) 글자를 남기고 평가부터. */
   public void retry() {
     if (status != AnswerStatus.FAILED) {
       throw new DomainException("NOT_FAILED", "실패한 답변만 다시 시도할 수 있어요.");
     }
     this.audioVersion++;
+    if (transcript != null && !transcript.isBlank()) {
+      this.failureReason = null;
+      this.status = AnswerStatus.TRANSCRIBED;
+      return;
+    }
     reset();
   }
 
