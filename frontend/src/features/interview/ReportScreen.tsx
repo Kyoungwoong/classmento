@@ -7,11 +7,15 @@ import {
   Button,
   ButtonLink,
   ListRow,
+  Panel,
   Screen,
   ScoreBar,
   ScreenTitle,
+  Section,
   TopBar,
+  TwoColumn,
 } from "@/components/ui";
+import { Mascot } from "@/components/site/Mascot";
 import { api, ApiError, type ReportItemView, type ReportView } from "@/lib/api/client";
 import { criterionLabel } from "./labels";
 
@@ -133,6 +137,7 @@ export function ReportScreen({ id }: { id: number }) {
           )
         }
       >
+        <Mascot mood={shown ? "oops" : "thinking"} size={96} className="mb-6" />
         <div role={shown ? "alert" : undefined}>
           <ScreenTitle title={shown?.message ?? "리포트를 불러오고 있어요"} />
         </div>
@@ -141,112 +146,138 @@ export function ReportScreen({ id }: { id: number }) {
   }
 
   const ready = report.status === "READY";
+  const overall = ready ? report.overall : null;
 
   return (
-    <Screen header={header} cta={practice}>
-      <div aria-live="polite">
-        <ScreenTitle
-          title={ready ? "면접이 끝났어요" : "답변을 평가하고 있어요"}
-          description={ready ? undefined : "끝나면 이 화면에 바로 보여 드려요."}
-        />
-      </div>
-
-      {error && (
-        <div role="alert" className="-mt-4 mb-6">
-          <p className="text-body2 text-danger">
-            평가 결과를 불러오지 못했어요. 연결을 확인하고 다시 불러와 주세요.
-          </p>
-          <button
-            type="button"
-            onClick={reload}
-            className="inline-flex h-11 items-center text-body2 text-accent"
-          >
-            다시 불러오기
-          </button>
-        </div>
-      )}
-
-      {ready && report.overall != null && (
-        <section aria-label="종합 점수">
-          <p className="flex items-baseline gap-1">
-            <span className="text-display text-text-strong tabular-nums">
-              {report.overall.toFixed(1)}
-            </span>
-            <span className="text-body2 text-text-sub">/ 5</span>
-          </p>
-          <dl className="mt-6 flex flex-col gap-4">
-            <div>
-              <dt className="text-caption text-text-sub">잘한 점</dt>
-              <dd className="mt-1 text-body1 text-text">{report.strength}</dd>
-            </div>
-            <div>
-              <dt className="text-caption text-text-sub">보완할 점</dt>
-              <dd className="mt-1 text-body1 text-text">{report.improvement}</dd>
-            </div>
-          </dl>
-        </section>
-      )}
-
-      {report.criteria.length > 0 && (
-        <section className="mt-10">
-          <h2 className="text-body1 font-semibold text-text-strong">기준별 점수</h2>
-          <div className="mt-4 flex flex-col gap-4">
-            {report.criteria.map((c) => (
-              <ScoreBar
-                key={c.criterion}
-                label={criterionLabel(c.criterion)}
-                score={c.average}
-                decimals={1}
-              />
-            ))}
+    <main>
+      {/* 머리 띠(연한 연두): 결과 한 줄 + 종합 점수 + 마스코트 + 잘한 점·보완할 점 */}
+      <Section tone="tint" compact aria-labelledby="report-heading">
+        <div className="flex items-center justify-between gap-6">
+          <div aria-live="polite" className="min-w-0">
+            <p className="mb-2 text-caption font-semibold text-accent">면접 리포트</p>
+            <h1 id="report-heading" className="text-title1 text-text-strong md:text-title1-lg">
+              {ready ? "면접이 끝났어요" : "답변을 평가하고 있어요"}
+            </h1>
+            {!ready && (
+              <p className="mt-2 text-body2 text-text md:text-body1">
+                끝나면 이 화면에 바로 보여 드려요.
+              </p>
+            )}
+            {overall != null && (
+              <p
+                className="mt-6 flex items-baseline gap-2"
+                aria-label={`종합 ${overall.toFixed(1)}점, 5점 만점`}
+              >
+                <span className="text-hero text-text-strong tabular-nums">
+                  {overall.toFixed(1)}
+                </span>
+                <span className="text-body1 text-text">/ 5</span>
+              </p>
+            )}
           </div>
-        </section>
-      )}
+          <Mascot mood={ready ? "happy" : "thinking"} size={88} className="md:size-36" />
+        </div>
 
-      <section className="mt-10">
-        <h2 className="text-body1 font-semibold text-text-strong">문항별</h2>
-        <ul className="mt-2">
-          {report.items.map((it) => (
-            <li key={it.seq}>
-              <ListRow
-                title={`${it.seq}. ${it.question}`}
-                titleLines={2}
-                description={itemStatus(it)}
-                trailing={
-                  it.answerStatus === "EVALUATED" && it.overall != null ? (
-                    <span className="text-body1 font-semibold text-text-strong tabular-nums">
-                      {`${it.overall.toFixed(1)}점`}
-                    </span>
-                  ) : undefined
-                }
-                onClick={
-                  it.answerStatus
-                    ? () => router.push(`/interview/${id}/report/${it.seq}`)
-                    : undefined
-                }
-              />
-              {it.answerStatus === "FAILED" && (
-                <>
-                  <button
-                    type="button"
-                    aria-label={`${it.seq}번 다시 평가하기`}
-                    disabled={retrying === it.seq}
-                    onClick={() => retry(it.seq)}
-                    className="-mt-2 inline-flex h-11 items-center text-caption text-accent disabled:text-text-hint"
-                  >
-                    {retrying === it.seq ? "다시 평가하고 있어요" : "다시 평가하기"}
-                  </button>
-                  {retryFailed === it.seq && (
-                    <p role="alert" className="text-caption text-danger">
-                      다시 평가를 시작하지 못했어요. 잠시 후 다시 눌러 주세요.
-                    </p>
-                  )}
-                </>
+        {error && (
+          <div role="alert" className="mt-6">
+            <p className="text-body2 text-danger">
+              평가 결과를 불러오지 못했어요. 연결을 확인하고 다시 불러와 주세요.
+            </p>
+            <button
+              type="button"
+              onClick={reload}
+              className="inline-flex h-11 items-center text-body2 font-semibold text-accent"
+            >
+              다시 불러오기
+            </button>
+          </div>
+        )}
+
+        {overall != null && (
+          <dl className="mt-8 grid gap-4 md:grid-cols-2">
+            <Panel>
+              <dt className="text-caption font-semibold text-accent">잘한 점</dt>
+              <dd className="mt-2 text-body1 text-text">{report.strength}</dd>
+            </Panel>
+            <Panel>
+              <dt className="text-caption font-semibold text-accent">보완할 점</dt>
+              <dd className="mt-2 text-body1 text-text">{report.improvement}</dd>
+            </Panel>
+          </dl>
+        )}
+      </Section>
+
+      {/* 아래: 왼쪽 기준별 점수(붙잡아 둠) · 오른쪽 문항 목록 + 다시 연습하기 */}
+      <Section compact>
+        <TwoColumn
+          stickyAside
+          aside={
+            <Panel>
+              <h2 className="text-body1 font-semibold text-text-strong">기준별 점수</h2>
+              {report.criteria.length > 0 ? (
+                <div className="mt-5 flex flex-col gap-4">
+                  {report.criteria.map((c) => (
+                    <ScoreBar
+                      key={c.criterion}
+                      label={criterionLabel(c.criterion)}
+                      score={c.average}
+                      decimals={1}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-body2 text-text-sub">평가가 끝나면 기준별 점수가 보여요.</p>
               )}
-            </li>
-          ))}
-        </ul>
-      </section>
-    </Screen>
+            </Panel>
+          }
+        >
+          <Panel>
+            <h2 className="text-body1 font-semibold text-text-strong">문항별</h2>
+            <ul className="mt-2">
+              {report.items.map((it) => (
+                <li key={it.seq}>
+                  <ListRow
+                    title={`${it.seq}. ${it.question}`}
+                    titleLines={2}
+                    description={itemStatus(it)}
+                    trailing={
+                      it.answerStatus === "EVALUATED" && it.overall != null ? (
+                        <span className="text-body1 font-semibold text-text-strong tabular-nums">
+                          {`${it.overall.toFixed(1)}점`}
+                        </span>
+                      ) : undefined
+                    }
+                    onClick={
+                      it.answerStatus
+                        ? () => router.push(`/interview/${id}/report/${it.seq}`)
+                        : undefined
+                    }
+                  />
+                  {it.answerStatus === "FAILED" && (
+                    <>
+                      <button
+                        type="button"
+                        aria-label={`${it.seq}번 다시 평가하기`}
+                        disabled={retrying === it.seq}
+                        onClick={() => retry(it.seq)}
+                        className="-mt-2 inline-flex h-11 items-center text-caption text-accent disabled:text-text-hint"
+                      >
+                        {retrying === it.seq ? "다시 평가하고 있어요" : "다시 평가하기"}
+                      </button>
+                      {retryFailed === it.seq && (
+                        <p role="alert" className="text-caption text-danger">
+                          다시 평가를 시작하지 못했어요. 잠시 후 다시 눌러 주세요.
+                        </p>
+                      )}
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Panel>
+          {practice}
+        </TwoColumn>
+      </Section>
+    </main>
   );
 }
