@@ -5,8 +5,11 @@ interface Step {
   description: ReactNode;
 }
 
-/** 번호 단계 목록: "01 · 제목 · 설명"을 가로 한 줄씩(모바일은 세로), 행 사이 얇은 선. */
-export function StepList({ steps }: { steps: Step[] }) {
+/**
+ * 번호 단계 목록: "01 · 제목 · 설명"을 가로 한 줄씩(모바일은 세로), 행 사이 얇은 선.
+ * 연한 면(tint) 띠 안이면 `onTint` — 설명 글자를 진하게(text-sub는 연한 면 위 대비 부족).
+ */
+export function StepList({ steps, onTint = false }: { steps: Step[]; onTint?: boolean }) {
   return (
     <ol className="border-t border-border">
       {steps.map((s, i) => (
@@ -20,7 +23,15 @@ export function StepList({ steps }: { steps: Step[] }) {
           <span className="text-body1 font-semibold text-text-strong md:col-span-4 md:text-title2">
             {s.title}
           </span>
-          <span className="text-body2 text-text-sub md:col-span-7">{s.description}</span>
+          <span
+            className={
+              onTint
+                ? "text-body2 text-text md:col-span-7"
+                : "text-body2 text-text-sub md:col-span-7"
+            }
+          >
+            {s.description}
+          </span>
         </li>
       ))}
     </ol>

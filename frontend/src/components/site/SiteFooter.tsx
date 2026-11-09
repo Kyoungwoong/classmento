@@ -27,7 +27,7 @@ export function SiteFooter() {
           </Link>
         </nav>
       </div>
-      <p className="mx-auto mt-8 w-full max-w-site px-5 text-caption text-navy-100 opacity-70 md:px-8">
+      <p className="mx-auto mt-8 w-full max-w-site px-5 text-caption text-navy-100 md:px-8">
         © classmento
       </p>
     </footer>

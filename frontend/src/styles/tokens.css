@@ -27,6 +27,7 @@
   /* Navy — 제목·헤더·푸터, 연두 위 글자 */
   --navy-50: #f3f5f9;
   --navy-100: #e6eaf2;
+  --navy-200: #cdd4e3;
   --navy-600: #4a5a7e;
   --navy-800: #22325a;
   --navy-900: #14213d;
@@ -39,6 +40,7 @@
   --green-500: #03b26c;
   --orange-500: #fe9800;
   --red-500: #f04452;
+  --red-600: #d22030;
   --red-50: #ffeeee;
 
   /* Semantic */
@@ -60,7 +62,8 @@
   --on-ink: #ffffff;
   --highlight: var(--yellow-400);
   --highlight-weak: var(--yellow-100);
-  --danger: var(--red-500);
+  /* 글자·흰 글자 버튼 모두 AA(흰색 대비 5.3) */
+  --danger: var(--red-600);
   --success: var(--green-500);
   --warning: var(--orange-500);
 }

@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, type MeResponse } from "@/lib/api/client";
 import { Logo } from "./Logo";
 
@@ -13,7 +13,13 @@ const NAV = [
   { href: "/resume/upload", label: "이력서 올리기" },
 ];
 
-const linkClass = "inline-flex h-11 items-center text-body2 font-medium text-text hover:text-ink";
+/** 로그인·회원가입 화면에서는 그 화면의 CTA가 같은 일을 하므로 헤더 버튼을 숨긴다 */
+const AUTH_PATHS = ["/login", "/signup"];
+
+const desktopLink =
+  "inline-flex h-11 items-center text-body2 font-medium text-text hover:text-ink aria-[current=page]:font-semibold aria-[current=page]:text-ink";
+const mobileLink =
+  "flex h-12 w-full items-center text-body1 font-medium text-text aria-[current=page]:font-semibold aria-[current=page]:text-ink";
 
 /**
  * 모든 화면 위의 사이트 헤더: 로고 · 메뉴 · 로그인 상태.
@@ -25,6 +31,8 @@ export function SiteHeader() {
   const [me, setMe] = useState<MeResponse | null>(null);
   const [open, setOpen] = useState(false);
   const [lastPath, setLastPath] = useState(pathname);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLElement>(null);
 
   // 페이지가 바뀌면 메뉴를 닫는다(렌더 중 비교 — effect 안 setState 대신)
   if (lastPath !== pathname) {
@@ -39,6 +47,20 @@ export function SiteHeader() {
       .catch(() => setMe({ authenticated: false }));
   }, [pathname]);
 
+  // 메뉴를 열면 첫 링크로 초점, Escape면 닫고 메뉴 버튼으로 초점을 돌려준다
+  useEffect(() => {
+    if (!open) return;
+    menuRef.current?.querySelector("a")?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        toggleRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
   async function logout() {
     await api.logout().catch(() => undefined);
     setMe({ authenticated: false });
@@ -48,16 +70,22 @@ export function SiteHeader() {
 
   const isAdmin = me?.user?.role === "ADMIN";
   const links = isAdmin ? [...NAV, { href: "/admin", label: "관리" }] : NAV;
+  const current = (href: string) => (pathname.startsWith(href) ? "page" : undefined);
+  const onAuthPage = AUTH_PATHS.some((p) => pathname.startsWith(p));
 
   const account =
-    me === null ? null : me.authenticated ? (
-      <button type="button" onClick={logout} className={clsx(linkClass, "text-text-sub")}>
+    me === null || (onAuthPage && !me.authenticated) ? null : me.authenticated ? (
+      <button
+        type="button"
+        onClick={logout}
+        className="inline-flex h-11 items-center px-2 text-body2 font-medium text-text-sub"
+      >
         로그아웃
       </button>
     ) : (
       <Link
         href="/login"
-        className="inline-flex h-10 items-center rounded-md bg-ink px-4 text-body2 font-semibold text-on-ink"
+        className="inline-flex h-11 items-center rounded-md bg-ink px-4 text-body2 font-semibold text-on-ink"
       >
         로그인
       </Link>
@@ -69,12 +97,7 @@ export function SiteHeader() {
         <Logo />
         <nav aria-label="주 메뉴" className="hidden flex-1 items-center gap-6 md:flex">
           {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              aria-current={pathname.startsWith(l.href) ? "page" : undefined}
-              className={clsx(linkClass, "aria-[current=page]:text-ink")}
-            >
+            <Link key={l.href} href={l.href} aria-current={current(l.href)} className={desktopLink}>
               {l.label}
             </Link>
           ))}
@@ -82,6 +105,7 @@ export function SiteHeader() {
         <div className="ml-auto flex items-center gap-2 md:ml-0">
           {account}
           <button
+            ref={toggleRef}
             type="button"
             aria-expanded={open}
             aria-controls="mobile-menu"
@@ -95,14 +119,17 @@ export function SiteHeader() {
       </div>
       {open && (
         <nav
+          ref={menuRef}
           id="mobile-menu"
           aria-label="모바일 메뉴"
-          className="absolute inset-x-0 top-full border-b border-border bg-bg px-5 pb-4 shadow-float md:hidden"
+          className={clsx(
+            "absolute inset-x-0 top-full border-b border-border bg-bg px-5 pb-4 shadow-float md:hidden",
+          )}
         >
           <ul>
             {links.map((l) => (
               <li key={l.href}>
-                <Link href={l.href} className={clsx(linkClass, "w-full text-body1")}>
+                <Link href={l.href} aria-current={current(l.href)} className={mobileLink}>
                   {l.label}
                 </Link>
               </li>
