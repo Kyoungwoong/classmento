@@ -2,7 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { BottomCTA, Button, ProgressBar, Screen, ScreenTitle, TopBar } from "@/components/ui";
+import {
+  BottomCTA,
+  Button,
+  ButtonLink,
+  ProgressBar,
+  Screen,
+  ScreenTitle,
+  TopBar,
+} from "@/components/ui";
 import { api, ApiError, type InterviewView } from "@/lib/api/client";
 import { useRecorder } from "./useRecorder";
 
@@ -38,6 +46,10 @@ export function InterviewScreen({ id }: { id: number }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploadFailed, setUploadFailed] = useState(false);
+  // 마지막 답변은 올렸는데 끝내기만 실패했을 때: 다시 올리지 않고 끝내기만 다시 한다
+  const [finishFailed, setFinishFailed] = useState(false);
+  const [loadFailed, setLoadFailed] = useState<"notFound" | "error" | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   const load = useCallback(
     () =>
@@ -60,17 +72,40 @@ export function InterviewScreen({ id }: { id: number }) {
           router.replace(`/login?next=/interview/${id}`);
           return;
         }
+        const notFound = err instanceof ApiError && err.status === 404;
+        setLoadFailed(notFound ? "notFound" : "error");
         setError(
-          err instanceof ApiError && err.status === 404
+          notFound
             ? "면접을 찾을 수 없어요."
             : "면접을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",
         );
       });
-  }, [id, load, router]);
+  }, [id, load, router, attempt]);
 
   if (!view || seq === null) {
     return (
-      <Screen header={<TopBar onBack={() => router.push("/")} />}>
+      <Screen
+        header={<TopBar onBack={() => router.push("/")} />}
+        cta={
+          loadFailed === "notFound" ? (
+            <BottomCTA>
+              <ButtonLink href="/interview/new">새 면접 만들기</ButtonLink>
+            </BottomCTA>
+          ) : loadFailed === "error" ? (
+            <BottomCTA>
+              <Button
+                onClick={() => {
+                  setLoadFailed(null);
+                  setError(null);
+                  setAttempt((n) => n + 1);
+                }}
+              >
+                다시 불러오기
+              </Button>
+            </BottomCTA>
+          ) : undefined
+        }
+      >
         <ScreenTitle title={error ?? "면접을 불러오고 있어요"} />
       </Screen>
     );
@@ -85,12 +120,13 @@ export function InterviewScreen({ id }: { id: number }) {
   const isLast = remaining.length === 0;
 
   async function finish(retries = PROCESSING_RETRIES): Promise<void> {
+    setFinishFailed(false);
     try {
       await api.finishInterview(id);
       router.push(`/interview/${id}/report`);
     } catch (err) {
       if (err instanceof ApiError && err.code === "ANSWERS_PROCESSING" && retries > 0) {
-        setBusy("답변을 정리하고 있어요");
+        setBusy("정리하고 있어요");
         await new Promise((r) => setTimeout(r, PROCESSING_RETRY_MS));
         return finish(retries - 1);
       }
@@ -102,7 +138,7 @@ export function InterviewScreen({ id }: { id: number }) {
           if (failed) {
             setSeq(failed.seq);
             recorder.reset();
-            setError(failed.failureReason ?? err.message);
+            setError(`${failed.failureReason ?? err.message} 다시 녹음해 주세요.`);
           }
         }
         setBusy(null);
@@ -111,15 +147,22 @@ export function InterviewScreen({ id }: { id: number }) {
       setError(
         err instanceof ApiError ? err.message : "면접을 끝내지 못했어요. 다시 시도해 주세요.",
       );
+      setFinishFailed(true);
       setBusy(null);
     }
   }
 
   async function submit() {
+    if (finishFailed) {
+      setError(null);
+      setBusy("마무리하고 있어요");
+      await finish();
+      return;
+    }
     if (!recorder.blob || seq === null) return;
     setError(null);
     setUploadFailed(false);
-    setBusy("답변을 올리고 있어요");
+    setBusy("올리고 있어요");
     try {
       await api.uploadAnswer(id, seq, recorder.blob);
     } catch {
@@ -131,7 +174,7 @@ export function InterviewScreen({ id }: { id: number }) {
     const nextDone = new Set(done).add(seq);
     setDone(nextDone);
     if (isLast) {
-      setBusy("면접을 마무리하고 있어요");
+      setBusy("마무리하고 있어요");
       await finish();
       return;
     }
@@ -157,13 +200,25 @@ export function InterviewScreen({ id }: { id: number }) {
   const cta =
     recorder.state === "recording" ? (
       <Button onClick={recorder.stop}>답변 끝내기</Button>
+    ) : recorder.state === "recorded" && busy !== null ? (
+      <Button loading loadingText={busy}>
+        {isLast ? "면접 끝내기" : "다음 질문"}
+      </Button>
     ) : recorder.state === "recorded" ? (
       <>
-        <Button variant="secondary" disabled={busy !== null} onClick={recorder.reset}>
-          다시 녹음
-        </Button>
-        <Button loading={busy !== null} loadingText={busy ?? undefined} onClick={submit}>
-          {uploadFailed ? "다시 올리기" : isLast ? "면접 끝내기" : "다음 질문"}
+        {!finishFailed && (
+          <Button variant="secondary" onClick={recorder.reset}>
+            다시 녹음
+          </Button>
+        )}
+        <Button onClick={submit}>
+          {finishFailed
+            ? "다시 끝내기"
+            : uploadFailed
+              ? "다시 올리기"
+              : isLast
+                ? "면접 끝내기"
+                : "다음 질문"}
         </Button>
       </>
     ) : (
@@ -182,19 +237,23 @@ export function InterviewScreen({ id }: { id: number }) {
 
       {recorder.state === "recording" && (
         <div className="mt-4">
-          <p className="text-title1 text-text-strong tabular-nums" aria-live="off">
+          <p className="text-title2 text-text-strong tabular-nums" aria-live="off">
             {mmss(recorder.elapsed)}
           </p>
-          <p className="mt-1 text-body2 text-text-sub">
+          <p role="status" className="mt-1 text-body2 text-text-sub">
             녹음하고 있어요. 3분이 되면 저절로 멈춰요.
           </p>
         </div>
       )}
       {recorder.state === "recorded" && recorder.url && (
         <div className="mt-4">
-          <p className="mb-3 text-body2 text-text-sub">
-            다시 들어 보고 괜찮으면 다음으로 넘어가요.
-          </p>
+          {!error && (
+            <p className="mb-3 text-body2 text-text-sub">
+              {isLast
+                ? "다시 들어 보고 괜찮으면 면접을 끝내요."
+                : "다시 들어 보고 괜찮으면 다음으로 넘어가요."}
+            </p>
+          )}
           <audio controls src={recorder.url} className="w-full" />
         </div>
       )}

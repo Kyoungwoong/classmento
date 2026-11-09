@@ -89,6 +89,46 @@ describe("InterviewScreen", () => {
     expect(push).toHaveBeenCalledWith("/interview/7/report");
   });
 
+  it("끝내기만 실패하면 다시 올리지 않고 끝내기만 다시 한다", async () => {
+    vi.spyOn(api, "interview").mockResolvedValue(interview([1, 2]));
+    const upload = vi.spyOn(api, "uploadAnswer").mockResolvedValue({ seq: 3, status: "UPLOADED" });
+    const finish = vi
+      .spyOn(api, "finishInterview")
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValueOnce(interview([1, 2, 3]));
+    Object.assign(recorder, { state: "recorded", blob: new Blob(["v"]), url: "blob:x" });
+    render(<InterviewScreen id={7} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "면접 끝내기" }));
+    fireEvent.click(await screen.findByRole("button", { name: "다시 끝내기" }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/interview/7/report"));
+    expect(upload).toHaveBeenCalledTimes(1);
+    expect(finish).toHaveBeenCalledTimes(2);
+  });
+
+  it("불러오지 못하면 [다시 불러오기]로 다시 시도한다", async () => {
+    const get = vi
+      .spyOn(api, "interview")
+      .mockRejectedValueOnce(new ApiError(500, "INTERNAL", "x"))
+      .mockResolvedValueOnce(interview());
+    render(<InterviewScreen id={7} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "다시 불러오기" }));
+
+    expect(await screen.findByRole("heading", { name: "질문 1번이에요" })).toBeInTheDocument();
+    expect(get).toHaveBeenCalledTimes(2);
+  });
+
+  it("없는 면접이면 새 면접 만들기로 안내한다", async () => {
+    vi.spyOn(api, "interview").mockRejectedValue(new ApiError(404, "NOT_FOUND", "x"));
+    render(<InterviewScreen id={7} />);
+    expect(await screen.findByRole("link", { name: "새 면접 만들기" })).toHaveAttribute(
+      "href",
+      "/interview/new",
+    );
+  });
+
   it("다시 녹음해야 하는 답변이 있으면 그 질문으로 돌아간다", async () => {
     const failed = interview([1, 2, 3]);
     failed.questions[1] = {
