@@ -36,6 +36,8 @@ export type InterviewView = Schemas["InterviewView"];
 export type InterviewSummary = Schemas["InterviewSummary"];
 export type CreateInterviewRequest = Schemas["CreateInterviewRequest"];
 export type AnswerStatusView = Schemas["AnswerStatusView"];
+export type ReportView = Schemas["ReportView"];
+export type ReportItemView = Schemas["ReportItemView"];
 export type SignupRequest = Schemas["SignupRequest"];
 export type LoginRequest = Schemas["LoginRequest"];
 
@@ -149,6 +151,9 @@ export const api = {
   },
   retryAnswer: (id: number, seq: number) =>
     apiFetch<AnswerStatusView>(`/api/interviews/${id}/questions/${seq}/retry`, { method: "POST" }),
+  finishInterview: (id: number) =>
+    apiFetch<InterviewView>(`/api/interviews/${id}/finish`, { method: "POST" }),
+  interviewReport: (id: number) => apiFetch<ReportView>(`/api/interviews/${id}/report`),
   /** <audio src>에 바로 쓰는 녹음 주소(같은 출처, 세션 쿠키) */
   answerAudioUrl: (id: number, seq: number) => `/api/interviews/${id}/questions/${seq}/audio`,
 

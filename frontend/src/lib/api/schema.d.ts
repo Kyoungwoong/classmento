@@ -100,6 +100,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/interviews/{id}/finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["finishInterview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/signup": {
         parameters: {
             query?: never;
@@ -268,6 +284,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getInterview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/interviews/{id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInterviewReport"];
         put?: never;
         post?: never;
         delete?: never;
@@ -598,6 +630,50 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        CriterionView: {
+            criterion: string;
+            /** Format: double */
+            average: number;
+        };
+        ReportItemView: {
+            /** Format: int32 */
+            seq: number;
+            question: string;
+            intent?: string;
+            /** @enum {string} */
+            kind: "TECH" | "BEHAVIORAL";
+            /** @enum {string} */
+            answerStatus?: "UPLOADED" | "TRANSCRIBED" | "EVALUATED" | "FAILED";
+            failureReason?: string;
+            transcript?: string;
+            /** Format: int64 */
+            durationMillis?: number;
+            /** Format: double */
+            overall?: number;
+            scores: components["schemas"]["ScoreView"][];
+            strength?: string;
+            improvement?: string;
+            suggestion?: string;
+        };
+        ReportView: {
+            /** Format: int64 */
+            id: number;
+            /** @enum {string} */
+            type: "EXPERIENCE" | "TECH" | "BEHAVIORAL" | "MIXED";
+            status: string;
+            /** Format: double */
+            overall?: number;
+            strength?: string;
+            improvement?: string;
+            criteria: components["schemas"]["CriterionView"][];
+            items: components["schemas"]["ReportItemView"][];
+        };
+        ScoreView: {
+            criterion: string;
+            /** Format: int32 */
+            score: number;
+            evidence?: string;
+        };
         HealthResponse: {
             status: string;
             llmAvailable: boolean;
@@ -617,9 +693,9 @@ export interface components {
             user?: components["schemas"]["UserView"];
         };
         CsrfToken: {
+            headerName?: string;
             parameterName?: string;
             token?: string;
-            headerName?: string;
         };
         CsrfResponse: {
             headerName: string;
@@ -890,6 +966,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["AnswerStatusView"];
+                };
+            };
+        };
+    };
+    finishInterview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InterviewView"];
                 };
             };
         };
@@ -1227,6 +1325,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["InterviewView"];
+                };
+            };
+        };
+    };
+    getInterviewReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ReportView"];
                 };
             };
         };
