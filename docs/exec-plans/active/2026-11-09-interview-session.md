@@ -158,3 +158,7 @@ GET  /api/interviews/{id}/report              {status: EVALUATING|READY, overall
   - 리포트에서 점수·STT 텍스트·다시 듣기 확인
   - 375/1280 스크린샷, design-reviewer "위반 없음"
 - 끝나면 서버·DB keep-alive·Gradle·Playwright를 정리한다.
+
+## 남은 일 (리뷰에서 나온 후속)
+- 리포트 응답에 세션 상태(`finished`)를 넣는다. 지금은 진행 중인 면접에서 모두 평가됐을 때 리포트 주소로 직접 들어오면, 끝낼 때까지 3초마다 다시 부른다(PR #20 리뷰).
+- 녹음 중에 뒤로 가기를 누르면 확인 시트를 띄운다. ListRow `href`를 지원한다. 문항 상세에도 폴링과 다시 평가를 넣는다(디자인 [제안]).
