@@ -1,9 +1,11 @@
 import clsx from "clsx";
-import { useId, type TextareaHTMLAttributes } from "react";
+import { useId, type Ref, type TextareaHTMLAttributes } from "react";
 
 export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label: string;
   error?: string;
+  /** React 19: ref는 일반 prop으로 받아 textarea에 넘긴다 */
+  ref?: Ref<HTMLTextAreaElement>;
 }
 
 /** 여러 줄 입력. TextField와 같은 회색 면, maxLength가 있으면 오른쪽 아래에 글자 수. */

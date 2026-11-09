@@ -12,3 +12,4 @@ export { SelectChip } from "./SelectChip";
 export { TagInput, type TagItem } from "./TagInput";
 export { TextArea } from "./TextArea";
 export { Toggle } from "./Toggle";
+export { ChipGroup } from "./ChipGroup";
