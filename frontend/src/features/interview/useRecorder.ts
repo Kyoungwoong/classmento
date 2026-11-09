@@ -31,6 +31,7 @@ export function useRecorder() {
   // 마이크를 여는 중에 또 시작하면 스트림이 둘 생겨 하나가 꺼지지 않는다
   const starting = useRef(false);
   const seconds = useRef(0);
+  const mounted = useRef(true);
 
   const clearTimer = () => {
     if (timer.current) clearInterval(timer.current);
@@ -55,7 +56,13 @@ export function useRecorder() {
       media = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
       starting.current = false;
-      setState("denied");
+      if (mounted.current) setState("denied");
+      return;
+    }
+    // 권한 창이 떠 있는 동안 화면을 떠났으면 바로 끈다
+    if (!mounted.current) {
+      media.getTracks().forEach((t) => t.stop());
+      starting.current = false;
       return;
     }
     const mimeType = pickMimeType();
@@ -115,13 +122,14 @@ export function useRecorder() {
   }, [url]);
 
   // 화면을 떠나면 녹음·마이크를 멈춘다
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
       clearTimer();
       stream.current?.getTracks().forEach((t) => t.stop());
-    },
-    [],
-  );
+    };
+  }, []);
 
   return { state, elapsed, blob, url: state === "recorded" ? url : null, start, stop, reset };
 }

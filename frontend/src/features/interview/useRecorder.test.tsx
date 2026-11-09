@@ -114,11 +114,12 @@ describe("useRecorder", () => {
     expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
     expect(result.current.state).toBe("recording");
   });
+
   it("마이크를 여는 중에 화면을 떠나면 열린 마이크를 바로 끈다", async () => {
-    let resolve!: (s: unknown) => void;
+    let resolve!: (s: MediaStream) => void;
     const late = { stop: vi.fn() };
     vi.mocked(navigator.mediaDevices.getUserMedia).mockReturnValueOnce(
-      new Promise((r) => (resolve = r)) as Promise<MediaStream>,
+      new Promise<MediaStream>((r) => (resolve = r)),
     );
     const { result, unmount } = renderHook(() => useRecorder());
     let pending!: Promise<void>;
@@ -127,7 +128,7 @@ describe("useRecorder", () => {
     });
     unmount();
     await act(async () => {
-      resolve({ getTracks: () => [late] });
+      resolve({ getTracks: () => [late] } as unknown as MediaStream);
       await pending;
     });
     expect(late.stop).toHaveBeenCalled();
