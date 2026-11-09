@@ -34,4 +34,11 @@ public class QuestionBankAdapter implements QuestionSource {
         .map(p -> QuestionDraft.fromBank(p.id(), p.text(), p.intent(), kind))
         .toList();
   }
+
+  @Override
+  public List<QuestionDraft> nearestTech(float[] query, int k) {
+    return catalog.nearestTech(query, k).stream()
+        .map(p -> QuestionDraft.fromBank(p.id(), p.text(), p.intent(), QuestionKind.TECH))
+        .toList();
+  }
 }

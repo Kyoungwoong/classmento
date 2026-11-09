@@ -13,4 +13,7 @@ public interface QuestionSource {
    */
   List<QuestionDraft> pick(
       QuestionKind kind, InterviewLevel level, JobRole jobRole, Set<String> prefer, int count);
+
+  /** 인성이 아닌 질문 중 벡터와 가까운 k개(경험 기반 면접의 후보, TECH). */
+  List<QuestionDraft> nearestTech(float[] query, int k);
 }

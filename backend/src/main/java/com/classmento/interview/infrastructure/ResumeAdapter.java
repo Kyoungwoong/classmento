@@ -1,7 +1,9 @@
 package com.classmento.interview.infrastructure;
 
+import com.classmento.interview.domain.Experience;
 import com.classmento.interview.domain.ExperienceSource;
 import com.classmento.resume.application.ExperienceQuery;
+import com.classmento.resume.application.ExperienceQuery.ExperienceDetail;
 import java.util.Set;
 import org.springframework.stereotype.Component;
 
@@ -18,5 +20,11 @@ public class ResumeAdapter implements ExperienceSource {
   @Override
   public Set<String> resumeSkills(Long userId, Long resumeId) {
     return experiences.skills(userId, resumeId);
+  }
+
+  @Override
+  public Experience experience(Long userId, Long resumeId, Long experienceId) {
+    ExperienceDetail d = experiences.experience(userId, resumeId, experienceId);
+    return new Experience(d.title(), d.summary(), d.detail(), d.skills(), d.embedding());
   }
 }
