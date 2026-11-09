@@ -1,7 +1,9 @@
 "use client";
 
+import { ChevronRight, History } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Panel } from "@/components/ui";
 import { api, type InterviewSummary } from "@/lib/api/client";
 import { TYPE_LABEL } from "./labels";
 
@@ -12,7 +14,7 @@ function date(iso: string) {
   return `${d.getMonth() + 1}월 ${d.getDate()}일`;
 }
 
-/** 홈의 "최근 면접"(로그인했고 면접이 있을 때만). 진행 중이면 이어서, 끝났으면 리포트로. */
+/** 홈의 "최근 면접" 패널(로그인했고 면접이 있을 때만). 진행 중이면 이어서(노랑 배지), 끝났으면 리포트로. */
 export function RecentInterviews() {
   const [list, setList] = useState<InterviewSummary[]>([]);
 
@@ -26,33 +28,47 @@ export function RecentInterviews() {
   if (list.length === 0) return null;
 
   return (
-    <section className="mt-10">
-      <h2 className="text-body1 font-semibold text-text-strong">최근 면접</h2>
-      <ul className="mt-2">
-        {list.slice(0, SHOWN).map((s) => {
-          const inProgress = s.status === "IN_PROGRESS";
-          return (
-            <li key={s.id}>
-              <Link
-                href={inProgress ? `/interview/${s.id}` : `/interview/${s.id}/report`}
-                className="-mx-2 flex items-center gap-4 rounded-sm px-2 py-4 active:bg-bg-subtle"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="block text-body1 font-medium text-text-strong">
-                    {TYPE_LABEL[s.type]}
+    <section aria-labelledby="recent-heading" className="mt-12 md:mt-16">
+      <Panel>
+        <div className="flex items-center gap-2">
+          <History size={20} aria-hidden className="text-accent" />
+          <h2 id="recent-heading" className="text-body1 font-semibold text-text-strong">
+            최근 면접
+          </h2>
+        </div>
+        <ul className="mt-2 divide-y divide-border">
+          {list.slice(0, SHOWN).map((s) => {
+            const inProgress = s.status === "IN_PROGRESS";
+            return (
+              <li key={s.id}>
+                <Link
+                  href={inProgress ? `/interview/${s.id}` : `/interview/${s.id}/report`}
+                  className="-mx-2 flex items-center gap-4 rounded-sm px-2 py-4 hover:bg-bg-subtle active:bg-bg-subtle"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-body1 font-medium text-text-strong">
+                      {TYPE_LABEL[s.type]}
+                    </span>
+                    <span className="mt-0.5 block text-body2 text-text-sub">
+                      {`${date(s.createdAt)} · 질문 ${s.questionCount}개`}
+                    </span>
                   </span>
-                  <span className="mt-0.5 block text-body2 text-text-sub">
-                    {`${date(s.createdAt)} · 질문 ${s.questionCount}개`}
+                  <span
+                    className={
+                      inProgress
+                        ? "shrink-0 rounded-full bg-highlight-weak px-3 py-1 text-caption font-semibold text-ink"
+                        : "shrink-0 text-body2 font-medium text-accent"
+                    }
+                  >
+                    {inProgress ? "이어서 하기" : "리포트 보기"}
                   </span>
-                </span>
-                <span className="shrink-0 text-body2 text-text-sub">
-                  {inProgress ? "이어서 하기" : "리포트 보기"}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+                  <ChevronRight size={20} aria-hidden className="shrink-0 text-text-hint" />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </Panel>
     </section>
   );
 }
