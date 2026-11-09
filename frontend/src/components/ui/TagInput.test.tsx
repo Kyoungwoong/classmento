@@ -58,6 +58,16 @@ describe("TagInput", () => {
     expect(screen.getAllByRole("button", { name: "JPA 지우기" })).toHaveLength(1);
   });
 
+  it("한글 조합 중 Enter는 태그를 만들지 않는다", () => {
+    const create = vi.fn();
+    render(<Harness create={create} />);
+    const input = screen.getByLabelText("태그");
+    fireEvent.change(input, { target: { value: "네트" } });
+    fireEvent.keyDown(input, { key: "Enter", isComposing: true });
+    expect(create).not.toHaveBeenCalled();
+    expect(input).toHaveValue("네트");
+  });
+
   it("칩의 지우기를 누르면 빠진다", () => {
     render(<Harness initial={[{ id: 1, name: "JPA" }]} />);
     fireEvent.click(screen.getByRole("button", { name: "JPA 지우기" }));
