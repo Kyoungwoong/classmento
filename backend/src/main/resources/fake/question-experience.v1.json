@@ -1,0 +1,9 @@
+[
+  {"question": "이 경험에서 그 기술을 고른 이유와, 함께 검토한 대안은 무엇이었나요?", "intent": "기술 선택 근거와 대안 비교", "bankQuestionId": null},
+  {"question": "진행하면서 가장 어려웠던 문제와, 원인을 어떻게 찾아 해결했는지 말해 주세요.", "intent": "문제 해결 과정(원인 → 해결 → 결과)", "bankQuestionId": null},
+  {"question": "지금 다시 만든다면 어떤 부분을 다르게 설계하시겠어요?", "intent": "트레이드오프와 회고", "bankQuestionId": null},
+  {"question": "트래픽이 열 배로 늘면 이 구조에서 어디가 먼저 문제가 될까요?", "intent": "확장성과 병목 이해", "bankQuestionId": null},
+  {"question": "데이터 정합성이 깨질 수 있는 지점은 어디였고 어떻게 막으셨나요?", "intent": "정합성·트랜잭션 개념 적용", "bankQuestionId": null},
+  {"question": "장애가 났을 때 어떻게 알아채고 복구하도록 만들었나요?", "intent": "운영·모니터링 경험", "bankQuestionId": null},
+  {"question": "이 경험에서 성과를 어떤 숫자로 확인하셨나요?", "intent": "결과를 수치로 설명하는지", "bankQuestionId": null}
+]
