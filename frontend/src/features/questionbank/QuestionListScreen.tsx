@@ -95,7 +95,12 @@ export function QuestionListScreen() {
         .then((res) => {
           if (req !== latest.current) return;
           setError(null);
-          setItems((prev) => (nextPage === 0 || !prev ? res.items : [...prev, ...res.items]));
+          setItems((prev) => {
+            if (nextPage === 0 || !prev) return res.items;
+            // offset 페이지라 그 사이 새 질문이 들어오면 겹칠 수 있다 → id로 거른다
+            const seen = new Set(prev.map((q) => q.id));
+            return [...prev, ...res.items.filter((q) => !seen.has(q.id))];
+          });
           setTotal(res.total);
           setPage(nextPage);
         })
