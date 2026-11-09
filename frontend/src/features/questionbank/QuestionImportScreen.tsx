@@ -20,7 +20,6 @@ const MAX_BYTES = 2 * 1024 * 1024;
 /** /admin/questions/import — CSV로 질문 여러 개를 한 번에 넣는다. 오류가 하나라도 있으면 서버는 아무것도 저장하지 않는다. */
 export function QuestionImportScreen() {
   const router = useRouter();
-  const inputId = useId();
   const errorId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -122,7 +121,6 @@ export function QuestionImportScreen() {
 
       {/* 오류 화면에서도 [다른 파일 고르기]가 열 수 있게 파일 입력은 늘 그려 둔다 */}
       <input
-        id={inputId}
         ref={inputRef}
         type="file"
         accept=".csv,text/csv"
@@ -182,7 +180,7 @@ export function QuestionImportScreen() {
               </Button>
             </div>
             {fileError && (
-              <p id={errorId} className="mt-2 text-caption text-danger">
+              <p id={errorId} role="alert" className="mt-2 text-caption text-danger">
                 {fileError}
               </p>
             )}
