@@ -238,3 +238,17 @@ describe("InterviewScreen", () => {
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/interview/7/report"));
   });
 });
+
+describe("InterviewScreen 마스코트", () => {
+  it("녹음 중이면 듣는 표정, 기다릴 때는 대기 표정", async () => {
+    vi.spyOn(api, "interview").mockResolvedValue(interview());
+    Object.assign(recorder, { state: "recording", elapsed: 5 });
+    const { container, rerender } = render(<InterviewScreen id={7} />);
+    await screen.findByRole("heading", { name: "질문 1번이에요" });
+    expect(container.querySelector("[data-mood]")).toHaveAttribute("data-mood", "listening");
+
+    Object.assign(recorder, { state: "idle", elapsed: 0 });
+    rerender(<InterviewScreen id={7} />);
+    expect(container.querySelector("[data-mood]")).toHaveAttribute("data-mood", "idle");
+  });
+});

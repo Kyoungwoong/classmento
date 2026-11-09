@@ -205,3 +205,19 @@ describe("NewInterviewScreen", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("조건에 맞는 질문이 부족해요.");
   });
 });
+
+describe("NewInterviewScreen 단계 안내", () => {
+  it("단계 목록이 지금 단계를 알려 주고, 인성은 조건 단계를 건너뛴다", async () => {
+    noResume();
+    render(<NewInterviewScreen />);
+    const steps = screen.getByRole("list", { name: "면접 만들기 단계" });
+    expect(steps).toHaveTextContent("면접 종류");
+    expect(steps).toHaveTextContent("조건");
+    expect(steps.querySelector("[aria-current='step']")).toHaveTextContent("면접 종류");
+
+    fireEvent.click(await screen.findByRole("radio", { name: /인성 면접/ }));
+    next();
+    expect(steps).not.toHaveTextContent("조건");
+    expect(steps.querySelector("[aria-current='step']")).toHaveTextContent("질문 수");
+  });
+});

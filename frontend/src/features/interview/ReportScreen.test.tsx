@@ -210,3 +210,18 @@ describe("ReportScreen", () => {
     expect(load).not.toHaveBeenCalled();
   });
 });
+
+describe("ReportScreen 마스코트", () => {
+  it("평가가 끝나면 기쁜 표정, 평가 중이면 생각하는 표정", async () => {
+    vi.spyOn(api, "interviewReport").mockResolvedValueOnce(report());
+    const { container, unmount } = render(<ReportScreen id={7} />);
+    await screen.findByRole("heading", { name: "면접이 끝났어요" });
+    expect(container.querySelector("[data-mood]")).toHaveAttribute("data-mood", "happy");
+    unmount();
+
+    vi.spyOn(api, "interviewReport").mockResolvedValue(report({ status: "EVALUATING" }));
+    const second = render(<ReportScreen id={7} />);
+    await screen.findByRole("heading", { name: "답변을 평가하고 있어요" });
+    expect(second.container.querySelector("[data-mood]")).toHaveAttribute("data-mood", "thinking");
+  });
+});
