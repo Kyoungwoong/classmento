@@ -110,6 +110,89 @@ describe("NewInterviewScreen", () => {
     expect(screen.getByRole("heading", { name: /몇 개/ })).toBeInTheDocument();
   });
 
+  it("기술 면접에서 이력서로 좁히면 어느 이력서인지 보여 주고 resumeId를 보낸다", async () => {
+    parsedResume();
+    const create = vi.spyOn(api, "createInterview").mockResolvedValue(created);
+    render(<NewInterviewScreen />);
+    fireEvent.click(await screen.findByRole("radio", { name: /기술 면접/ }));
+    next();
+    fireEvent.click(screen.getByRole("button", { name: "백엔드" }));
+    fireEvent.click(screen.getByRole("radio", { name: "미들" }));
+    fireEvent.click(screen.getByRole("switch", { name: /me\.pdf 기술로 좁히기/ }));
+    next();
+    fireEvent.click(screen.getByRole("button", { name: "질문 만들기" }));
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith({
+        type: "TECH",
+        count: 3,
+        level: "MIDDLE",
+        jobRole: "BACKEND",
+        narrowByResume: true,
+        resumeId: 3,
+      }),
+    );
+  });
+
+  it("혼합은 직무·연차만 보낸다", async () => {
+    noResume();
+    const create = vi.spyOn(api, "createInterview").mockResolvedValue(created);
+    render(<NewInterviewScreen />);
+    fireEvent.click(await screen.findByRole("radio", { name: /기술 \+ 인성/ }));
+    next();
+    fireEvent.click(screen.getByRole("button", { name: "프론트엔드" }));
+    fireEvent.click(screen.getByRole("radio", { name: "신입" }));
+    next();
+    fireEvent.click(screen.getByRole("button", { name: "질문 만들기" }));
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith({
+        type: "MIXED",
+        count: 3,
+        level: "NEW",
+        jobRole: "FRONTEND",
+      }),
+    );
+  });
+
+  it("뒤로 가기는 이전 단계로", async () => {
+    noResume();
+    render(<NewInterviewScreen />);
+    fireEvent.click(await screen.findByRole("radio", { name: /인성 면접/ }));
+    next();
+    fireEvent.click(screen.getByRole("button", { name: "뒤로 가기" }));
+    expect(screen.getByRole("heading", { name: "어떤 면접을 볼까요?" })).toBeInTheDocument();
+    expect(router.back).not.toHaveBeenCalled();
+  });
+
+  it("경험을 못 불러오면 다시 불러올 수 있다", async () => {
+    vi.spyOn(api, "resumes").mockResolvedValue([
+      { id: 3, filename: "me.pdf", status: "PARSED", createdAt: "2026-11-09T00:00:00Z" },
+    ]);
+    const load = vi
+      .spyOn(api, "resumeExperiences")
+      .mockRejectedValueOnce(new Error("x"))
+      .mockResolvedValue([exp]);
+    render(<NewInterviewScreen />);
+    const experience = await screen.findByRole("radio", { name: /경험 기반 면접/ });
+    await waitFor(() => expect(experience).toBeEnabled());
+    fireEvent.click(experience);
+    next();
+    expect(await screen.findByRole("alert")).toHaveTextContent("경험을 불러오지 못했어요");
+    fireEvent.click(screen.getByRole("button", { name: "다시 불러오기" }));
+    expect(await screen.findByRole("radio", { name: /실시간 재고 동기화/ })).toBeInTheDocument();
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it("올렸지만 정리 중인 이력서면 다시 올리라고 하지 않는다", async () => {
+    vi.spyOn(api, "resumes").mockResolvedValue([
+      { id: 4, filename: "new.pdf", status: "EXTRACTED", createdAt: "2026-11-09T00:00:00Z" },
+    ]);
+    render(<NewInterviewScreen />);
+    expect(await screen.findByRole("radio", { name: /경험 기반 면접/ })).toHaveTextContent(
+      "이력서를 정리하고 있어요",
+    );
+    expect(screen.queryByRole("link", { name: "이력서 올리러 가기" })).not.toBeInTheDocument();
+  });
+
   it("질문이 모자라면 원인을 보여준다", async () => {
     noResume();
     vi.spyOn(api, "createInterview").mockRejectedValue(
