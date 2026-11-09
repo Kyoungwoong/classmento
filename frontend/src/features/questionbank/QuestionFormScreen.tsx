@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BottomCTA,
   Button,
   ButtonLink,
+  ChipGroup,
   Screen,
   ScreenTitle,
   SegmentedControl,
@@ -24,7 +25,9 @@ const TEXT_MIN = 5;
 const TEXT_MAX = 300;
 const INTENT_MAX = 200;
 
-type Errors = Partial<Record<"category" | "text" | "level" | "jobRoles", string>>;
+type Field = "category" | "text" | "level" | "jobRoles";
+type Errors = Partial<Record<Field, string>>;
+const FIELD_ORDER: Field[] = ["category", "text", "level", "jobRoles"];
 
 const suggestTags = (q: string) => api.suggestTags(q);
 const createTag = (name: string) => api.createTag(name).then((r) => r.tag);
@@ -49,6 +52,10 @@ export function QuestionFormScreen({ id }: { id?: number }) {
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const categoryRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLTextAreaElement>(null);
+  const levelRef = useRef<HTMLDivElement>(null);
+  const jobRolesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const here = editing ? `/admin/questions/${id}` : "/admin/questions/new";
@@ -106,7 +113,15 @@ export function QuestionFormScreen({ id }: { id?: number }) {
     const e = validate();
     setErrors(e);
     setFormError(null);
-    if (Object.keys(e).length > 0 || subId === null || level === null) return;
+    if (Object.keys(e).length > 0 || subId === null || level === null) {
+      // 화면 아래에서 눌렀어도 무엇이 틀렸는지 보이게 첫 번째 칸으로
+      const first = FIELD_ORDER.find((k) => e[k]);
+      const refs = { category: categoryRef, text: textRef, level: levelRef, jobRoles: jobRolesRef };
+      const el = first && refs[first].current;
+      el?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+      (el?.querySelector<HTMLElement>("button, textarea") ?? el)?.focus?.({ preventScroll: true });
+      return;
+    }
     const body = {
       categoryId: subId,
       text: text.trim(),
@@ -189,9 +204,8 @@ export function QuestionFormScreen({ id }: { id?: number }) {
 
       {ready && (
         <div className="flex flex-col gap-8">
-          <div>
-            <p className="mb-2 text-caption text-text-sub">대분류</p>
-            <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-6">
+            <ChipGroup label="대분류">
               {tops.map((t) => (
                 <SelectChip
                   key={t.id}
@@ -200,26 +214,25 @@ export function QuestionFormScreen({ id }: { id?: number }) {
                   onClick={() => chooseTop(t.id)}
                 />
               ))}
-            </div>
-            <p className="mt-6 mb-2 text-caption text-text-sub">소분류</p>
-            {topId === null ? (
-              <p className="text-body2 text-text-hint">대분류를 먼저 골라 주세요</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {subs.map((c) => (
+            </ChipGroup>
+            <ChipGroup ref={categoryRef} label="소분류" error={errors.category}>
+              {topId === null ? (
+                <p className="text-body2 text-text-hint">대분류를 먼저 골라 주세요</p>
+              ) : (
+                subs.map((c) => (
                   <SelectChip
                     key={c.id}
                     label={c.name}
                     selected={c.id === subId}
                     onClick={() => setSubId(c.id)}
                   />
-                ))}
-              </div>
-            )}
-            {errors.category && <p className="mt-2 text-caption text-danger">{errors.category}</p>}
+                ))
+              )}
+            </ChipGroup>
           </div>
 
           <TextArea
+            ref={textRef}
             label="질문"
             value={text}
             maxLength={TEXT_MAX}
@@ -228,25 +241,26 @@ export function QuestionFormScreen({ id }: { id?: number }) {
             onChange={(e) => setText(e.target.value)}
           />
 
-          <div>
+          <div ref={levelRef}>
             <SegmentedControl label="난이도" options={LEVELS} value={level} onChange={setLevel} />
             {errors.level && <p className="mt-2 text-caption text-danger">{errors.level}</p>}
           </div>
 
-          <div>
-            <p className="mb-2 text-caption text-text-sub">직무 (여러 개 고를 수 있어요)</p>
-            <div className="flex flex-wrap gap-2">
-              {JOB_ROLES.map((j) => (
-                <SelectChip
-                  key={j.value}
-                  label={j.label}
-                  selected={jobRoles.includes(j.value)}
-                  onClick={() => toggleJobRole(j.value)}
-                />
-              ))}
-            </div>
-            {errors.jobRoles && <p className="mt-2 text-caption text-danger">{errors.jobRoles}</p>}
-          </div>
+          <ChipGroup
+            ref={jobRolesRef}
+            label="직무"
+            hint="여러 개 고를 수 있어요"
+            error={errors.jobRoles}
+          >
+            {JOB_ROLES.map((j) => (
+              <SelectChip
+                key={j.value}
+                label={j.label}
+                selected={jobRoles.includes(j.value)}
+                onClick={() => toggleJobRole(j.value)}
+              />
+            ))}
+          </ChipGroup>
 
           <TagInput
             label="태그 (선택)"
