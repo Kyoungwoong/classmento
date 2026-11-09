@@ -15,28 +15,25 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.springframework.core.task.TaskExecutor;
-import org.springframework.core.task.TaskRejectedException;
 import org.springframework.stereotype.Service;
 
-/** 면접 리포트 조회: 종합(끝났을 때) + 기준별 평균 + 문항별(내 답변 글자·점수·피드백). 본인 것만. */
+/**
+ * 면접 리포트 조회: 종합(끝났을 때) + 기준별 평균 + 문항별(내 답변 글자·점수·피드백). 본인 것만.
+ *
+ * <p>부수효과: 끝났고 모두 평가됐는데 종합이 없으면 종합을 다시 요청한다({@link ReportScheduler}, 세션마다 하나만).
+ */
 @Service
 public class ReportQuery {
 
   private final InterviewSessionRepository sessions;
   private final AnswerRepository answers;
-  private final ReportWriter writer;
-  private final TaskExecutor interviewExecutor;
+  private final ReportScheduler reports;
 
   public ReportQuery(
-      InterviewSessionRepository sessions,
-      AnswerRepository answers,
-      ReportWriter writer,
-      TaskExecutor interviewExecutor) {
+      InterviewSessionRepository sessions, AnswerRepository answers, ReportScheduler reports) {
     this.sessions = sessions;
     this.answers = answers;
-    this.writer = writer;
-    this.interviewExecutor = interviewExecutor;
+    this.reports = reports;
   }
 
   public Report report(Long userId, Long sessionId) {
@@ -76,11 +73,7 @@ public class ReportQuery {
     boolean allEvaluated = items.stream().allMatch(it -> it.evaluation() != null);
     if (s.getStatus() == SessionStatus.FINISHED && allEvaluated) {
       // 끝내기 직후 종합 작업이 거절·실패했으면 여기서 다시 시도한다(잠금·상태 확인으로 한 번만 저장)
-      try {
-        interviewExecutor.execute(() -> writer.maybeReport(sessionId));
-      } catch (TaskRejectedException e) {
-        // 다음 조회에서 다시 시도
-      }
+      reports.request(sessionId);
     }
     return new Report(s, ready, report, criteria, items);
   }

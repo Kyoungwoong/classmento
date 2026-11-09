@@ -31,7 +31,7 @@ public class AnswerService {
   private final AnswerProcessor processor;
   private final TaskExecutor interviewExecutor;
   private final TransactionTemplate tx;
-  private final ReportWriter reports;
+  private final ReportScheduler reports;
 
   public AnswerService(
       InterviewSessionRepository sessions,
@@ -40,7 +40,7 @@ public class AnswerService {
       AnswerProcessor processor,
       TaskExecutor interviewExecutor,
       TransactionTemplate tx,
-      ReportWriter reports) {
+      ReportScheduler reports) {
     this.sessions = sessions;
     this.answers = answers;
     this.storage = storage;
@@ -134,11 +134,8 @@ public class AnswerService {
         start(a); // 평가부터(혼합). 거절되면 FAILED로 남아 다시 시도할 수 있다
       }
     }
-    try {
-      interviewExecutor.execute(() -> reports.maybeReport(sessionId));
-    } catch (TaskRejectedException e) {
-      // 남은 평가가 끝날 때, 그리고 리포트를 조회할 때(ReportQuery) 다시 시도한다
-    }
+    // 남은 평가가 끝날 때, 그리고 리포트를 조회할 때도 다시 요청된다(세션마다 하나만 진행)
+    reports.request(sessionId);
     return finished;
   }
 

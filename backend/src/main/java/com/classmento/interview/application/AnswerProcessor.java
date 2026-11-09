@@ -38,7 +38,7 @@ public class AnswerProcessor {
   private final SttClient stt;
   private final AnswerEvaluator evaluator;
   private final TransactionTemplate tx;
-  private final ReportWriter reports;
+  private final ReportScheduler reports;
 
   public AnswerProcessor(
       AnswerRepository answers,
@@ -47,7 +47,7 @@ public class AnswerProcessor {
       SttClient stt,
       AnswerEvaluator evaluator,
       TransactionTemplate tx,
-      ReportWriter reports) {
+      ReportScheduler reports) {
     this.answers = answers;
     this.sessions = sessions;
     this.storage = storage;
@@ -109,12 +109,7 @@ public class AnswerProcessor {
       return;
     }
     if (save(answerId, version, a -> a.evaluated(evaluation))) {
-      try {
-        reports.maybeReport(answer.getSessionId());
-      } catch (RuntimeException e) {
-        // 종합 실패가 이미 평가된 답변을 실패로 바꾸지 않게 따로 잡는다(다음 평가·조회 때 다시 시도)
-        log.warn("면접 {} 종합 실패: {}", answer.getSessionId(), e.getClass().getSimpleName());
-      }
+      reports.request(answer.getSessionId());
     }
   }
 
