@@ -62,6 +62,16 @@ public class InterviewSession {
   @OrderBy("seq")
   private List<InterviewQuestion> questions = new ArrayList<>();
 
+  private Double reportOverall;
+
+  private String reportStrength;
+
+  private String reportImprovement;
+
+  private String reportPromptVersion;
+
+  private String reportModel;
+
   @Column(nullable = false, updatable = false)
   private Instant createdAt = Instant.now();
 
@@ -123,16 +133,38 @@ public class InterviewSession {
     return s;
   }
 
-  public void finish(java.util.Set<Integer> answeredSeqs) {
-    throw new UnsupportedOperationException("TODO");
+  /** 모든 질문에 답한 뒤에만, 한 번만 끝낼 수 있다(건너뛰기 없음). */
+  public void finish(Set<Integer> answeredSeqs) {
+    if (status != SessionStatus.IN_PROGRESS) {
+      throw new DomainException("ALREADY_FINISHED", "이미 끝난 면접이에요.");
+    }
+    for (InterviewQuestion q : questions) {
+      if (!answeredSeqs.contains(q.getSeq())) {
+        throw new DomainException("NOT_ALL_ANSWERED", "모든 질문에 답한 뒤에 끝낼 수 있어요.");
+      }
+    }
+    status = SessionStatus.FINISHED;
   }
 
+  /** 모든 답변 평가가 끝난 뒤 종합을 붙인다(끝난 면접에 한 번). */
   public void report(SessionReport report) {
-    throw new UnsupportedOperationException("TODO");
+    if (status != SessionStatus.FINISHED) {
+      throw new DomainException("NOT_FINISHED", "끝난 면접만 종합할 수 있어요.");
+    }
+    this.reportOverall = report.overall();
+    this.reportStrength = report.strength();
+    this.reportImprovement = report.improvement();
+    this.reportPromptVersion = report.promptVersion();
+    this.reportModel = report.model();
+    this.status = SessionStatus.REPORTED;
   }
 
   public SessionReport getReport() {
-    throw new UnsupportedOperationException("TODO");
+    if (status != SessionStatus.REPORTED) {
+      return null;
+    }
+    return new SessionReport(
+        reportOverall, reportStrength, reportImprovement, reportPromptVersion, reportModel);
   }
 
   /** 진행 중인 면접의 있는 질문인지 확인하고 그 질문을 돌려준다. */
