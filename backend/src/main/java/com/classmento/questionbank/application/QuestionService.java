@@ -135,7 +135,7 @@ public class QuestionService {
       return embeddingClient.embed(text);
     } catch (RuntimeException e) {
       // 외부 장애로 질문 저장까지 막지 않는다. 임베딩은 비워 두고 기동 시 채운다.
-      log.warn("질문 임베딩 생성 실패(비워 두고 나중에 채움): {}", e.getMessage());
+      log.warn("질문 임베딩 생성 실패(비워 두고 나중에 채움): {}: {}", e.getClass().getSimpleName(), e.getMessage());
       return null;
     }
   }
