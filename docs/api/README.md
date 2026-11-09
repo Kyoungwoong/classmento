@@ -70,6 +70,8 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 | GET | `/api/interviews/{id}` | 면접 하나(질문 포함, 질문마다 `answerStatus`·`failureReason`) |
 | POST | `/api/interviews/{id}/questions/{seq}/answer` | multipart `audio`(webm·ogg·m4a·aac·wav·mp3, 10MB) → 202 `{seq, status}`. 같은 질문에 다시 올리면 다시 녹음(글자·평가를 지우고 처음부터). 백그라운드 STT → 평가(혼합은 STT까지, 평가는 끝낸 뒤). 끝난 면접 409 `INTERVIEW_CLOSED`, 없는 질문 404, 오디오 아님·빈 파일 400 |
 | POST | `/api/interviews/{id}/questions/{seq}/retry` | 실패한 답변만(409 `NOT_FAILED`) 같은 녹음으로 다시 처리 → 202. 글자까지 됐으면 평가만 다시 |
+| POST | `/api/interviews/{id}/finish` | 모든 질문에 답했으면 끝낸다 → 202 `InterviewView`. 다 답하지 않으면 409 `NOT_ALL_ANSWERED`, 두 번 409 `ALREADY_FINISHED`. 혼합은 이때 한꺼번에 평가. 모든 평가가 끝나면 종합(session-report) |
+| GET | `/api/interviews/{id}/report` | `{status: READY\|EVALUATING, overall?, strength?, improvement?, criteria[{criterion, average}], items[{seq, question, intent, kind, answerStatus?, failureReason?, transcript?, durationMillis?, overall?, scores[{criterion, score, evidence?}], strength?, improvement?, suggestion?}]}`. 종합은 READY일 때만, 문항은 진행 중에도 |
 | GET | `/api/interviews/{id}/questions/{seq}/audio` | 내 녹음 듣기(원래 Content-Type, `no-store`, Range 206 지원). 남의 것·답하지 않은 질문 404 |
 - 질문 고르기: 기술은 인성이 아닌 대분류에서 직무(또는 COMMON)·연차(같은 단계, 모자라면 한 단계 아래), 이력서로 좁히면 이력서 기술과 맞는 태그·소분류 먼저, 소분류가 겹치지 않게. 인성은 인성 대분류. 혼합은 기술·인성을 기술부터 번갈아.
 
