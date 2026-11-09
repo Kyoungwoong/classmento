@@ -36,6 +36,7 @@ Tailwind 기본 팔레트는 꺼져 있다(`--color-*: initial`). `bg-purple-500
 | `TopBar` | `Screen` header 슬롯. 뒤로 가기 + 오른쪽 작은 텍스트 행동 하나(예: 로그아웃) |
 | `Chip` | 기술 같은 짧은 키워드. `size` md(편집, 지우기 버튼 터치 44px) / sm(읽기 전용), `tone` muted(흰 배경 위) / surface(회색 면 위) |
 | `ListRow` | 정보 나열. 카드 그리드 대신 세로 리스트. 긴 문장(질문)은 `titleLines={2}` |
+| `ChoiceRow` | 하나만 고르는 목록 행(면접 종류 등). 부모 `role="radiogroup"` + `-mx-4`, 고르면 `bg-primary-weak` + 체크, 고를 수 없으면 제목만 흐리고 이유는 `text-text-sub` |
 | `SelectChip` | 눌러서 고르는 칩(필터·여러 개 선택). 높이 44, 고르면 `bg-primary-weak` + `text-primary` |
 | `ChipGroup` | SelectChip 묶음 + 라벨·에러(스크린리더용 group 연결). 줄바꿈으로 나열 |
 | `SegmentedControl` | 2~5개 중 하나 고르기(난이도). 회색 면 위 고른 칸만 흰 면, `radiogroup` |
