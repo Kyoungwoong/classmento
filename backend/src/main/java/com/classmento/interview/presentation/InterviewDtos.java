@@ -1,14 +1,17 @@
 package com.classmento.interview.presentation;
 
 import com.classmento.interview.application.InterviewService.Command;
+import com.classmento.interview.application.ReportQuery;
 import com.classmento.interview.domain.Answer;
 import com.classmento.interview.domain.AnswerStatus;
+import com.classmento.interview.domain.Evaluation;
 import com.classmento.interview.domain.InterviewLevel;
 import com.classmento.interview.domain.InterviewQuestion;
 import com.classmento.interview.domain.InterviewSession;
 import com.classmento.interview.domain.InterviewType;
 import com.classmento.interview.domain.JobRole;
 import com.classmento.interview.domain.QuestionKind;
+import com.classmento.interview.domain.SessionReport;
 import com.classmento.interview.domain.SessionStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -101,6 +104,84 @@ public final class InterviewDtos {
     static InterviewSummary of(InterviewSession s) {
       return new InterviewSummary(
           s.getId(), s.getType(), s.getStatus(), s.getQuestions().size(), s.getCreatedAt());
+    }
+  }
+
+  @Schema(requiredProperties = {"criterion", "score"})
+  public record ScoreView(String criterion, int score, String evidence) {}
+
+  @Schema(requiredProperties = {"criterion", "average"})
+  public record CriterionView(String criterion, double average) {}
+
+  /** 문항 하나. 답하지 않았으면 answerStatus부터 비어 있고, 평가 전이면 점수·피드백이 비어 있다. */
+  @Schema(requiredProperties = {"seq", "question", "kind", "scores"})
+  public record ReportItemView(
+      int seq,
+      String question,
+      String intent,
+      QuestionKind kind,
+      AnswerStatus answerStatus,
+      String failureReason,
+      String transcript,
+      Long durationMillis,
+      Double overall,
+      List<ScoreView> scores,
+      String strength,
+      String improvement,
+      String suggestion) {
+
+    static ReportItemView of(ReportQuery.Item it) {
+      InterviewQuestion q = it.question();
+      Answer a = it.answer();
+      Evaluation e = it.evaluation();
+      return new ReportItemView(
+          q.getSeq(),
+          q.getText(),
+          q.getIntent(),
+          q.getKind(),
+          a == null ? null : a.getStatus(),
+          a == null ? null : a.getFailureReason(),
+          a == null ? null : a.getTranscript(),
+          a == null ? null : a.getDurationMillis(),
+          e == null ? null : e.overall(),
+          it.scores().entrySet().stream()
+              .map(x -> new ScoreView(x.getKey(), x.getValue().score(), x.getValue().evidence()))
+              .toList(),
+          e == null ? null : e.strength(),
+          e == null ? null : e.improvement(),
+          e == null ? null : e.suggestion());
+    }
+  }
+
+  /** 리포트 상태: READY(종합까지 끝) / EVALUATING(진행 중이거나 평가 중) */
+  public enum ReportStatus {
+    READY,
+    EVALUATING
+  }
+
+  /** status: READY(종합까지 끝) / EVALUATING(진행 중이거나 평가 중). overall·strength·improvement는 READY일 때만. */
+  @Schema(requiredProperties = {"id", "type", "status", "criteria", "items"})
+  public record ReportView(
+      Long id,
+      InterviewType type,
+      ReportStatus status,
+      Double overall,
+      String strength,
+      String improvement,
+      List<CriterionView> criteria,
+      List<ReportItemView> items) {
+
+    static ReportView of(ReportQuery.Report r) {
+      SessionReport sum = r.summary();
+      return new ReportView(
+          r.session().getId(),
+          r.session().getType(),
+          r.ready() ? ReportStatus.READY : ReportStatus.EVALUATING,
+          sum == null ? null : sum.overall(),
+          sum == null ? null : sum.strength(),
+          sum == null ? null : sum.improvement(),
+          r.criteria().stream().map(c -> new CriterionView(c.criterion(), c.average())).toList(),
+          r.items().stream().map(ReportItemView::of).toList());
     }
   }
 }

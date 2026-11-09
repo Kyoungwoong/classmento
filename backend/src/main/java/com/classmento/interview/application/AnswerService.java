@@ -4,9 +4,11 @@ import com.classmento.common.domain.DomainException;
 import com.classmento.common.web.ApiException;
 import com.classmento.interview.domain.Answer;
 import com.classmento.interview.domain.AnswerRepository;
+import com.classmento.interview.domain.AnswerStatus;
 import com.classmento.interview.domain.InterviewSession;
 import com.classmento.interview.domain.InterviewSessionRepository;
 import com.classmento.storage.FileStorage;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -29,6 +31,7 @@ public class AnswerService {
   private final AnswerProcessor processor;
   private final TaskExecutor interviewExecutor;
   private final TransactionTemplate tx;
+  private final ReportScheduler reports;
 
   public AnswerService(
       InterviewSessionRepository sessions,
@@ -36,13 +39,15 @@ public class AnswerService {
       FileStorage storage,
       AnswerProcessor processor,
       TaskExecutor interviewExecutor,
-      TransactionTemplate tx) {
+      TransactionTemplate tx,
+      ReportScheduler reports) {
     this.sessions = sessions;
     this.answers = answers;
     this.storage = storage;
     this.processor = processor;
     this.interviewExecutor = interviewExecutor;
     this.tx = tx;
+    this.reports = reports;
   }
 
   /** 녹음을 받아 저장하고 처리를 시작한다. 같은 질문에 다시 올리면 다시 녹음으로 본다. */
@@ -75,15 +80,18 @@ public class AnswerService {
 
   private Answer record(InterviewSession session, int seq, String key, String type) {
     return tx.execute(
-        s ->
-            answers
-                .lockBySessionIdAndSeq(session.getId(), seq)
-                .map(
-                    a -> {
-                      a.reRecord(key, type);
-                      return a;
-                    })
-                .orElseGet(() -> answers.save(Answer.recorded(session, seq, key, type))));
+        s -> {
+          // 끝내기와 거의 동시에 온 다시 녹음이 끝난 뒤에 반영되지 않게 세션을 잠그고 다시 확인
+          sessions.lockById(session.getId()).orElseThrow().requireAnswerable(seq);
+          return answers
+              .lockBySessionIdAndSeq(session.getId(), seq)
+              .map(
+                  a -> {
+                    a.reRecord(key, type);
+                    return a;
+                  })
+              .orElseGet(() -> answers.save(Answer.recorded(session, seq, key, type)));
+        });
   }
 
   /** 실패한 답변을 같은 녹음으로 다시 처리한다. */
@@ -105,6 +113,30 @@ public class AnswerService {
     sessionWithQuestion(userId, sessionId, seq);
     Answer a = answers.findBySessionIdAndSeq(sessionId, seq).orElseThrow(ApiException::notFound);
     return new Audio(storage.load(a.getAudioKey()), a.getContentType());
+  }
+
+  /** 면접 끝내기: 모든 질문에 답했어야 한다. 끝나면 글자까지 된 답변(혼합)을 평가하고, 모두 평가되면 종합을 만든다. */
+  public InterviewSession finish(Long userId, Long sessionId) {
+    sessions.findByIdAndUserId(sessionId, userId).orElseThrow(ApiException::notFound);
+    InterviewSession finished =
+        tx.execute(
+            s -> {
+              InterviewSession locked = sessions.lockById(sessionId).orElseThrow();
+              Map<Integer, AnswerStatus> answered = new HashMap<>();
+              answers
+                  .findBySessionIdOrderBySeq(sessionId)
+                  .forEach(a -> answered.put(a.getSeq(), a.getStatus()));
+              locked.finish(answered);
+              return locked;
+            });
+    for (Answer a : answers.findBySessionIdOrderBySeq(sessionId)) {
+      if (a.getStatus() == AnswerStatus.TRANSCRIBED) {
+        start(a); // 평가부터(혼합). 거절되면 FAILED로 남아 다시 시도할 수 있다
+      }
+    }
+    // 남은 평가가 끝날 때, 그리고 리포트를 조회할 때도 다시 요청된다(세션마다 하나만 진행)
+    reports.request(sessionId);
+    return finished;
   }
 
   public List<Answer> answersOf(Long sessionId) {

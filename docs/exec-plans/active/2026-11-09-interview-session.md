@@ -1,6 +1,6 @@
 # 실행계획: 면접 세션 (질문 고르기 → 녹음 → STT → 평가 → 리포트)
 
-진행: [x] E1 · [x] E2 · [ ] E3 · [ ] E4 · [ ] E5 · [ ] E6
+진행: [x] E1 · [x] E2 · [x] E3(a 답변·평가 PR #16, b 끝내기·리포트) · [ ] E4 · [ ] E5 · [ ] E6
 
 ## Context
 - 질문 은행(PR #9~#13)과 이력서 경험 분리가 끝났으니, 이제 서비스 본체인 **면접 세션**을 만든다.
@@ -127,6 +127,8 @@ GET  /api/interviews/{id}/report              {status: EVALUATING|READY, overall
 **후속 메모(E3a 리뷰)**
 - 다시 녹음할 때마다 예전 녹음 파일이 남는다(UUID 키). `FileStorage`에 삭제를 넣고 보관 기간 정책과 함께 정리한다.
 - 처리 중 예상하지 못한 오류(바깥 catch) 경로는 저장소 오류를 흉내 내는 테스트로 보강한다.
+
+- (E6) 리포트 화면은 EVALUATING 동안 폴링한다. 종합이 빠졌을 때 조회가 다시 요청하는 경로이기도 하다(ReportScheduler).
 
 **문서**
 - `docs/exec-plans/active/2026-11-09-interview-session.md`

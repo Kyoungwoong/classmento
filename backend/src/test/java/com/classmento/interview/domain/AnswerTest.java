@@ -107,6 +107,15 @@ class AnswerTest {
   }
 
   @Test
+  void 평가가_끝난_답변은_실패로_바뀌지_않는다() {
+    Answer a = Answer.recorded(session(), 1, "k", "audio/webm");
+    a.transcribed("답변", 1000);
+    a.evaluated(eval(techScores(4)));
+    a.failed("나중에 난 오류");
+    assertThat(a.getStatus()).isEqualTo(AnswerStatus.EVALUATED);
+  }
+
+  @Test
   void 실패가_아니면_다시_시도할_수_없다() {
     Answer a = Answer.recorded(session(), 1, "k", "audio/webm");
     assertThatThrownBy(a::retry)

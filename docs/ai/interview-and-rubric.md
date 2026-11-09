@@ -13,7 +13,7 @@
 | 이력서 구조화 | `resume-parse.v2.md` (v1은 기록용) | 추출 텍스트 → `ParsedResume` JSON. v2부터 경력·프로젝트별 `summary` (`ResumeParser`) → `ExperienceFactory`가 경험으로 분리 |
 | 경험 기반 질문 | `question-experience.v1.md` | 경험 하나 + 질문 은행 kNN 후보 → 질문 N개 `[{question, intent, bankQuestionId}]` (`ExperienceQuestionWriter`, `EXPERIENCE` 탭) |
 | 답변 평가 | `answer-evaluation.v2.md` (v1은 기록용) | 질문·의도 + STT 답변 + `<rubric>` → 기준별 점수·근거, 잘한 점·고칠 점·답변 방향 (`AnswerEvaluator`). 루브릭 기준이 빠지거나 1~5가 아니면 한 번 다시, 그래도 안 되면 FAILED. 근거 없는 점수는 3점까지로 낮춤 |
-| 세션 리포트 | `session-report.v1.md` (예정, E3) | 문항 평가들 → 종합 |
+| 세션 리포트 | `session-report.v1.md` | 끝난 면접의 문항 평가들 → 강점·보완점 한 줄씩 (`ReportWriter`). 종합 점수는 답변 점수 평균(AI가 아님). AI가 실패하면 가장 높은 답변의 잘한 점·가장 낮은 답변의 고칠 점으로 대신 |
 | (기록용) | `question-generation.v1.md` | ADR 0004 시절 이력서 기반 질문. 쓰지 않음 |
 
 ## 질문 만들기 (ADR 0005, 실행계획 2026-11-09-interview-session)

@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import org.hibernate.annotations.BatchSize;
@@ -61,6 +62,16 @@ public class InterviewSession {
   @CollectionTable(name = "interview_question", joinColumns = @JoinColumn(name = "session_id"))
   @OrderBy("seq")
   private List<InterviewQuestion> questions = new ArrayList<>();
+
+  private Double reportOverall;
+
+  private String reportStrength;
+
+  private String reportImprovement;
+
+  private String reportPromptVersion;
+
+  private String reportModel;
 
   @Column(nullable = false, updatable = false)
   private Instant createdAt = Instant.now();
@@ -121,6 +132,52 @@ public class InterviewSession {
       s.questions.add(InterviewQuestion.of(i + 1, drafts.get(i)));
     }
     return s;
+  }
+
+  /**
+   * 모든 질문에 답한 뒤에만, 한 번만 끝낼 수 있다(건너뛰기 없음). 끝나면 다시 녹음할 수 없으므로, 아직 글자로 바꾸는 중이거나 실패한 답변이 있으면 끝내지 않는다(끝난
+   * 뒤 실패하면 빠져나올 길이 없다).
+   *
+   * @param answers 질문 번호 → 답변 상태
+   */
+  public void finish(Map<Integer, AnswerStatus> answers) {
+    if (status != SessionStatus.IN_PROGRESS) {
+      throw new DomainException("ALREADY_FINISHED", "이미 끝난 면접이에요.");
+    }
+    for (InterviewQuestion q : questions) {
+      AnswerStatus a = answers.get(q.getSeq());
+      if (a == null) {
+        throw new DomainException("NOT_ALL_ANSWERED", "모든 질문에 답한 뒤에 끝낼 수 있어요.");
+      }
+      if (a == AnswerStatus.FAILED) {
+        throw new DomainException("ANSWERS_FAILED", "다시 녹음해야 하는 답변이 있어요. 해당 질문에 다시 답해 주세요.");
+      }
+      if (a == AnswerStatus.UPLOADED) {
+        throw new DomainException("ANSWERS_PROCESSING", "답변을 아직 정리하고 있어요. 잠시 후 다시 끝내 주세요.");
+      }
+    }
+    status = SessionStatus.FINISHED;
+  }
+
+  /** 모든 답변 평가가 끝난 뒤 종합을 붙인다(끝난 면접에 한 번). */
+  public void report(SessionReport report) {
+    if (status != SessionStatus.FINISHED) {
+      throw new DomainException("NOT_FINISHED", "끝난 면접만 종합할 수 있어요.");
+    }
+    this.reportOverall = report.overall();
+    this.reportStrength = report.strength();
+    this.reportImprovement = report.improvement();
+    this.reportPromptVersion = report.promptVersion();
+    this.reportModel = report.model();
+    this.status = SessionStatus.REPORTED;
+  }
+
+  public SessionReport getReport() {
+    if (status != SessionStatus.REPORTED) {
+      return null;
+    }
+    return new SessionReport(
+        reportOverall, reportStrength, reportImprovement, reportPromptVersion, reportModel);
   }
 
   /** 진행 중인 면접의 있는 질문인지 확인하고 그 질문을 돌려준다. */

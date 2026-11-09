@@ -141,7 +141,11 @@ public class Answer {
     this.status = AnswerStatus.EVALUATED;
   }
 
+  /** 평가까지 끝난 답변은 바꾸지 않는다(늦게 난 다른 오류가 결과를 지우지 않게). */
   public void failed(String reason) {
+    if (status == AnswerStatus.EVALUATED) {
+      return;
+    }
     String r = reason == null ? "알 수 없는 오류" : reason.strip();
     this.failureReason = r.length() > FAILURE_MAX ? r.substring(0, FAILURE_MAX) : r;
     this.status = AnswerStatus.FAILED;
