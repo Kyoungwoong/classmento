@@ -61,6 +61,15 @@ Swagger UI: http://localhost:8080/swagger-ui.html
 | PATCH | `/api/admin/questions/{id}/active` | ADMIN | `{active}` 숨기기/다시 보이기(삭제 없음) |
 | POST | `/api/admin/questions/import` | ADMIN | CSV 대량 등록(multipart `file`, UTF-8, 2MB, 1000줄). 전부 검사한 뒤 한 번에 저장하고, 오류가 하나라도 있으면 0건 저장 → 200 `{imported, errors[{line, message}]}`. 2MB 초과·UTF-8 아님은 400 |
 
+
+### 면접 (`/api/interviews`, 로그인 사용자 · 본인 것만, 남의 것은 404)
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/api/interviews` | `{type, count(3·5·7), level?, jobRole?, resumeId?, experienceId?, narrowByResume?}` → 201 `InterviewView`(질문 포함, 의도는 숨김). 기술·혼합은 직무·연차 필수(409 `CONDITIONS_REQUIRED`), 질문 수 409 `INVALID_QUESTION_COUNT`, 질문 은행이 모자라면 409 `NOT_ENOUGH_QUESTIONS`, 남의 이력서로 좁히면 404. 경험 기반은 E2에서 |
+| GET | `/api/interviews` | 내 면접 목록(최신순) `InterviewSummary[]` |
+| GET | `/api/interviews/{id}` | 면접 하나(질문 포함) |
+- 질문 고르기: 기술은 인성이 아닌 대분류에서 직무(또는 COMMON)·연차(같은 단계, 모자라면 한 단계 아래), 이력서로 좁히면 이력서 기술과 맞는 태그·소분류 먼저, 소분류가 겹치지 않게. 인성은 인성 대분류. 혼합은 기술·인성을 기술부터 번갈아.
+
 ### 질문 CSV 형식 (`POST /api/admin/questions/import`)
 ```
 대분류,소분류,질문,난이도,직무,태그,의도

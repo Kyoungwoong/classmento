@@ -5,9 +5,8 @@
 |---|---|---|---|
 | 회원 | `identity` | 가입·로그인·소셜·역할·관리자 | 구현 |
 | 이력서 | `resume` | 업로드·추출·청크·구조화 | 구현 |
-| 질문 은행 | `questionbank` | 관리자 질문 관리·검색 | 예정 |
-| 면접 | `interview` | 세션(4유형)·질문 생성·꼬리질문·답변 | 예정 |
-| 평가 | `evaluation` | 채점·리포트 | 예정 |
+| 질문 은행 | `questionbank` | 관리자 질문 관리·검색·CSV, 면접용 질문 고르기 | 구현 |
+| 면접 | `interview` | 세션(ADR 0005 4탭)·질문 고르기/만들기·답변·STT·평가·리포트(평가는 세션 애그리거트와 함께 바뀌어 같은 컨텍스트에 둔다) | 구현 중 |
 | 결제 | `billing` | 크레딧 원장·결제 | 예정 |
 | 공용 커널 | `common` | 에러 응답, 현재 사용자(`AuthUser`), `DomainException`, 웹 설정 | — |
 | 플랫폼 포트 | `llm` `embedding` `speech` `storage` | 외부 기술 포트 + 어댑터 (여러 컨텍스트가 공유) | — |
@@ -15,6 +14,10 @@
 **컨텍스트끼리는 직접 import하지 않는다.**
 - 필요한 정보는 ID(`Long userId`)나 `common` 타입으로 주고받는다.
 - 다른 컨텍스트의 데이터가 필요하면 그쪽 application 서비스를 부르는 "공개 API"를 만든다. 이때는 문서에 남기고 ArchUnit에 예외로 등록한다.
+- 지금 있는 공개 API(값은 문자열·record로만, 도메인 타입을 내보내지 않는다):
+  - questionbank `application.QuestionCatalog` ← interview `infrastructure.QuestionBankAdapter`
+  - resume `application.ExperienceQuery` ← interview `infrastructure.ResumeAdapter`
+  - 부르는 쪽은 자기 도메인 포트(`QuestionSource`, `ExperienceSource`)만 알고, 어댑터만 다른 컨텍스트의 application에 의존한다(ArchitectureTest).
 
 ## 2. 계층
 ```
