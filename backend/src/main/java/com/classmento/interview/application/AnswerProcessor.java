@@ -109,7 +109,12 @@ public class AnswerProcessor {
       return;
     }
     if (save(answerId, version, a -> a.evaluated(evaluation))) {
-      reports.maybeReport(answer.getSessionId());
+      try {
+        reports.maybeReport(answer.getSessionId());
+      } catch (RuntimeException e) {
+        // 종합 실패가 이미 평가된 답변을 실패로 바꾸지 않게 따로 잡는다(다음 평가·조회 때 다시 시도)
+        log.warn("면접 {} 종합 실패: {}", answer.getSessionId(), e.getClass().getSimpleName());
+      }
     }
   }
 

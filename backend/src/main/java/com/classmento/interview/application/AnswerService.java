@@ -80,15 +80,18 @@ public class AnswerService {
 
   private Answer record(InterviewSession session, int seq, String key, String type) {
     return tx.execute(
-        s ->
-            answers
-                .lockBySessionIdAndSeq(session.getId(), seq)
-                .map(
-                    a -> {
-                      a.reRecord(key, type);
-                      return a;
-                    })
-                .orElseGet(() -> answers.save(Answer.recorded(session, seq, key, type))));
+        s -> {
+          // 끝내기와 거의 동시에 온 다시 녹음이 끝난 뒤에 반영되지 않게 세션을 잠그고 다시 확인
+          sessions.lockById(session.getId()).orElseThrow().requireAnswerable(seq);
+          return answers
+              .lockBySessionIdAndSeq(session.getId(), seq)
+              .map(
+                  a -> {
+                    a.reRecord(key, type);
+                    return a;
+                  })
+              .orElseGet(() -> answers.save(Answer.recorded(session, seq, key, type)));
+        });
   }
 
   /** 실패한 답변을 같은 녹음으로 다시 처리한다. */
@@ -128,21 +131,15 @@ public class AnswerService {
             });
     for (Answer a : answers.findBySessionIdOrderBySeq(sessionId)) {
       if (a.getStatus() == AnswerStatus.TRANSCRIBED) {
-        Long id = a.getId();
-        int version = a.getAudioVersion();
-        submit(() -> processor.evaluateIfDue(id, version));
+        start(a); // 평가부터(혼합). 거절되면 FAILED로 남아 다시 시도할 수 있다
       }
     }
-    submit(() -> reports.maybeReport(sessionId));
-    return finished;
-  }
-
-  private void submit(Runnable task) {
     try {
-      interviewExecutor.execute(task);
+      interviewExecutor.execute(() -> reports.maybeReport(sessionId));
     } catch (TaskRejectedException e) {
-      // 거절돼도 답변 처리·평가가 끝날 때 다시 종합을 시도한다
+      // 남은 평가가 끝날 때마다 종합을 다시 시도한다. 모두 끝났다면 리포트 조회 때 다시 시도한다
     }
+    return finished;
   }
 
   public List<Answer> answersOf(Long sessionId) {
