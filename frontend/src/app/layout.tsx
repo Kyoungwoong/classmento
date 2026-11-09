@@ -31,7 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense fallback={<SiteHeaderShell />}>
           <SiteHeader />
         </Suspense>
-        <div className="flex-1">{children}</div>
+        <div className="flex flex-1 flex-col">{children}</div>
         <SiteFooter />
       </body>
     </html>

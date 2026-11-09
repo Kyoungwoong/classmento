@@ -19,8 +19,8 @@ export function Logo({ tone = "ink" }: { tone?: "ink" | "on-ink" }) {
       <span
         className={
           tone === "ink"
-            ? "text-title2 font-extrabold tracking-tight text-ink"
-            : "text-title2 font-extrabold tracking-tight text-on-ink"
+            ? "text-body1 font-extrabold tracking-tight text-ink md:text-title2"
+            : "text-body1 font-extrabold tracking-tight text-on-ink md:text-title2"
         }
       >
         classmento

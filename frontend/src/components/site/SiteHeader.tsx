@@ -100,7 +100,7 @@ export function SiteHeader() {
     ) : (
       <Link
         href="/login"
-        className="inline-flex h-11 items-center rounded-md bg-ink px-4 text-body2 font-semibold text-on-ink"
+        className="inline-flex h-11 shrink-0 items-center rounded-md bg-ink px-3 text-body2 font-semibold text-on-ink md:px-4"
       >
         로그인
       </Link>
@@ -108,7 +108,7 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-bg">
-      <div className="mx-auto flex h-16 w-full max-w-site items-center gap-8 px-5 md:px-8">
+      <div className="mx-auto flex h-16 w-full max-w-site items-center gap-4 px-5 md:gap-8 md:px-8">
         <Logo />
         <nav aria-label="주 메뉴" className="hidden flex-1 items-center gap-6 md:flex">
           {links.map((l) => (
