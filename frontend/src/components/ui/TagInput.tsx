@@ -29,6 +29,7 @@ const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().t
 export function TagInput({ label, value, onChange, suggest, create, max = 10 }: TagInputProps) {
   const inputId = useId();
   const listId = useId();
+  const errorId = useId();
   const [text, setText] = useState("");
   const [options, setOptions] = useState<TagItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -137,6 +138,8 @@ export function TagInput({ label, value, onChange, suggest, create, max = 10 }: 
           disabled={full}
           onChange={(e) => changeText(e.target.value)}
           onKeyDown={onKeyDown}
+          aria-invalid={!!error || undefined}
+          aria-describedby={error ? errorId : undefined}
           role="combobox"
           aria-expanded={visible.length > 0}
           aria-controls={listId}
@@ -169,7 +172,9 @@ export function TagInput({ label, value, onChange, suggest, create, max = 10 }: 
         </div>
       )}
       {error ? (
-        <p className="mt-2 text-caption text-danger">{error}</p>
+        <p id={errorId} className="mt-2 text-caption text-danger">
+          {error}
+        </p>
       ) : (
         <p className="mt-2 text-caption text-text-hint">Enter나 쉼표를 누르면 새 태그를 만들어요</p>
       )}
