@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { api, type ReportView } from "@/lib/api/client";
+import { api, ApiError, type ReportView } from "@/lib/api/client";
 import { ReportScreen } from "./ReportScreen";
 
 const push = vi.fn();
@@ -57,8 +57,8 @@ describe("ReportScreen", () => {
     expect(screen.getByText("3.8")).toBeInTheDocument();
     expect(screen.getByText("흐름이 잘 보였어요.")).toBeInTheDocument();
     expect(screen.getByText("결과를 숫자로 말해 보세요.")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar", { name: "정확성 4점" })).toBeInTheDocument();
-    expect(screen.getByRole("progressbar", { name: "깊이·근거 3점" })).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "정확성 4.0점" })).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "깊이·근거 3.0점" })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /TCP와 UDP/ }));
     expect(push).toHaveBeenCalledWith("/interview/7/report/1");
@@ -109,5 +109,51 @@ describe("ReportScreen", () => {
       "href",
       "/interview/new",
     );
+  });
+  it("다시 평가 요청이 실패하면 그 문항 아래에 알려준다", async () => {
+    vi.spyOn(api, "interviewReport").mockResolvedValue(report());
+    vi.spyOn(api, "retryAnswer").mockRejectedValue(new Error("network"));
+    render(<ReportScreen id={7} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "2번 다시 평가하기" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("다시 평가를 시작하지 못했어요");
+  });
+
+  it("평가 중에 다시 불러오지 못하면 알리고 다시 불러올 수 있다", async () => {
+    vi.useFakeTimers();
+    const evaluating = report({ status: "EVALUATING", overall: undefined });
+    const load = vi
+      .spyOn(api, "interviewReport")
+      .mockResolvedValueOnce(evaluating)
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValue(report());
+    render(<ReportScreen id={7} />);
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+    expect(screen.getByRole("alert")).toHaveTextContent("평가 결과를 불러오지 못했어요");
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "다시 불러오기" }));
+    });
+    expect(screen.getByRole("heading", { name: "면접이 끝났어요" })).toBeInTheDocument();
+    expect(load).toHaveBeenCalledTimes(3);
+  });
+
+  it("처음 불러오기가 실패하면 [다시 불러오기], 없는 리포트면 [다시 연습하기]", async () => {
+    const load = vi
+      .spyOn(api, "interviewReport")
+      .mockRejectedValueOnce(new ApiError(500, "INTERNAL", "x"))
+      .mockResolvedValue(report());
+    render(<ReportScreen id={7} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "다시 불러오기" }));
+
+    expect(await screen.findByRole("heading", { name: "면접이 끝났어요" })).toBeInTheDocument();
+    expect(load).toHaveBeenCalledTimes(2);
   });
 });

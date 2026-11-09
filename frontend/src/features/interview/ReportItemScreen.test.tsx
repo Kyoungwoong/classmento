@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api, type ReportView } from "@/lib/api/client";
 import { ReportItemScreen } from "./ReportItemScreen";
@@ -52,6 +52,7 @@ describe("ReportItemScreen", () => {
     expect(screen.getByText("상황을 구체적으로 말했어요.")).toBeInTheDocument();
     expect(screen.getByText("결과가 빠졌어요.")).toBeInTheDocument();
     expect(screen.getByText("어떻게 합의했는지로 마무리해 보세요.")).toBeInTheDocument();
+    expect(screen.getByText("이 질문으로 보려는 것: 갈등 조정")).toBeInTheDocument();
   });
 
   it("없는 문항이면 알려준다", async () => {
@@ -60,5 +61,20 @@ describe("ReportItemScreen", () => {
     expect(
       await screen.findByRole("heading", { name: "문항을 찾을 수 없어요" }),
     ).toBeInTheDocument();
+  });
+  it("불러오지 못하면 알리고 다시 불러올 수 있다", async () => {
+    const load = vi
+      .spyOn(api, "interviewReport")
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValue(view);
+    render(<ReportItemScreen id={7} seq={2} />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("답변을 불러오지 못했어요");
+    fireEvent.click(screen.getByRole("button", { name: "다시 불러오기" }));
+
+    expect(
+      await screen.findByRole("heading", { name: "팀원과 의견이 달랐던 경험을 말해 주세요." }),
+    ).toBeInTheDocument();
+    expect(load).toHaveBeenCalledTimes(2);
   });
 });
