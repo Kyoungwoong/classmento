@@ -106,7 +106,9 @@ export function InterviewScreen({ id }: { id: number }) {
           ) : undefined
         }
       >
-        <ScreenTitle title={error ?? "면접을 불러오고 있어요"} />
+        <div role={error ? "alert" : undefined}>
+          <ScreenTitle title={error ?? "면접을 불러오고 있어요"} />
+        </div>
       </Screen>
     );
   }
