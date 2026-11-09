@@ -35,7 +35,13 @@ Tailwind 기본 팔레트는 꺼져 있다(`--color-*: initial`). `bg-purple-500
 | `ButtonLink` | 화면 이동용 버튼(모양은 Button, 실제는 링크) |
 | `TopBar` | `Screen` header 슬롯. 뒤로 가기 + 오른쪽 작은 텍스트 행동 하나(예: 로그아웃) |
 | `Chip` | 기술 같은 짧은 키워드. `size` md(편집, 지우기 버튼 터치 44px) / sm(읽기 전용), `tone` muted(흰 배경 위) / surface(회색 면 위) |
-| `ListRow` | 정보 나열. 카드 그리드 대신 세로 리스트 |
+| `ListRow` | 정보 나열. 카드 그리드 대신 세로 리스트. 긴 문장(질문)은 `titleLines={2}` |
+| `SelectChip` | 눌러서 고르는 칩(필터·여러 개 선택). 높이 44, 고르면 `bg-primary-weak` + `text-primary` |
+| `ChipGroup` | SelectChip 묶음 + 라벨·에러(스크린리더용 group 연결). 줄바꿈으로 나열 |
+| `SegmentedControl` | 2~5개 중 하나 고르기(난이도). 회색 면 위 고른 칸만 흰 면, `radiogroup` |
+| `Toggle` | 켜고 끄는 설정 한 줄(왼쪽 라벨, 오른쪽 스위치, `switch`) |
+| `TextArea` | 여러 줄 입력. TextField와 같은 회색 면, `maxLength`면 글자 수 |
+| `TagInput` | Notion식 태그: 입력하면 후보, Enter·쉼표로 만들기, 칩 지우기, 한글 조합 중 Enter 무시 |
 | `TextField` | 회색 면 입력창(테두리 없음), 라벨은 위 |
 | `ProgressBar` | 면접 진행도 (얇은 4px 막대) |
 | `Toast` | "저장했어요" 같은 짧은 결과 |
@@ -46,6 +52,7 @@ Tailwind 기본 팔레트는 꺼져 있다(`--color-*: initial`). `bg-purple-500
 - 누르는 것은 모두 높이 44px 이상(`h-11`). 작은 텍스트 버튼·링크도 `inline-flex h-11 items-center`로 영역을 넓힌다.
 - 화면마다 4가지 상태를 그린다: 처음 불러오기("~를 불러오고 있어요") / 처리 중 / 비어 있음 / 에러(원인 + 다음 행동 CTA).
 - 에러는 위치를 맞춘다: 특정 칸 문제는 그 칸 아래, 그 외는 폼 아래 `role="alert"`.
+- 칩 여러 개는 가로 스크롤 대신 줄바꿈(`ChipGroup`, flex-wrap). 가로로 숨기면 데스크톱 마우스로 끝까지 가기 어렵다.
 - 블루(`text-primary`)는 누를 수 있는 것과 주요 강조에만 쓴다. 상태 표시(예: "관리자")는 회색 글자로.
 
 ## 문구 톤

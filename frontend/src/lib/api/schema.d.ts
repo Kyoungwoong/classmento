@@ -27,7 +27,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        get: operations["getAdminQuestion"];
         put: operations["update"];
         post?: never;
         delete?: never;
@@ -530,6 +530,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ResumeDetail"];
+                };
+            };
+        };
+    };
+    getAdminQuestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["QuestionView"];
                 };
             };
         };

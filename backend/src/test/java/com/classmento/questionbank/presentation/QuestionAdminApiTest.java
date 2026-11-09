@@ -243,6 +243,10 @@ class QuestionAdminApiTest extends IntegrationTest {
     mockMvc
         .perform(get("/api/admin/questions").with(user(normal)))
         .andExpect(status().isForbidden());
+    mockMvc.perform(get("/api/admin/questions/1")).andExpect(status().isUnauthorized());
+    mockMvc
+        .perform(get("/api/admin/questions/1").with(user(normal)))
+        .andExpect(status().isForbidden());
 
     long id = idOf(create(body(categoryId("CS", "보안"), "권한 확인용 질문입니다", "")));
     String json = body(categoryId("CS", "보안"), "권한 확인용 질문입니다", "");
@@ -299,6 +303,22 @@ class QuestionAdminApiTest extends IntegrationTest {
                 .content(body(categoryId("CS", "보안"), "없는 질문을 고치려는 요청", "")))
         .andExpect(status().isNotFound());
     setActive(999999, false).andExpect(status().isNotFound());
+    mockMvc
+        .perform(get("/api/admin/questions/999999").with(user(admin)))
+        .andExpect(status().isNotFound());
+  }
+
+  @Test
+  void 질문_하나를_수정_화면용으로_불러온다() throws Exception {
+    long jpa = tag("JPA");
+    long id =
+        idOf(create(body(categoryId("Framework", "Spring"), "지연 로딩이 동작하는 원리를 설명해 주세요.", "" + jpa)));
+    mockMvc
+        .perform(get("/api/admin/questions/" + id).with(user(admin)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.categoryName").value("Spring"))
+        .andExpect(jsonPath("$.tags[0].name").value("JPA"))
+        .andExpect(jsonPath("$.intent").value("의도"));
   }
 
   @Test

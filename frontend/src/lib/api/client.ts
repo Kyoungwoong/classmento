@@ -146,6 +146,7 @@ export const api = {
   // 관리자: 질문 은행 질문
   adminQuestions: (params: QuestionSearchParams = {}) =>
     apiFetch<QuestionPage>(`/api/admin/questions${queryString(params)}`),
+  adminQuestion: (id: number) => apiFetch<QuestionView>(`/api/admin/questions/${id}`),
   createQuestion: (body: QuestionRequest) =>
     apiFetch<QuestionView>("/api/admin/questions", { method: "POST", body: json(body) }),
   updateQuestion: (id: number, body: QuestionRequest) =>

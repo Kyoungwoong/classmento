@@ -55,6 +55,12 @@ public class AdminQuestionController {
         service.search(filter, Math.max(page, 0), Math.min(Math.max(size, 1), MAX_SIZE)));
   }
 
+  @GetMapping("/{id}")
+  @Operation(operationId = "getAdminQuestion")
+  public QuestionView get(@PathVariable Long id) {
+    return QuestionView.of(service.get(id));
+  }
+
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   public QuestionView create(

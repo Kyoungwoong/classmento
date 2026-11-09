@@ -108,6 +108,11 @@ public class QuestionService {
         });
   }
 
+  public Details get(Long id) {
+    return tx.execute(
+        s -> detailsOf(List.of(questions.findById(id).orElseThrow(ApiException::notFound))).get(0));
+  }
+
   public Page search(Filter filter, int page, int size) {
     return tx.execute(
         s -> {

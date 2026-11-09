@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BottomCTA, ButtonLink, ListRow, Screen, ScreenTitle, TopBar } from "@/components/ui";
-import { api, ApiError, type AdminUserView } from "@/lib/api/client";
+import { api, type AdminUserView } from "@/lib/api/client";
+import { adminError } from "./adminError";
 
 const PROVIDER_LABEL: Record<AdminUserView["provider"], string> = {
   LOCAL: "이메일",
@@ -21,40 +22,14 @@ export function AdminUsersScreen() {
       .adminUsers()
       .then(setUsers)
       .catch((err) => {
-        if (err instanceof ApiError && err.status === 401) {
-          router.replace("/login?next=/admin");
-          return;
-        }
-        setError(
-          err instanceof ApiError && err.status === 403
-            ? "관리자만 볼 수 있어요."
-            : "잠시 후 다시 시도해 주세요.",
-        );
+        const message = adminError(err, router, "/admin/users");
+        if (message) setError(message);
       });
   }, [router]);
 
-  async function logout() {
-    await api.logout().catch(() => undefined);
-    router.replace("/");
-    router.refresh();
-  }
-
   return (
     <Screen
-      header={
-        <TopBar
-          back={false}
-          trailing={
-            <button
-              type="button"
-              onClick={logout}
-              className="-mr-2 h-11 px-2 text-body2 text-text-sub"
-            >
-              로그아웃
-            </button>
-          }
-        />
-      }
+      header={<TopBar />}
       cta={
         error ? (
           <BottomCTA>
@@ -79,7 +54,8 @@ export function AdminUsersScreen() {
               {users.map((u) => (
                 <li key={u.id}>
                   <ListRow
-                    title={u.role === "ADMIN" ? `${u.name} · 관리자` : u.name}
+                    title={u.name}
+                    trailing={u.role === "ADMIN" ? "관리자" : undefined}
                     description={`${u.email}
 ${PROVIDER_LABEL[u.provider]} 가입 · ${formatDate(u.createdAt)}`}
                   />
