@@ -20,6 +20,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/questions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/resumes": {
         parameters: {
             query?: never;
@@ -84,6 +100,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["search"];
+        put?: never;
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/categories": {
         parameters: {
             query?: never;
@@ -93,11 +125,27 @@ export interface paths {
         };
         get: operations["tree"];
         put?: never;
-        post: operations["create_1"];
+        post: operations["create_2"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/admin/questions/{id}/active": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["setActive"];
         trace?: never;
     };
     "/api/admin/categories/{id}": {
@@ -113,7 +161,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["update"];
+        patch: operations["update_1"];
         trace?: never;
     };
     "/api/resumes/{id}": {
@@ -277,6 +325,40 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        QuestionRequest: {
+            /** Format: int64 */
+            categoryId: number;
+            text: string;
+            /** @enum {string} */
+            level: "NEW" | "JUNIOR" | "MIDDLE" | "SENIOR";
+            jobRoles: ("BACKEND" | "FRONTEND" | "FULLSTACK" | "MOBILE" | "DATA" | "DEVOPS" | "COMMON")[];
+            tagIds?: number[];
+            intent?: string;
+        };
+        QuestionView: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            topCategoryId: number;
+            topCategoryName: string;
+            /** Format: int64 */
+            categoryId: number;
+            categoryName: string;
+            text: string;
+            /** @enum {string} */
+            level: "NEW" | "JUNIOR" | "MIDDLE" | "SENIOR";
+            jobRoles: ("BACKEND" | "FRONTEND" | "FULLSTACK" | "MOBILE" | "DATA" | "DEVOPS" | "COMMON")[];
+            tags: components["schemas"]["TagView"][];
+            intent?: string;
+            active: boolean;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        TagView: {
+            /** Format: int64 */
+            id: number;
+            name: string;
+        };
         SignupRequest: {
             /** Format: email */
             email: string;
@@ -302,11 +384,6 @@ export interface components {
             tag: components["schemas"]["TagView"];
             created: boolean;
         };
-        TagView: {
-            /** Format: int64 */
-            id: number;
-            name: string;
-        };
         CreateCategoryRequest: {
             /** Format: int64 */
             parentId?: number;
@@ -320,6 +397,9 @@ export interface components {
             name: string;
             /** Format: int32 */
             sortOrder: number;
+            active: boolean;
+        };
+        SetActiveRequest: {
             active: boolean;
         };
         UpdateCategoryRequest: {
@@ -389,6 +469,15 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        QuestionPage: {
+            items: components["schemas"]["QuestionView"][];
+            /** Format: int64 */
+            total: number;
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            size: number;
+        };
         CategoryTreeNode: {
             /** Format: int64 */
             id: number;
@@ -396,7 +485,19 @@ export interface components {
             /** Format: int32 */
             sortOrder: number;
             active: boolean;
-            children: components["schemas"]["CategoryView"][];
+            children: components["schemas"]["SubcategoryView"][];
+        };
+        SubcategoryView: {
+            /** Format: int64 */
+            id: number;
+            /** Format: int64 */
+            parentId: number;
+            name: string;
+            /** Format: int32 */
+            sortOrder: number;
+            active: boolean;
+            /** Format: int64 */
+            questionCount: number;
         };
     };
     responses: never;
@@ -429,6 +530,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ResumeDetail"];
+                };
+            };
+        };
+    };
+    update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuestionRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["QuestionView"];
                 };
             };
         };
@@ -574,6 +701,60 @@ export interface operations {
             };
         };
     };
+    search: {
+        parameters: {
+            query?: {
+                topCategoryId?: number;
+                categoryId?: number;
+                level?: "NEW" | "JUNIOR" | "MIDDLE" | "SENIOR";
+                jobRole?: "BACKEND" | "FRONTEND" | "FULLSTACK" | "MOBILE" | "DATA" | "DEVOPS" | "COMMON";
+                tagId?: number;
+                q?: string;
+                includeHidden?: boolean;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["QuestionPage"];
+                };
+            };
+        };
+    };
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuestionRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["QuestionView"];
+                };
+            };
+        };
+    };
     tree: {
         parameters: {
             query?: never;
@@ -594,7 +775,7 @@ export interface operations {
             };
         };
     };
-    create_1: {
+    create_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -618,7 +799,33 @@ export interface operations {
             };
         };
     };
-    update: {
+    setActive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetActiveRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["QuestionView"];
+                };
+            };
+        };
+    };
+    update_1: {
         parameters: {
             query?: never;
             header?: never;
