@@ -35,6 +35,7 @@ export type AdminUserView = Schemas["AdminUserView"];
 export type InterviewView = Schemas["InterviewView"];
 export type InterviewSummary = Schemas["InterviewSummary"];
 export type CreateInterviewRequest = Schemas["CreateInterviewRequest"];
+export type AnswerStatusView = Schemas["AnswerStatusView"];
 export type SignupRequest = Schemas["SignupRequest"];
 export type LoginRequest = Schemas["LoginRequest"];
 
@@ -138,6 +139,18 @@ export const api = {
     apiFetch<InterviewView>("/api/interviews", { method: "POST", body: json(body) }),
   interviews: () => apiFetch<InterviewSummary[]>("/api/interviews"),
   interview: (id: number) => apiFetch<InterviewView>(`/api/interviews/${id}`),
+  uploadAnswer: (id: number, seq: number, audio: Blob) => {
+    const form = new FormData();
+    form.append("audio", audio, "answer");
+    return apiFetch<AnswerStatusView>(`/api/interviews/${id}/questions/${seq}/answer`, {
+      method: "POST",
+      body: form,
+    });
+  },
+  retryAnswer: (id: number, seq: number) =>
+    apiFetch<AnswerStatusView>(`/api/interviews/${id}/questions/${seq}/retry`, { method: "POST" }),
+  /** <audio src>에 바로 쓰는 녹음 주소(같은 출처, 세션 쿠키) */
+  answerAudioUrl: (id: number, seq: number) => `/api/interviews/${id}/questions/${seq}/audio`,
 
   // 관리자
   adminUsers: () => apiFetch<AdminUserView[]>("/api/admin/users"),
