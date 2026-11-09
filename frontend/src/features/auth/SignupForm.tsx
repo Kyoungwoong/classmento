@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Mascot } from "@/components/site/Mascot";
-import { BottomCTA, Button, Panel, Screen, ScreenTitle, TextField, TopBar } from "@/components/ui";
+import { GridPaper, HandNote, NoteSheet } from "@/components/note";
+import { BottomCTA, Button, Screen, ScreenTitle, TextField, TopBar } from "@/components/ui";
 import { api, ApiError } from "@/lib/api/client";
 import { safeNext } from "./safeNext";
 import { SocialButtons } from "./SocialButtons";
@@ -40,8 +41,9 @@ export function SignupForm() {
   }
 
   return (
-    // 회색 바탕 위 흰 패널 — 면 대비로 폼을 한 덩어리로 보이게
-    <div className="flex-1 bg-bg-subtle">
+    // 모눈 바탕 위 노트 한 장(ADR 0007)
+    <div className="relative isolate flex-1 bg-paper">
+      <GridPaper />
       <Screen
         width="narrow"
         header={<TopBar />}
@@ -63,7 +65,8 @@ export function SignupForm() {
           <ScreenTitle title={"반가워요\n몇 가지만 알려주세요"} />
           <Mascot mood="idle" size={72} className="mb-8 shrink-0 md:mb-10" />
         </div>
-        <Panel>
+        <NoteSheet>
+          <HandNote className="mb-2 block -rotate-1">첫 장을 펼쳐요</HandNote>
           <form id="signup-form" onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
             <TextField
               label="이름"
@@ -106,7 +109,7 @@ export function SignupForm() {
             </Link>
           </p>
           <SocialButtons />
-        </Panel>
+        </NoteSheet>
       </Screen>
     </div>
   );
