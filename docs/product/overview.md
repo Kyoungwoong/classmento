@@ -30,7 +30,9 @@
 | 이력서 | `Resume` | 업로드 원본 + 추출 텍스트 + 구조화 결과(`ParsedResume`) |
 | 이력서 청크 | `resume_chunk` | 이력서를 ~800자로 나눈 조각 + 임베딩 벡터(전체 검색용) |
 | 경험 | `ResumeExperience` | 경력·프로젝트 하나(제목·요약·본문·기술 + 임베딩). 경험 기반 면접에서 고르는 단위 |
-| 질문 은행 | `question_bank` (예정) | 관리자가 등록한 질문. 카테고리(CS/STACK/ROLE/BEHAVIORAL), 직무, 연차, 기술 태그, 평가 포인트 + 벡터 |
+| 질문 은행 | `questionbank` | 관리자가 등록한 질문. 카테고리 2단계 + 태그 + 난이도 + 직무 + 벡터 |
+| 카테고리 | `Category` | 대분류(Language·Framework·CS·설계·인프라·인성) → 소분류(Java, 자료구조 …). 삭제 없이 숨김 |
+| 태그 | `Tag` | Notion식 자유 키워드(입력하며 찾고, 없으면 바로 만든다). 대소문자 무시로 같은 태그 |
 | 채용공고 | `job_posting` (예정) | 사용자가 지원할 공고 본문 + 벡터 |
 | 크레딧 | `credit_ledger` (예정) | 유료 사용량 원장. 설계: ADR 0003 |
 | 면접 유형 | `InterviewMode` | `TECH` / `RESUME_TECH` / `DEEP_DIVE` / `BEHAVIORAL` |
