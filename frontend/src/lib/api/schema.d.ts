@@ -660,7 +660,8 @@ export interface components {
             id: number;
             /** @enum {string} */
             type: "EXPERIENCE" | "TECH" | "BEHAVIORAL" | "MIXED";
-            status: string;
+            /** @enum {string} */
+            status: "READY" | "EVALUATING";
             /** Format: double */
             overall?: number;
             strength?: string;
@@ -693,9 +694,9 @@ export interface components {
             user?: components["schemas"]["UserView"];
         };
         CsrfToken: {
-            headerName?: string;
             parameterName?: string;
             token?: string;
+            headerName?: string;
         };
         CsrfResponse: {
             headerName: string;
