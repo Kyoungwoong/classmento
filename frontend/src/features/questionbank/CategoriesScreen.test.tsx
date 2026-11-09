@@ -4,9 +4,9 @@ import { api } from "@/lib/api/client";
 import { CategoriesScreen } from "./CategoriesScreen";
 import { tree } from "./testData";
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }),
-}));
+// 실제 라우터처럼 렌더마다 같은 객체
+const router = { push: vi.fn(), replace: vi.fn(), back: vi.fn() };
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 afterEach(() => vi.restoreAllMocks());
 
