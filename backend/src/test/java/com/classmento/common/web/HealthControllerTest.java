@@ -18,7 +18,7 @@ class HealthControllerTest extends IntegrationTest {
         .andExpect(jsonPath("$.fakeAi").value(true))
         .andExpect(jsonPath("$.llmAvailable").value(true))
         .andExpect(jsonPath("$.embeddingAvailable").value(true))
-        .andExpect(jsonPath("$.sttAvailable").value(false));
+        .andExpect(jsonPath("$.sttAvailable").value(true));
   }
 
   @Test
