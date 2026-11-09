@@ -16,6 +16,7 @@ interface ChoiceRowProps {
  * 고르면 연한 블루 면 + 오른쪽 체크. 고를 수 없으면 제목만 흐리게, 이유(description)는 읽히게 둔다.
  */
 export function ChoiceRow({ title, description, selected, disabled, onSelect }: ChoiceRowProps) {
+  const titleId = useId();
   const descriptionId = useId();
   return (
     <button
@@ -23,6 +24,7 @@ export function ChoiceRow({ title, description, selected, disabled, onSelect }: 
       role="radio"
       aria-checked={selected}
       disabled={disabled}
+      aria-labelledby={titleId}
       aria-describedby={description ? descriptionId : undefined}
       onClick={onSelect}
       className={clsx(
@@ -32,6 +34,7 @@ export function ChoiceRow({ title, description, selected, disabled, onSelect }: 
     >
       <span className="min-w-0 flex-1">
         <span
+          id={titleId}
           className={clsx(
             "block text-body1 font-medium",
             disabled ? "text-text-hint" : "text-text-strong",
