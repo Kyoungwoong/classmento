@@ -21,8 +21,6 @@
 | `resume` 이력서 | `Resume`(상태 전이), `ResumeExperience`, `ExperienceFactory`, `ParsedResume`, `ResumeFileType`, `TextChunker`, `ResumeRepository`, `ResumeChunkRepository`, `ResumeExperienceRepository` | `ResumeService`, `ResumeProcessor`, `ResumeParser`, `ExperienceSync`, `TextExtractor`(포트) | `ResumeJpaRepository`, `JdbcResumeChunkRepository`·`JdbcResumeExperienceRepository`(pgvector), `PdfDocxTextExtractor`, 실행기 | `ResumeController` |
 | `questionbank` 질문 은행 | `Category`(2단계·숨김), `Tag`, `Question`(소분류만·직무·태그 ID), `QuestionEmbeddingText`, `QuestionCsv`(CSV 형식·줄별 오류), 포트 `CategoryRepository`·`TagRepository`·`QuestionRepository`·`QuestionSearchRepository`·`QuestionEmbeddingRepository` | `CategoryService`, `TagService`, `QuestionService`(임베딩 prepare → 트랜잭션 save), `QuestionEmbeddingBackfill`(기동 시 빈 임베딩 채우기), `QuestionImportService`(CSV 전부 아니면 0건) | `*JpaRepository`, `JdbcQuestionSearchRepository`(필터 조합), `JdbcQuestionEmbeddingRepository`(전역 kNN, HNSW) | `AdminCategoryController`, `AdminTagController`, `AdminQuestionController` |
 | `interview` 면접 | `InterviewSession`(탭·조건·질문 3/5/7, 상태), `InterviewQuestion`, 포트 `QuestionSource`·`ExperienceSource`·`InterviewSessionRepository` | `InterviewService`(탭별 질문 고르기·혼합 번갈아) | `InterviewSessionJpaRepository`, 어댑터 `QuestionBankAdapter`(→ questionbank `QuestionCatalog`)·`ResumeAdapter`(→ resume `ExperienceQuery`) | `InterviewController` |
-| `interview` | (예정, 4유형 ADR 0004) | | | |
-| `evaluation` | (예정) | | | |
 
 | 공용 · 플랫폼 | 내용 |
 |---|---|
@@ -96,9 +94,9 @@ qb_tag(id, name, name_key UNIQUE, seeded)                         -- V5
 qb_question(id, category_id → 소분류, text, level, intent?, active, seeded, created_by?, embedding vector(1536)?)  -- V6, HNSW(전역 kNN)
 qb_question_job_role(question_id, job_role) · qb_question_tag(question_id, tag_id)                                  -- V6
   임베딩 문장: "대분류 > 소분류 · 질문 · 태그(이름순)". 시드는 비워 두고 기동 시 채운다
-interview_session(id, user_id, mode[TECH|RESUME_TECH|DEEP_DIVE|BEHAVIORAL], resume_id?, config(jsonb), status)
-question(id, session_id, seq, parent_question_id?, depth, text, intent, source)
-answer(id, question_id, audio_key, transcript, duration_ms) / evaluation(..., model, prompt_version)
+interview_session(id, user_id, type[EXPERIENCE|TECH|BEHAVIORAL|MIXED], level?, job_role?, resume_id?, experience_id?, status)  -- V7, 탭이 쓰는 조건만 저장
+interview_question(session_id, seq, text, intent?, kind[TECH|BEHAVIORAL], bank_question_id?, generated)              -- V7
+interview_answer(… 녹음·STT·평가)                                                                                    -- 예정(E3, V8)
 job_posting(id, user_id, text, embedding)
 credit_ledger / payment  → ADR 0003
 ```
