@@ -52,6 +52,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/interviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["listInterviews"];
+        put?: never;
+        post: operations["createInterview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/signup": {
         parameters: {
             query?: never;
@@ -204,6 +220,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["experiences"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/interviews/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getInterview"];
         put?: never;
         post?: never;
         delete?: never;
@@ -375,6 +407,47 @@ export interface components {
             id: number;
             name: string;
         };
+        CreateInterviewRequest: {
+            /** @enum {string} */
+            type: "EXPERIENCE" | "TECH" | "BEHAVIORAL" | "MIXED";
+            /** Format: int32 */
+            count: number;
+            /** @enum {string} */
+            level?: "NEW" | "JUNIOR" | "MIDDLE" | "SENIOR";
+            /** @enum {string} */
+            jobRole?: "BACKEND" | "FRONTEND" | "FULLSTACK" | "MOBILE" | "DATA" | "DEVOPS" | "COMMON";
+            /** Format: int64 */
+            resumeId?: number;
+            /** Format: int64 */
+            experienceId?: number;
+            narrowByResume?: boolean;
+        };
+        InterviewQuestionView: {
+            /** Format: int32 */
+            seq: number;
+            text: string;
+            /** @enum {string} */
+            kind: "TECH" | "BEHAVIORAL";
+        };
+        InterviewView: {
+            /** Format: int64 */
+            id: number;
+            /** @enum {string} */
+            type: "EXPERIENCE" | "TECH" | "BEHAVIORAL" | "MIXED";
+            /** @enum {string} */
+            status: "IN_PROGRESS" | "FINISHED" | "REPORTED";
+            /** @enum {string} */
+            level?: "NEW" | "JUNIOR" | "MIDDLE" | "SENIOR";
+            /** @enum {string} */
+            jobRole?: "BACKEND" | "FRONTEND" | "FULLSTACK" | "MOBILE" | "DATA" | "DEVOPS" | "COMMON";
+            /** Format: int64 */
+            resumeId?: number;
+            /** Format: int64 */
+            experienceId?: number;
+            questions: components["schemas"]["InterviewQuestionView"][];
+            /** Format: date-time */
+            createdAt: string;
+        };
         SignupRequest: {
             /** Format: email */
             email: string;
@@ -455,6 +528,18 @@ export interface components {
             period?: string;
             summary: string;
             skills: string[];
+        };
+        InterviewSummary: {
+            /** Format: int64 */
+            id: number;
+            /** @enum {string} */
+            type: "EXPERIENCE" | "TECH" | "BEHAVIORAL" | "MIXED";
+            /** @enum {string} */
+            status: "IN_PROGRESS" | "FINISHED" | "REPORTED";
+            /** Format: int32 */
+            questionCount: number;
+            /** Format: date-time */
+            createdAt: string;
         };
         HealthResponse: {
             status: string;
@@ -651,6 +736,50 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ResumeDetail"];
+                };
+            };
+        };
+    };
+    listInterviews: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InterviewSummary"][];
+                };
+            };
+        };
+    };
+    createInterview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInterviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InterviewView"];
                 };
             };
         };
@@ -966,6 +1095,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ExperienceView"][];
+                };
+            };
+        };
+    };
+    getInterview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InterviewView"];
                 };
             };
         };
