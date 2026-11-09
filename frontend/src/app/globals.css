@@ -43,6 +43,8 @@
   --color-bg-subtle: var(--bg-subtle);
   --color-bg-muted: var(--bg-muted);
   --color-bg-tint: var(--bg-tint);
+  --color-paper: var(--paper);
+  --color-rule: var(--rule);
   --color-text-strong: var(--text-strong);
   --color-text: var(--text);
   --color-text-sub: var(--text-sub);
@@ -62,6 +64,8 @@
   --color-warning: var(--warning);
 
   --font-sans: var(--font-pretendard), system-ui, sans-serif;
+  /* 손글씨 메모 전용(HandNote). 본문·버튼에 쓰지 않는다 */
+  --font-hand: var(--font-gaegu), var(--font-pretendard), cursive;
 
   /* 타입 스케일
    * hero 52(데스크톱 히어로) / display 40(점수·타이머 숫자, 모바일 히어로)
