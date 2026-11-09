@@ -59,6 +59,13 @@ class QuestionCsvTest {
   }
 
   @Test
+  void 칸_중간의_따옴표는_글자_그대로다() {
+    Parsed p = parse("CS,보안,5\" 화면에서 XSS를 막는 방법을 말해 주세요.,신입,공통,,\n");
+    assertThat(p.errors()).isEmpty();
+    assertThat(p.rows().get(0).text()).isEqualTo("5\" 화면에서 XSS를 막는 방법을 말해 주세요.");
+  }
+
+  @Test
   void 빈_줄은_건너뛴다() {
     Parsed p = parse("\nCS,보안,비밀번호 저장 방법을 말해 주세요.,신입,공통,,\n\n");
     assertThat(p.errors()).isEmpty();

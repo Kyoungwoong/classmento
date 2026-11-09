@@ -115,7 +115,20 @@ class QuestionImportApiTest extends IntegrationTest {
   }
 
   @Test
+  void 파일_칸이_없으면_400() throws Exception {
+    mockMvc
+        .perform(multipart("/api/admin/questions/import").with(csrf()).with(user(admin)))
+        .andExpect(status().isBadRequest());
+  }
+
+  @Test
   void 관리자만_올릴_수_있다() throws Exception {
+    mockMvc
+        .perform(
+            multipart("/api/admin/questions/import")
+                .file(new MockMultipartFile("file", "q.csv", "text/csv", new byte[0]))
+                .with(csrf()))
+        .andExpect(status().isUnauthorized());
     AuthUser normal = createUser("user@test.com", AppUser.Role.USER);
     upload(HEADER.getBytes(StandardCharsets.UTF_8), normal).andExpect(status().isForbidden());
   }
