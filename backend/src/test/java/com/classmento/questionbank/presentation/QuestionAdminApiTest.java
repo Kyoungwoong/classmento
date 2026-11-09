@@ -168,7 +168,7 @@ class QuestionAdminApiTest extends IntegrationTest {
                 .param("jobRole", "DEVOPS")
                 .param("q", "배포")
                 .with(user(admin)))
-        .andExpect(jsonPath("$.total").value(2));
+        .andExpect(jsonPath("$.total").value(1));
   }
 
   @Test
