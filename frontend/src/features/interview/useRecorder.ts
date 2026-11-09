@@ -5,7 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 /** 답변 하나의 최대 길이(초). 넘으면 저절로 멈춘다(서버 10MB 제한 안쪽). */
 export const MAX_SECONDS = 180;
 
-export type RecorderState = "idle" | "recording" | "recorded" | "denied" | "unsupported";
+export type RecorderState =
+  "idle" | "requesting" | "recording" | "recorded" | "denied" | "unsupported";
 
 /** 브라우저가 녹음할 수 있는 형식 중 서버가 받는 것(먼저 나온 것 우선) */
 const PREFERRED = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
@@ -27,6 +28,9 @@ export function useRecorder() {
   const recorder = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  // 마이크를 여는 중에 또 시작하면 스트림이 둘 생겨 하나가 꺼지지 않는다
+  const starting = useRef(false);
+  const seconds = useRef(0);
 
   const clearTimer = () => {
     if (timer.current) clearInterval(timer.current);
@@ -39,14 +43,18 @@ export function useRecorder() {
   }, []);
 
   const start = useCallback(async () => {
+    if (starting.current || recorder.current?.state === "recording") return;
     if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
       setState("unsupported");
       return;
     }
+    starting.current = true;
+    setState("requesting");
     let media: MediaStream;
     try {
       media = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
+      starting.current = false;
       setState("denied");
       return;
     }
@@ -57,6 +65,7 @@ export function useRecorder() {
     } catch {
       // 형식을 지원하지 않거나 마이크 스트림이 끊긴 경우
       media.getTracks().forEach((t) => t.stop());
+      starting.current = false;
       setState("unsupported");
       return;
     }
@@ -71,24 +80,29 @@ export function useRecorder() {
       setUrl(URL.createObjectURL(out));
       setState("recorded");
     };
+    // 남아 있던 스트림이 있으면 끈다
+    if (stream.current && stream.current !== media) {
+      stream.current.getTracks().forEach((t) => t.stop());
+    }
     recorder.current = rec;
     stream.current = media;
     setBlob(null);
+    seconds.current = 0;
     setElapsed(0);
     rec.start();
+    starting.current = false;
     setState("recording");
     timer.current = setInterval(() => {
-      setElapsed((s) => {
-        const next = s + 1;
-        if (next >= MAX_SECONDS) stop();
-        return next;
-      });
+      seconds.current += 1;
+      setElapsed(seconds.current);
+      if (seconds.current >= MAX_SECONDS) stop();
     }, 1000);
   }, [stop]);
 
   const reset = useCallback(() => {
     clearTimer();
     setBlob(null);
+    seconds.current = 0;
     setElapsed(0);
     setState("idle");
   }, []);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BottomCTA,
   Button,
@@ -50,6 +50,15 @@ export function InterviewScreen({ id }: { id: number }) {
   const [finishFailed, setFinishFailed] = useState(false);
   const [loadFailed, setLoadFailed] = useState<"notFound" | "error" | null>(null);
   const [attempt, setAttempt] = useState(0);
+  // 화면을 떠나면 끝내기 재시도를 멈춘다(나중에 리포트로 끌려가지 않게)
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
+  const invalidId = !Number.isInteger(id) || id <= 0;
 
   const load = useCallback(
     () =>
@@ -65,6 +74,7 @@ export function InterviewScreen({ id }: { id: number }) {
   );
 
   useEffect(() => {
+    if (invalidId) return;
     load()
       .then((v) => v && setSeq(firstOpen(v, new Set())))
       .catch((err) => {
@@ -80,18 +90,20 @@ export function InterviewScreen({ id }: { id: number }) {
             : "면접을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.",
         );
       });
-  }, [id, load, router, attempt]);
+  }, [id, invalidId, load, router, attempt]);
 
-  if (!view || seq === null) {
+  if (invalidId || !view || seq === null) {
+    const failure = invalidId ? "notFound" : loadFailed;
+    const title = invalidId ? "면접을 찾을 수 없어요." : error;
     return (
       <Screen
         header={<TopBar onBack={() => router.push("/")} />}
         cta={
-          loadFailed === "notFound" ? (
+          failure === "notFound" ? (
             <BottomCTA>
               <ButtonLink href="/interview/new">새 면접 만들기</ButtonLink>
             </BottomCTA>
-          ) : loadFailed === "error" ? (
+          ) : failure === "error" ? (
             <BottomCTA>
               <Button
                 onClick={() => {
@@ -106,8 +118,8 @@ export function InterviewScreen({ id }: { id: number }) {
           ) : undefined
         }
       >
-        <div role={error ? "alert" : undefined}>
-          <ScreenTitle title={error ?? "면접을 불러오고 있어요"} />
+        <div role={title ? "alert" : undefined}>
+          <ScreenTitle title={title ?? "면접을 불러오고 있어요"} />
         </div>
       </Screen>
     );
@@ -120,28 +132,36 @@ export function InterviewScreen({ id }: { id: number }) {
     (q) => q.seq !== seq && ((!q.answerStatus && !done.has(q.seq)) || q.answerStatus === "FAILED"),
   );
   const isLast = remaining.length === 0;
+  // 모든 질문을 올렸으면(새로고침·끝내기 실패 뒤) 다시 녹음하지 않고 끝내기만 한다
+  const allAnswered = view.questions.every((q) =>
+    q.answerStatus === "FAILED" ? false : Boolean(q.answerStatus) || done.has(q.seq),
+  );
+  const finishOnly = allAnswered || finishFailed;
 
   async function finish(retries = PROCESSING_RETRIES): Promise<void> {
     setFinishFailed(false);
     try {
       await api.finishInterview(id);
-      router.push(`/interview/${id}/report`);
+      if (alive.current) router.push(`/interview/${id}/report`);
     } catch (err) {
+      if (!alive.current) return;
       if (err instanceof ApiError && err.code === "ANSWERS_PROCESSING" && retries > 0) {
         setBusy("정리하고 있어요");
         await new Promise((r) => setTimeout(r, PROCESSING_RETRY_MS));
+        if (!alive.current) return;
         return finish(retries - 1);
       }
       if (err instanceof ApiError && err.code === "ANSWERS_FAILED") {
         // 다시 녹음해야 하는 질문으로 돌아간다
-        const fresh = await load();
-        if (fresh) {
-          const failed = fresh.questions.find((q) => q.answerStatus === "FAILED");
-          if (failed) {
-            setSeq(failed.seq);
-            recorder.reset();
-            setError(`${failed.failureReason ?? err.message} 다시 녹음해 주세요.`);
-          }
+        const fresh = await load().catch(() => undefined); // null이면 이미 리포트로 보냈다
+        const failed = fresh?.questions.find((q) => q.answerStatus === "FAILED");
+        if (failed) {
+          setSeq(failed.seq);
+          recorder.reset();
+          setError(`${failed.failureReason ?? err.message} 다시 녹음해 주세요.`);
+        } else if (fresh !== null) {
+          setError("면접을 끝내지 못했어요. 다시 시도해 주세요.");
+          setFinishFailed(true);
         }
         setBusy(null);
         return;
@@ -155,7 +175,7 @@ export function InterviewScreen({ id }: { id: number }) {
   }
 
   async function submit() {
-    if (finishFailed) {
+    if (finishOnly) {
       setError(null);
       setBusy("마무리하고 있어요");
       await finish();
@@ -175,11 +195,6 @@ export function InterviewScreen({ id }: { id: number }) {
     }
     const nextDone = new Set(done).add(seq);
     setDone(nextDone);
-    if (isLast) {
-      setBusy("마무리하고 있어요");
-      await finish();
-      return;
-    }
     // 실패로 돌아왔던 질문을 고쳤으면 그 상태를 지운다
     setView({
       ...view!,
@@ -187,6 +202,11 @@ export function InterviewScreen({ id }: { id: number }) {
         q.seq === seq ? { ...q, answerStatus: "UPLOADED", failureReason: undefined } : q,
       ),
     });
+    if (isLast) {
+      setBusy("마무리하고 있어요");
+      await finish();
+      return;
+    }
     setSeq(remaining[0].seq);
     recorder.reset();
     setBusy(null);
@@ -199,8 +219,18 @@ export function InterviewScreen({ id }: { id: number }) {
         ? "이 브라우저에서는 녹음할 수 없어요. 최신 크롬이나 사파리에서 열어 주세요."
         : null;
 
+  function rerecord() {
+    setUploadFailed(false);
+    setError(null);
+    recorder.reset();
+  }
+
   const cta =
-    recorder.state === "recording" ? (
+    finishOnly && recorder.state !== "recording" ? (
+      <Button loading={busy !== null} loadingText={busy ?? undefined} onClick={submit}>
+        {finishFailed ? "다시 끝내기" : "면접 끝내기"}
+      </Button>
+    ) : recorder.state === "recording" ? (
       <Button onClick={recorder.stop}>답변 끝내기</Button>
     ) : recorder.state === "recorded" && busy !== null ? (
       <Button loading loadingText={busy}>
@@ -208,23 +238,21 @@ export function InterviewScreen({ id }: { id: number }) {
       </Button>
     ) : recorder.state === "recorded" ? (
       <>
-        {!finishFailed && (
-          <Button variant="secondary" onClick={recorder.reset}>
-            다시 녹음
-          </Button>
-        )}
+        <Button variant="secondary" onClick={rerecord}>
+          다시 녹음
+        </Button>
         <Button onClick={submit}>
-          {finishFailed
-            ? "다시 끝내기"
-            : uploadFailed
-              ? "다시 올리기"
-              : isLast
-                ? "면접 끝내기"
-                : "다음 질문"}
+          {uploadFailed ? "다시 올리기" : isLast ? "면접 끝내기" : "다음 질문"}
         </Button>
       </>
     ) : (
-      <Button onClick={recorder.start}>{micError ? "다시 시도하기" : "답변 시작하기"}</Button>
+      <Button
+        loading={recorder.state === "requesting"}
+        loadingText="마이크를 켜고 있어요"
+        onClick={recorder.start}
+      >
+        {micError ? "다시 시도하기" : "답변 시작하기"}
+      </Button>
     );
 
   return (
@@ -247,7 +275,12 @@ export function InterviewScreen({ id }: { id: number }) {
           </p>
         </div>
       )}
-      {recorder.state === "recorded" && recorder.url && (
+      {finishOnly && !error && (
+        <p className="mt-4 text-body2 text-text-sub">
+          모든 질문에 답했어요. 면접을 끝내면 리포트를 볼 수 있어요.
+        </p>
+      )}
+      {!finishOnly && recorder.state === "recorded" && recorder.url && (
         <div className="mt-4">
           {!error && (
             <p className="mb-3 text-body2 text-text-sub">
@@ -259,7 +292,7 @@ export function InterviewScreen({ id }: { id: number }) {
           <audio controls src={recorder.url} className="w-full" />
         </div>
       )}
-      {recorder.state === "idle" && !error && (
+      {!finishOnly && recorder.state === "idle" && !error && (
         <p className="mt-4 text-body2 text-text-sub">
           준비되면 답변을 시작해요. 결론부터 말해 보세요.
         </p>
