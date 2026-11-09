@@ -123,6 +123,18 @@ public class InterviewSession {
     return s;
   }
 
+  public void finish(java.util.Set<Integer> answeredSeqs) {
+    throw new UnsupportedOperationException("TODO");
+  }
+
+  public void report(SessionReport report) {
+    throw new UnsupportedOperationException("TODO");
+  }
+
+  public SessionReport getReport() {
+    throw new UnsupportedOperationException("TODO");
+  }
+
   /** 진행 중인 면접의 있는 질문인지 확인하고 그 질문을 돌려준다. */
   public InterviewQuestion requireAnswerable(int seq) {
     if (status != SessionStatus.IN_PROGRESS) {
