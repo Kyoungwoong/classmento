@@ -6,6 +6,8 @@ import com.classmento.interview.application.AnswerService.Audio;
 import com.classmento.interview.presentation.InterviewDtos.AnswerStatusView;
 import io.swagger.v3.oas.annotations.Operation;
 import java.io.IOException;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -54,12 +56,13 @@ public class InterviewAnswerController {
 
   @GetMapping("/audio")
   @Operation(operationId = "getInterviewAnswerAudio")
-  public ResponseEntity<byte[]> audio(
+  public ResponseEntity<Resource> audio(
       @PathVariable Long id, @PathVariable int seq, @AuthenticationPrincipal AuthUser user) {
     Audio a = answers.audio(user.id(), id, seq);
+    // Resource로 돌려주면 Spring이 Range 요청(206)을 처리한다 — Safari <audio>는 Range가 있어야 재생·탐색한다
     return ResponseEntity.ok()
-        .header(HttpHeaders.CONTENT_TYPE, a.contentType())
+        .contentType(MediaType.parseMediaType(a.contentType()))
         .header(HttpHeaders.CACHE_CONTROL, "private, no-store")
-        .body(a.bytes());
+        .body(new ByteArrayResource(a.bytes()));
   }
 }
