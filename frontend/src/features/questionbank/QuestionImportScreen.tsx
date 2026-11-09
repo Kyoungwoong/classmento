@@ -109,7 +109,7 @@ export function QuestionImportScreen() {
     >
       {errors.length > 0 ? (
         <ScreenTitle
-          title={`${errors.length}줄을 고쳐 주세요`}
+          title={`${new Set(errors.map((e) => e.line)).size}줄을 고쳐 주세요`}
           description="아무것도 저장하지 않았어요. 고친 뒤 다시 올려 주세요."
         />
       ) : (
