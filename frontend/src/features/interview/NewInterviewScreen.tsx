@@ -1,13 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   BottomCTA,
   Button,
-  ButtonLink,
   ChipGroup,
   ChoiceRow,
+  ProgressBar,
   Screen,
   ScreenTitle,
   SegmentedControl,
@@ -156,6 +157,10 @@ export function NewInterviewScreen() {
     }
   }
 
+  // 인성은 조건 단계가 없다
+  const steps: Step[] = type === "BEHAVIORAL" ? ["type", "count"] : ["type", "conditions", "count"];
+  const progress = (steps.indexOf(step) + 1) / steps.length;
+
   const cta =
     step === "count" ? (
       <Button
@@ -168,41 +173,50 @@ export function NewInterviewScreen() {
         질문 만들기
       </Button>
     ) : (
-      <Button onClick={goNext}>다음</Button>
+      <Button disabled={step === "type" && !type} onClick={goNext}>
+        다음
+      </Button>
     );
 
   return (
     <Screen header={<TopBar onBack={goBack} />} cta={<BottomCTA>{cta}</BottomCTA>}>
+      <div className="mb-6">
+        <ProgressBar value={progress} label="면접 만들기 진행도" />
+      </div>
       {step === "type" && (
         <>
           <ScreenTitle title="어떤 면접을 볼까요?" description="질문은 모두 말로 답해요." />
-          <div role="radiogroup" aria-label="면접 종류" className="flex flex-col gap-2">
+          <div role="radiogroup" aria-label="면접 종류" className="-mx-4 flex flex-col gap-2">
             {TYPES.map((t) => {
               const needsResume = t.value === "EXPERIENCE" && parsed.length === 0;
               return (
-                <ChoiceRow
-                  key={t.value}
-                  title={t.title}
-                  description={needsResume ? "이력서가 필요해요" : t.description}
-                  selected={type === t.value}
-                  disabled={needsResume}
-                  onSelect={() => setType(t.value)}
-                />
+                <div key={t.value}>
+                  <ChoiceRow
+                    title={t.title}
+                    description={needsResume ? "이력서가 필요해요" : t.description}
+                    selected={type === t.value}
+                    disabled={needsResume}
+                    onSelect={() => setType(t.value)}
+                  />
+                  {needsResume && resumes !== null && (
+                    <Link
+                      href="/resume/upload"
+                      className="-mt-2 inline-flex h-11 items-center px-4 text-caption text-primary"
+                    >
+                      이력서 올리러 가기
+                    </Link>
+                  )}
+                </div>
               );
             })}
           </div>
-          {resumes !== null && parsed.length === 0 && (
-            <ButtonLink href="/resume/upload" variant="ghost" size="md" className="mt-4 -ml-4">
-              이력서 올리러 가기
-            </ButtonLink>
-          )}
         </>
       )}
 
       {step === "conditions" && type === "EXPERIENCE" && (
         <>
           <ScreenTitle
-            title={"어떤 경험으로\n면접을 볼까요?"}
+            title="어떤 경험으로 면접을 볼까요?"
             description="고른 경험과 관련된 기술·CS 질문을 만들어요."
           />
           {parsed.length > 1 && (
@@ -254,7 +268,7 @@ export function NewInterviewScreen() {
       {step === "conditions" && (type === "TECH" || type === "MIXED") && (
         <>
           <ScreenTitle
-            title={"어떤 직무로\n볼까요?"}
+            title="어떤 직무로 볼까요?"
             description="직무와 연차에 맞는 질문을 골라요."
           />
           <div className="flex flex-col gap-8">
@@ -279,7 +293,7 @@ export function NewInterviewScreen() {
       {step === "count" && (
         <>
           <ScreenTitle
-            title={"질문은\n몇 개로 할까요?"}
+            title="질문은 몇 개로 할까요?"
             description="질문 하나에 2~3분 정도 걸려요."
           />
           <SegmentedControl label="질문 수" options={COUNTS} value={count} onChange={setCount} />
