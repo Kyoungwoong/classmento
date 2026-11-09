@@ -18,7 +18,10 @@ export function CheckList({ items, label }: { items: CheckItem[]; label: string 
             className="relative mt-0.5 size-7 shrink-0 rounded-sm border-2 border-ink bg-bg"
           >
             {it.done && (
-              <svg viewBox="0 0 32 28" className="absolute -top-2 -left-0.5 size-9 overflow-visible">
+              <svg
+                viewBox="0 0 32 28"
+                className="absolute -top-2 -left-0.5 size-9 overflow-visible"
+              >
                 <path
                   d="M4 15 L12 23 L29 2"
                   fill="none"
