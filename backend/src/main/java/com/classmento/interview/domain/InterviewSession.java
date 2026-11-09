@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import org.hibernate.annotations.BatchSize;
 
 /**
  * 면접 세션 (애그리거트 루트). 질문은 만들 때 모두 정해 둔다(꼬리질문 없음). 규칙: 실행계획 2026-11-09-interview-session, ADR 0005.
@@ -56,6 +57,7 @@ public class InterviewSession {
   private SessionStatus status;
 
   @ElementCollection(fetch = FetchType.EAGER)
+  @BatchSize(size = 50) // 목록 조회 시 세션마다 질문을 따로 읽지 않게
   @CollectionTable(name = "interview_question", joinColumns = @JoinColumn(name = "session_id"))
   @OrderBy("seq")
   private List<InterviewQuestion> questions = new ArrayList<>();
@@ -80,7 +82,7 @@ public class InterviewSession {
         if (c.level() == null || c.jobRole() == null) {
           throw new DomainException("CONDITIONS_REQUIRED", "직무와 연차를 골라 주세요.");
         }
-        if (c.narrowByResume() && c.resumeId() == null) {
+        if (type == InterviewType.TECH && c.narrowByResume() && c.resumeId() == null) {
           throw new DomainException("RESUME_REQUIRED", "이력서 기술로 좁히려면 이력서를 골라 주세요.");
         }
       }
@@ -105,10 +107,15 @@ public class InterviewSession {
     InterviewSession s = new InterviewSession();
     s.userId = Objects.requireNonNull(userId);
     s.type = type;
-    s.level = c.level();
-    s.jobRole = c.jobRole();
-    s.resumeId = c.resumeId();
-    s.experienceId = c.experienceId();
+    // 탭이 쓰는 조건만 저장한다. 쓰지 않는 이력서·경험 번호는 소유 확인을 거치지 않았으므로 남기지 않는다.
+    boolean techLike = type == InterviewType.TECH || type == InterviewType.MIXED;
+    s.level = techLike ? c.level() : null;
+    s.jobRole = techLike ? c.jobRole() : null;
+    s.resumeId =
+        type == InterviewType.EXPERIENCE || (type == InterviewType.TECH && c.narrowByResume())
+            ? c.resumeId()
+            : null;
+    s.experienceId = type == InterviewType.EXPERIENCE ? c.experienceId() : null;
     s.status = SessionStatus.IN_PROGRESS;
     for (int i = 0; i < count; i++) {
       s.questions.add(InterviewQuestion.of(i + 1, drafts.get(i)));
