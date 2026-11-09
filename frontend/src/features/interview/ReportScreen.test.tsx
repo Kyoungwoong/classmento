@@ -74,6 +74,8 @@ describe("ReportScreen", () => {
           overall: undefined,
           strength: undefined,
           improvement: undefined,
+          // 아직 평가 중인 문항이 있을 때만 다시 부른다
+          items: [{ ...report().items[0], answerStatus: "TRANSCRIBED", overall: undefined }],
         }),
       )
       .mockResolvedValue(report());
@@ -144,7 +146,7 @@ describe("ReportScreen", () => {
     expect(load).toHaveBeenCalledTimes(3);
   });
 
-  it("처음 불러오기가 실패하면 [다시 불러오기], 없는 리포트면 [다시 연습하기]", async () => {
+  it("처음 불러오기가 실패하면 [다시 불러오기]", async () => {
     const load = vi
       .spyOn(api, "interviewReport")
       .mockRejectedValueOnce(new ApiError(500, "INTERNAL", "x"))
@@ -155,5 +157,52 @@ describe("ReportScreen", () => {
 
     expect(await screen.findByRole("heading", { name: "면접이 끝났어요" })).toBeInTheDocument();
     expect(load).toHaveBeenCalledTimes(2);
+  });
+  it("서버가 null로 보낸 답하지 않은 문항은 '답하지 않았어요'", async () => {
+    const r = report({ status: "EVALUATING", overall: null as never });
+    r.items[1] = {
+      seq: 2,
+      question: "프로세스와 스레드의 차이는요?",
+      kind: "TECH",
+      answerStatus: null as never,
+      overall: null as never,
+      scores: [],
+    };
+    vi.spyOn(api, "interviewReport").mockResolvedValue(r);
+    render(<ReportScreen id={7} />);
+    expect(await screen.findByText("답하지 않았어요")).toBeInTheDocument();
+  });
+
+  it("다시 평가할 문항만 남아 종합이 안 되면 계속 부르지 않는다", async () => {
+    vi.useFakeTimers();
+    const load = vi
+      .spyOn(api, "interviewReport")
+      .mockResolvedValue(report({ status: "EVALUATING", overall: undefined }));
+    render(<ReportScreen id={7} />);
+    await act(async () => {
+      await vi.runOnlyPendingTimersAsync();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(9000);
+    });
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it("없는 리포트면 [다시 연습하기]", async () => {
+    vi.spyOn(api, "interviewReport").mockRejectedValue(new ApiError(404, "NOT_FOUND", "x"));
+    render(<ReportScreen id={7} />);
+    expect(
+      await screen.findByRole("heading", { name: "리포트를 찾을 수 없어요." }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "다시 연습하기" })).toBeInTheDocument();
+  });
+
+  it("숫자가 아닌 주소면 부르지 않고 없는 리포트로 안내한다", async () => {
+    const load = vi.spyOn(api, "interviewReport");
+    render(<ReportScreen id={NaN} />);
+    expect(
+      await screen.findByRole("heading", { name: "리포트를 찾을 수 없어요." }),
+    ).toBeInTheDocument();
+    expect(load).not.toHaveBeenCalled();
   });
 });

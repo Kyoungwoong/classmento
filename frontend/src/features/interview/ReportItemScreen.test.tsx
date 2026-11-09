@@ -77,4 +77,12 @@ describe("ReportItemScreen", () => {
     ).toBeInTheDocument();
     expect(load).toHaveBeenCalledTimes(2);
   });
+  it("숫자가 아닌 주소면 부르지 않고 없는 문항으로 안내한다", async () => {
+    const load = vi.spyOn(api, "interviewReport");
+    render(<ReportItemScreen id={7} seq={NaN} />);
+    expect(
+      await screen.findByRole("heading", { name: "문항을 찾을 수 없어요" }),
+    ).toBeInTheDocument();
+    expect(load).not.toHaveBeenCalled();
+  });
 });
