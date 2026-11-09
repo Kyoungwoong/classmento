@@ -33,7 +33,7 @@ const PREP = [
   },
 ];
 
-/** 색인 탭 색: 연두 · 노랑 · 연한 연두 · 남색 연한 면(모두 남색 글자) */
+/** 색인 탭 색: 연두 · 연한 남색 · 연한 연두 · 남색 회색(모두 남색 글자, 노랑은 쓰지 않는다) */
 const TYPES = [
   {
     tab: "경험",
@@ -43,7 +43,7 @@ const TYPES = [
   },
   {
     tab: "기술",
-    tabClass: "bg-highlight-weak text-ink",
+    tabClass: "bg-navy-100 text-ink",
     title: "기술 면접",
     description: "Language·Framework·CS 질문 은행에서 직무와 연차에 맞게 골라요.",
   },
@@ -184,7 +184,7 @@ export function HomeLanding() {
             </span>{" "}
             중에 골라요
           </h2>
-          <p className="mt-3 text-body2 text-text md:text-body1">
+          <p className="mt-5 text-body2 text-text md:text-body1">
             이력서가 없어도 기술·인성 면접은 바로 볼 수 있어요.
           </p>
           <ul className="mt-14 grid gap-12 md:grid-cols-2 md:gap-x-6 lg:grid-cols-4">

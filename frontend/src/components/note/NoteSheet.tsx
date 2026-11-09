@@ -11,7 +11,7 @@ interface NoteSheetProps extends HTMLAttributes<HTMLDivElement> {
 
 /**
  * 노트 한 장: 미색 종이 면 + 윗변 스프링 구멍 + 왼쪽 연두 여백선.
- * 화면의 주인공 묶음 하나에 쓴다. 노트 안에 노트를 넣지 않는다.
+ * 섹션의 주인공 묶음 하나에 쓴다(섹션마다 한 장까지). 노트 안에 노트를 넣지 않는다.
  */
 export function NoteSheet({ children, margin = true, className, ...rest }: NoteSheetProps) {
   return (

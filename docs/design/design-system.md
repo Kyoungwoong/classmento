@@ -10,12 +10,11 @@
 2. **색은 연두 · 남색 · 연한 면, 노랑은 포인트.**
    - 연두(`primary`)는 버튼·막대·선택 면에 쓴다. 흰 바탕 위 **글자로 쓰지 않는다**(대비 1.5:1). 글자 강조는 `text-accent`(진한 연두)로 한다.
    - 남색(`ink`)은 제목, 헤더 버튼, 푸터 면에 쓴다.
-   - 노랑(`highlight`)은 배지·밑줄처럼 한 화면에 한두 군데만 쓴다.
+   - 노랑(`highlight`)은 형광펜·포스트잇·배지에만, 한 화면에 세 군데까지 쓴다(원칙 4).
 3. **화면마다 노트의 다른 장면.** 같은 배치(띠 → 2단 → 패널)를 모든 화면에 반복하지 않는다.
    - 섹션의 주인공 묶음은 `NoteSheet`(노트 한 장, 섹션마다 한 장까지)로, 화면 맨 위 영역은 `GridPaper`(모눈)로 깔 수 있다.
    - 홈: 모눈 표지 → 준비 체크리스트 → 면접 종류 색인 탭 → 칠판 / 로그인: 모눈 위 노트 한 장 / 리포트: 채점된 답안지(도장·형광펜·여백 메모)
-4. **손맛은 섹션마다 두 개까지.** 손맛 = 형광펜(`Highlight`, 제목 핵심어 하나) · 손글씨(`HandNote`·포스트잇 제목·칠판 제목, 짧은 한마디) · 손 밑줄(`Scribble`) · 포스트잇(`StickyNote`, 팁 하나) · 도장(`Stamp`). 한 섹션에 두 개까지, 같은 부품은 화면에 한 번씩. 기울기는 그 부품에만 주고 본문·버튼·폼은 단정하게 둔다.
-   - 노랑은 형광펜·포스트잇·배지에만 쓰고, 한 화면에 세 군데를 넘기지 않는다.
+4. **손맛은 섹션마다 두 개까지.** 손맛 = 형광펜(`Highlight`, 제목 핵심어 하나) · 손글씨(`HandNote`·포스트잇 제목·칠판 제목, 짧은 한마디) · 손 밑줄(`Scribble`) · 포스트잇(`StickyNote`, 팁 하나) · 도장(`Stamp`). 한 섹션에 두 개까지, 같은 부품은 화면에 한 번씩. 기울기는 그 부품과 홈 미리보기 노트에만 주고 본문·버튼·폼은 단정하게 둔다.
    - **어떤 폭에서도 가로로 넘치지 않는다.** 장식을 음수 위치로 밖에 붙이면 좁은 폭에서 페이지가 넓어진다(헤더 선·푸터가 끊겨 보임). 배치는 그리드 칸으로 하고, 루트 레이아웃 본문은 `overflow-x-clip`으로 한 번 더 막는다. 320 · 768 · 1024 · 1280 · 1920에서 `scrollWidth`가 화면 폭과 같은지 확인한다.
    - 묶음이 더 필요하면 `Panel`(흰 면, 1px 테두리, 둥근 20px, 그림자 없음). 패널·노트 안에 또 넣지 않고, 한 화면에 2~3개까지.
    - 섹션을 띠 색으로 나눌 때는 `Section tone`(흰색 · 연한 연두 · 아주 연한 회색 · 남색), 같은 톤을 연달아 두지 않는다.
@@ -43,7 +42,7 @@
 | 배경 | white / 연한 연두 `#F4FCE3` / gray-50 / gray-100 | `bg-bg` `bg-bg-tint`(=`bg-primary-weak`) `bg-bg-subtle` `bg-bg-muted` |
 | 글자 | navy-900 / gray-800 / 600 / 500 | `text-text-strong` `text-text` `text-text-sub` `text-text-hint` |
 | 테두리 | gray-200 | `border-border` |
-| 노트 | 종이 `#FFFDF6` / 모눈·줄 `#DFE5F0` / 색인 탭·테이프 lime-200 · navy-200 · yellow-100 | `bg-paper` `border-rule` `stroke-rule` / `bg-lime-200` `bg-navy-200` `bg-highlight-weak`(탭·테이프 면에만) |
+| 노트 | 종이 `#FFFDF6` / 모눈·줄 `#DFE5F0` / 색인 탭·테이프 lime-200 · navy-200 · navy-100 | `bg-paper` `border-rule` `stroke-rule` / `bg-lime-200` `bg-navy-200` `bg-navy-100`(탭·테이프 면에만) |
 | 상태 | green / orange / red-600 `#D22030` | `text-success` `text-warning` `text-danger`(흰색 대비 5.3, danger 버튼도 AA) |
 | 모서리 | 8 / 12 / 16 / 20 | `rounded-sm` `rounded-md`(버튼·입력) `rounded-lg` `rounded-xl`(패널) |
 | 폭 | 1120 / 560 | `max-w-site` `max-w-narrow` |
@@ -109,7 +108,7 @@ Tailwind 기본 팔레트는 꺼져 있다(`--color-*: initial`). `bg-purple-500
 | 컴포넌트 | 언제 |
 |---|---|
 | `GridPaper` | 모눈 바탕(SVG 패턴, 장식). 부모에 `relative isolate`, 첫 자식으로 둔다. 화면 맨 위 영역·로그인 바탕 |
-| `NoteSheet` | 노트 한 장: 종이 면 + 윗변 스프링 구멍 + 왼쪽 연두 여백선(`margin={false}`로 끔). 화면의 주인공 묶음 하나 |
+| `NoteSheet` | 노트 한 장: 종이 면 + 윗변 스프링 구멍 + 왼쪽 연두 여백선(`margin={false}`로 끔). 섹션의 주인공 묶음 하나(섹션마다 한 장까지) |
 | `Highlight` | 노랑 형광펜. 제목 핵심어 하나(짧은 단어, 줄바꿈하지 않음) |
 | `Scribble` | 손으로 그은 연두 밑줄(장식). 제목 핵심어 아래 한 곳 |
 | `HandNote` | 손글씨 한마디(`text-accent`). 본문·버튼·폼 금지 |

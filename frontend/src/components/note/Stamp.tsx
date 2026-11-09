@@ -1,6 +1,6 @@
 import clsx from "clsx";
 
-/** 채점 도장: 기울어진 원형 이중 테두리 안에 점수. 리포트 종합 점수에만 쓴다. */
+/** 채점 도장: 기울어진 원형 이중 테두리 안에 점수. 종합 점수(리포트, 홈 미리보기)에만 쓴다. */
 export function Stamp({ score, className }: { score: number; className?: string }) {
   const value = score.toFixed(1);
   return (
