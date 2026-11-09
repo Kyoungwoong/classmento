@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -31,6 +33,8 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 @Service
 public class QuestionService {
+
+  private static final Logger log = LoggerFactory.getLogger(QuestionService.class);
 
   private final QuestionRepository questions;
   private final CategoryRepository categories;
@@ -127,12 +131,21 @@ public class QuestionService {
             r.sub().getName(),
             c.text() == null ? "" : c.text().strip(),
             r.tags().stream().map(Tag::getName).toList());
-    return embeddingClient.embed(text);
+    try {
+      return embeddingClient.embed(text);
+    } catch (RuntimeException e) {
+      // 외부 장애로 질문 저장까지 막지 않는다. 임베딩은 비워 두고 기동 시 채운다.
+      log.warn("질문 임베딩 생성 실패(비워 두고 나중에 채움): {}", e.getMessage());
+      return null;
+    }
   }
 
   private void writeEmbedding(Long questionId, float[] vector) {
     if (vector != null) {
       embeddings.update(questionId, vector);
+    } else {
+      // 예전 내용의 벡터가 남지 않게 비운다(QuestionEmbeddingBackfill이 다시 채운다).
+      embeddings.clear(questionId);
     }
   }
 

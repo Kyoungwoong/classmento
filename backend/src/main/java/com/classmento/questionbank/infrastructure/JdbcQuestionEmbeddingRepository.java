@@ -30,6 +30,11 @@ public class JdbcQuestionEmbeddingRepository implements QuestionEmbeddingReposit
   }
 
   @Override
+  public void clear(Long questionId) {
+    jdbc.update("UPDATE qb_question SET embedding = NULL WHERE id = ?", questionId);
+  }
+
+  @Override
   public List<Missing> findMissing(int limit) {
     return jdbc.query(
         """

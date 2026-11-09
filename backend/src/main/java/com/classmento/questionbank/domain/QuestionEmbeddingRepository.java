@@ -7,6 +7,9 @@ public interface QuestionEmbeddingRepository {
 
   void update(Long questionId, float[] embedding);
 
+  /** 임베딩을 비운다(내용이 바뀌었는데 새 벡터를 만들 수 없을 때). */
+  void clear(Long questionId);
+
   /** 임베딩이 비어 있는 질문을 최대 limit개(임베딩 문장 재료와 함께). */
   List<Missing> findMissing(int limit);
 
