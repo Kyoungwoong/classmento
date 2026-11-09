@@ -1,8 +1,11 @@
 import { BottomCTA, ButtonLink, ListRow, Screen, ScreenTitle } from "@/components/ui";
 
 const steps = [
-  { title: "이력서 올리기", description: "경력과 프로젝트를 자동으로 정리해요" },
-  { title: "질문에 말로 답하기", description: "내 이력서에서 나온 기술·인성 질문이에요" },
+  {
+    title: "이력서 올리기",
+    description: "경력과 프로젝트를 자동으로 정리해요 (PDF·DOCX, 20MB까지)",
+  },
+  { title: "질문에 말로 답하기", description: "내 경험과 직무에 맞는 기술·인성 질문이에요" },
   { title: "답변별 피드백 받기", description: "잘한 점과 고칠 점을 바로 알려드려요" },
 ];
 
@@ -10,8 +13,11 @@ export default function Home() {
   return (
     <Screen
       cta={
-        <BottomCTA caption="PDF, DOCX 파일 · 최대 20MB">
-          {/* 로그인 안 했으면 proxy.ts가 /login?next=/resume/upload 로 보낸다 */}
+        <BottomCTA>
+          {/* 로그인 안 했으면 proxy.ts가 /login?next=<경로> 로 보낸다 */}
+          <ButtonLink href="/interview/new" variant="secondary">
+            바로 면접 보기
+          </ButtonLink>
           <ButtonLink href="/resume/upload">이력서 올리기</ButtonLink>
         </BottomCTA>
       }

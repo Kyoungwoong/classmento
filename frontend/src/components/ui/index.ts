@@ -13,3 +13,5 @@ export { TagInput, type TagItem } from "./TagInput";
 export { TextArea } from "./TextArea";
 export { Toggle } from "./Toggle";
 export { ChipGroup } from "./ChipGroup";
+export { ChoiceRow } from "./ChoiceRow";
+export { CheckMark } from "./CheckMark";
