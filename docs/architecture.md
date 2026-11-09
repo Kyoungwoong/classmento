@@ -98,6 +98,7 @@ interview_session(id, user_id, type[EXPERIENCE|TECH|BEHAVIORAL|MIXED], level?, j
 interview_question(session_id, seq, text, intent?, kind[TECH|BEHAVIORAL], bank_question_id?, generated)              -- V7
 interview_answer(session_id, user_id, seq UNIQUE/세션, kind, audio_key, content_type, audio_version, status[UPLOADED|TRANSCRIBED|EVALUATED|FAILED], transcript?, failure_reason?, overall_score?, strength?, improvement?, suggestion?, prompt_version?, model?)  -- V8
 interview_answer_score(answer_id, criterion, score 1~5, evidence?)                                                    -- V8, 루브릭 기준별
+  자식 테이블(interview_question, interview_answer_score)은 user_id 없이 부모(세션·답변)를 통해서만 읽는다 — CLAUDE.md 3-1의 예외
 job_posting(id, user_id, text, embedding)
 credit_ledger / payment  → ADR 0003
 ```
