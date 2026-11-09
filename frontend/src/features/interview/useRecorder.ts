@@ -51,7 +51,15 @@ export function useRecorder() {
       return;
     }
     const mimeType = pickMimeType();
-    const rec = new MediaRecorder(media, mimeType ? { mimeType } : undefined);
+    let rec: MediaRecorder;
+    try {
+      rec = new MediaRecorder(media, mimeType ? { mimeType } : undefined);
+    } catch {
+      // 형식을 지원하지 않거나 마이크 스트림이 끊긴 경우
+      media.getTracks().forEach((t) => t.stop());
+      setState("unsupported");
+      return;
+    }
     const chunks: Blob[] = [];
     rec.ondataavailable = (e) => {
       if (e.data.size > 0) chunks.push(e.data);
