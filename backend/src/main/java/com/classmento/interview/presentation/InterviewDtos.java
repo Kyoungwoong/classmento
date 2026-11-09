@@ -153,12 +153,18 @@ public final class InterviewDtos {
     }
   }
 
+  /** 리포트 상태: READY(종합까지 끝) / EVALUATING(진행 중이거나 평가 중) */
+  public enum ReportStatus {
+    READY,
+    EVALUATING
+  }
+
   /** status: READY(종합까지 끝) / EVALUATING(진행 중이거나 평가 중). overall·strength·improvement는 READY일 때만. */
   @Schema(requiredProperties = {"id", "type", "status", "criteria", "items"})
   public record ReportView(
       Long id,
       InterviewType type,
-      String status,
+      ReportStatus status,
       Double overall,
       String strength,
       String improvement,
@@ -170,7 +176,7 @@ public final class InterviewDtos {
       return new ReportView(
           r.session().getId(),
           r.session().getType(),
-          r.ready() ? "READY" : "EVALUATING",
+          r.ready() ? ReportStatus.READY : ReportStatus.EVALUATING,
           sum == null ? null : sum.overall(),
           sum == null ? null : sum.strength(),
           sum == null ? null : sum.improvement(),
