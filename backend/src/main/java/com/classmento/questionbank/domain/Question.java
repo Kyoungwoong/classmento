@@ -1,5 +1,6 @@
 package com.classmento.questionbank.domain;
 
+import com.classmento.common.domain.DomainException;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
@@ -24,6 +25,11 @@ import java.util.Set;
 @Entity
 @Table(name = "qb_question")
 public class Question {
+
+  public static final int TEXT_MIN = 5;
+  public static final int TEXT_MAX = 300;
+  public static final int TAGS_MAX = 10;
+  public static final int INTENT_MAX = 200;
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -74,9 +80,14 @@ public class Question {
       Set<Long> tagIds,
       String intent,
       Long createdBy) {
-    throw new UnsupportedOperationException("TODO");
+    requireOpenSubcategory(top, sub);
+    Question q = new Question();
+    q.apply(sub, text, level, jobRoles, tagIds, intent);
+    q.createdBy = createdBy;
+    return q;
   }
 
+  /** 같은(숨겨진) 카테고리 안에서는 고칠 수 있지만, 다른 숨긴 카테고리로 옮길 수는 없다. */
   public void edit(
       Category top,
       Category sub,
@@ -85,15 +96,59 @@ public class Question {
       Set<JobRole> jobRoles,
       Set<Long> tagIds,
       String intent) {
-    throw new UnsupportedOperationException("TODO");
+    if (sub.getId() != null && sub.getId().equals(categoryId)) {
+      requireSubcategory(top, sub);
+    } else {
+      requireOpenSubcategory(top, sub);
+    }
+    apply(sub, text, level, jobRoles, tagIds, intent);
   }
 
   public void hide() {
-    throw new UnsupportedOperationException("TODO");
+    this.active = false;
   }
 
   public void show() {
-    throw new UnsupportedOperationException("TODO");
+    this.active = true;
+  }
+
+  private void apply(
+      Category sub,
+      String text,
+      Level level,
+      Set<JobRole> jobRoles,
+      Set<Long> tagIds,
+      String intent) {
+    String t = text == null ? "" : text.strip();
+    if (t.length() < TEXT_MIN || t.length() > TEXT_MAX) {
+      throw new DomainException("INVALID_QUESTION", "질문은 5~300자로 입력해 주세요.");
+    }
+    if (jobRoles == null || jobRoles.isEmpty()) {
+      throw new DomainException("QUESTION_JOB_ROLE_REQUIRED", "직무를 하나 이상 골라 주세요.");
+    }
+    Set<Long> tags = tagIds == null ? Set.of() : tagIds;
+    if (tags.size() > TAGS_MAX) {
+      throw new DomainException("TOO_MANY_TAGS", "태그는 10개까지 붙일 수 있어요.");
+    }
+    this.categoryId = sub.getId();
+    this.text = t;
+    this.level = level;
+    this.jobRoles = new LinkedHashSet<>(jobRoles);
+    this.tagIds = new LinkedHashSet<>(tags);
+    this.intent = intent == null || intent.isBlank() ? null : intent.strip();
+  }
+
+  private static void requireSubcategory(Category top, Category sub) {
+    if (sub.isTop() || !top.isTop() || !sub.getParentId().equals(top.getId())) {
+      throw new DomainException("QUESTION_NEEDS_SUBCATEGORY", "질문은 소분류에 넣어 주세요.");
+    }
+  }
+
+  private static void requireOpenSubcategory(Category top, Category sub) {
+    requireSubcategory(top, sub);
+    if (!top.isActive() || !sub.isActive()) {
+      throw new DomainException("CATEGORY_HIDDEN", "숨긴 카테고리에는 질문을 넣을 수 없어요.");
+    }
   }
 
   @PreUpdate
