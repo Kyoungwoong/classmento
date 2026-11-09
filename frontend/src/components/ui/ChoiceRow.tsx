@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { useId, type ReactNode } from "react";
+import { CheckMark } from "./CheckMark";
 
 interface ChoiceRowProps {
   title: ReactNode;
@@ -44,20 +45,7 @@ export function ChoiceRow({ title, description, selected, disabled, onSelect }: 
           </span>
         )}
       </span>
-      <span
-        aria-hidden
-        className={clsx("shrink-0", selected ? "text-primary" : "text-transparent")}
-      >
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <path
-            d="M4 10.5l4 4 8-9"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </span>
+      <CheckMark shown={selected} />
     </button>
   );
 }
