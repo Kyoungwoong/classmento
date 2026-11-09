@@ -1,6 +1,7 @@
 package com.classmento.interview.presentation;
 
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -26,6 +27,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 /** 끝내기 → 종합 리포트(테스트: 동기 실행, 가짜 STT·LLM). 가짜 평가: 기술 4·3·4·4 → 3.8, 인성 3·4·2(근거 없음)·3 → 3.0. */
 class InterviewReportApiTest extends IntegrationTest {
+
+  @MockitoSpyBean LlmClient llm;
 
   private final JsonMapper json = JsonMapper.builder().build();
   private AuthUser me;
@@ -141,8 +144,6 @@ class InterviewReportApiTest extends IntegrationTest {
         .andExpect(jsonPath("$.code").value("INTERVIEW_CLOSED"));
   }
 
-  @MockitoSpyBean LlmClient llm;
-
   @Test
   void 종합_문장을_못_만들면_답변_피드백으로_대신한다() throws Exception {
     doThrow(new LlmUnavailableException("down"))
@@ -153,7 +154,24 @@ class InterviewReportApiTest extends IntegrationTest {
     finish(id, me).andExpect(status().isAccepted());
     report(id, me)
         .andExpect(jsonPath("$.status").value("READY"))
-        .andExpect(jsonPath("$.strength").value(org.hamcrest.Matchers.containsString("가짜 평가")));
+        .andExpect(jsonPath("$.strength").value(containsString("가짜 평가")));
+  }
+
+  @Test
+  void 종합이_빠진_채_끝났어도_리포트를_조회하면_다시_만든다() throws Exception {
+    long id = interview("{\"type\":\"BEHAVIORAL\",\"count\":3}");
+    answerAll(id, 3);
+    finish(id, me).andExpect(status().isAccepted());
+    // 끝내기 직후 종합 작업이 거절·실패한 상황을 흉내 낸다
+    jdbc.update(
+        "UPDATE interview_session SET status = 'FINISHED', report_overall = NULL,"
+            + " report_strength = NULL, report_improvement = NULL WHERE id = ?",
+        id);
+
+    report(id, me).andExpect(jsonPath("$.status").value("EVALUATING"));
+    report(id, me)
+        .andExpect(jsonPath("$.status").value("READY"))
+        .andExpect(jsonPath("$.strength").isNotEmpty());
   }
 
   @Test

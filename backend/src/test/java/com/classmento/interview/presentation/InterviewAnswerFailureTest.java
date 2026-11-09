@@ -125,6 +125,24 @@ class InterviewAnswerFailureTest extends IntegrationTest {
   }
 
   @Test
+  void 다시_녹음해야_하는_답변이_있으면_끝낼_수_없다() throws Exception {
+    doReturn(new Transcript("  ", 0)).when(stt).transcribe(any(), anyString());
+    for (int seq = 1; seq <= 3; seq++) {
+      mockMvc
+          .perform(
+              multipart("/api/interviews/" + id + "/questions/" + seq + "/answer")
+                  .file(new MockMultipartFile("audio", "a.webm", "audio/webm", "x".getBytes()))
+                  .with(csrf())
+                  .with(user(me)))
+          .andExpect(status().isAccepted());
+    }
+    mockMvc
+        .perform(post("/api/interviews/" + id + "/finish").with(csrf()).with(user(me)))
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("ANSWERS_FAILED"));
+  }
+
+  @Test
   void 실패하지_않은_답변은_다시_시도할_수_없다() throws Exception {
     answer();
     mockMvc
