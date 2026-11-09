@@ -4,6 +4,8 @@ import com.classmento.common.domain.DomainException;
 import com.classmento.embedding.EmbeddingUnavailableException;
 import com.classmento.llm.LlmUnavailableException;
 import com.classmento.speech.SttUnavailableException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,8 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
   @ExceptionHandler(ApiException.class)
   public ResponseEntity<ApiError> handleApi(ApiException e) {
@@ -46,6 +50,7 @@ public class GlobalExceptionHandler {
   /** 서비스 검사와 저장 사이 경쟁 등으로 DB 제약에 걸린 경우. 원인은 로그로만 남기고 사용자에게는 다시 시도를 안내한다. */
   @ExceptionHandler(DataIntegrityViolationException.class)
   public ResponseEntity<ApiError> handleDataIntegrity(DataIntegrityViolationException e) {
+    log.warn("DB 제약 위반: {}", e.getMostSpecificCause().getMessage());
     return ResponseEntity.status(HttpStatus.CONFLICT)
         .body(new ApiError("CONFLICT", "이미 있는 값과 겹쳐요. 확인 후 다시 시도해 주세요."));
   }
