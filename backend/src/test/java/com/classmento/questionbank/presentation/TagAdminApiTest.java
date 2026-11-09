@@ -80,4 +80,9 @@ class TagAdminApiTest extends IntegrationTest {
     AuthUser normal = createUser("user@test.com", AppUser.Role.USER);
     mockMvc.perform(get("/api/admin/tags").with(user(normal))).andExpect(status().isForbidden());
   }
+
+  @Test
+  void 로그인하지_않으면_401() throws Exception {
+    mockMvc.perform(get("/api/admin/tags")).andExpect(status().isUnauthorized());
+  }
 }
