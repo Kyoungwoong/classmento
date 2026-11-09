@@ -9,7 +9,11 @@ import com.classmento.interview.domain.InterviewSessionRepository;
 import com.classmento.storage.FileStorage;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.core.task.TaskRejectedException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -52,21 +56,34 @@ public class AnswerService {
     }
     InterviewSession session = sessionWithQuestion(userId, sessionId, seq);
     session.requireAnswerable(seq);
+    // 다시 녹음마다 새 파일(같은 이름을 덮어쓰면 처리 중인 예전 버전과 섞인다)
     String key =
-        storage.store("answers/" + userId + "/" + sessionId, "q" + seq + extension(type), audio);
-    Answer saved =
-        tx.execute(
-            s ->
-                answers
-                    .lockBySessionIdAndSeq(sessionId, seq)
-                    .map(
-                        a -> {
-                          a.reRecord(key, type);
-                          return a;
-                        })
-                    .orElseGet(() -> answers.save(Answer.recorded(session, seq, key, type))));
+        storage.store(
+            "answers/" + userId + "/" + sessionId,
+            "q" + seq + "-" + UUID.randomUUID() + extension(type),
+            audio);
+    Answer saved;
+    try {
+      saved = record(session, seq, key, type);
+    } catch (DataIntegrityViolationException e) {
+      // 같은 질문의 첫 답변이 동시에 두 번 오면 한쪽이 먼저 행을 만든다 → 그 행을 잠그고 다시 녹음으로
+      saved = record(session, seq, key, type);
+    }
     start(saved);
     return saved;
+  }
+
+  private Answer record(InterviewSession session, int seq, String key, String type) {
+    return tx.execute(
+        s ->
+            answers
+                .lockBySessionIdAndSeq(session.getId(), seq)
+                .map(
+                    a -> {
+                      a.reRecord(key, type);
+                      return a;
+                    })
+                .orElseGet(() -> answers.save(Answer.recorded(session, seq, key, type))));
   }
 
   /** 실패한 답변을 같은 녹음으로 다시 처리한다. */
@@ -97,7 +114,11 @@ public class AnswerService {
   private void start(Answer a) {
     Long id = a.getId();
     int version = a.getAudioVersion();
-    interviewExecutor.execute(() -> processor.process(id, version));
+    try {
+      interviewExecutor.execute(() -> processor.process(id, version));
+    } catch (TaskRejectedException e) {
+      processor.markFailed(id, version, "지금은 답변을 처리할 수 없어요. 잠시 후 다시 시도해 주세요.");
+    }
   }
 
   /** 본인 면접이고 그 번호의 질문이 있어야 한다(아니면 404). */
@@ -112,25 +133,31 @@ public class AnswerService {
     return session;
   }
 
-  /** "audio/webm;codecs=opus" → "audio/webm". 오디오가 아니면 400. */
+  /** "audio/webm;codecs=opus" → "audio/webm". 받는 형식(브라우저 녹음·흔한 오디오)이 아니면 400. */
   private static String audioType(String contentType) {
     String base =
         contentType == null ? "" : contentType.split(";")[0].strip().toLowerCase(Locale.ROOT);
-    if (!base.startsWith("audio/")) {
-      throw ApiException.badRequest("녹음 파일(오디오)만 올릴 수 있어요.");
+    if (!EXTENSIONS.containsKey(base)) {
+      throw ApiException.badRequest("녹음 파일(webm·ogg·m4a·wav·mp3)만 올릴 수 있어요.");
     }
     return base;
   }
 
+  private static final Map<String, String> EXTENSIONS =
+      Map.ofEntries(
+          Map.entry("audio/webm", ".webm"),
+          Map.entry("audio/ogg", ".ogg"),
+          Map.entry("audio/mp4", ".m4a"),
+          Map.entry("audio/m4a", ".m4a"),
+          Map.entry("audio/x-m4a", ".m4a"),
+          Map.entry("audio/aac", ".aac"),
+          Map.entry("audio/wav", ".wav"),
+          Map.entry("audio/x-wav", ".wav"),
+          Map.entry("audio/wave", ".wav"),
+          Map.entry("audio/mpeg", ".mp3"));
+
   private static String extension(String type) {
-    return switch (type) {
-      case "audio/webm" -> ".webm";
-      case "audio/ogg" -> ".ogg";
-      case "audio/mp4", "audio/m4a", "audio/x-m4a" -> ".m4a";
-      case "audio/wav", "audio/x-wav", "audio/wave" -> ".wav";
-      case "audio/mpeg" -> ".mp3";
-      default -> ".audio";
-    };
+    return EXTENSIONS.get(type);
   }
 
   public record Audio(byte[] bytes, String contentType) {}

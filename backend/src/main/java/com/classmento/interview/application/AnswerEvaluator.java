@@ -67,8 +67,13 @@ public class AnswerEvaluator {
       sb.append("<intent>").append(q.getIntent()).append("</intent>\n");
     }
     sb.append("<rubric>").append(Rubric.of(q.getKind()).name()).append("</rubric>\n");
-    sb.append("<answer>\n").append(transcript).append("\n</answer>");
+    // 답변 안의 "</answer>" 같은 글자가 태그 경계를 깨지 않게 꺾쇠를 바꾼다
+    sb.append("<answer>\n").append(escape(transcript)).append("\n</answer>");
     return sb.toString();
+  }
+
+  private static String escape(String s) {
+    return s.replace("<", "‹").replace(">", "›");
   }
 
   private static String stripFence(String s) {

@@ -53,7 +53,26 @@ public class AnswerProcessor {
     this.tx = tx;
   }
 
+  /** 어떤 예외가 나도 답변을 처리 중 상태로 남기지 않는다(FAILED로 두어 다시 시도할 수 있게). */
   public void process(Long answerId, int version) {
+    try {
+      run(answerId, version);
+    } catch (RuntimeException e) {
+      log.error("답변 {} 처리 중 예상하지 못한 오류: {}", answerId, e.getClass().getSimpleName());
+      markFailed(answerId, version, EVAL_FAILED);
+    }
+  }
+
+  /** 처리를 시작하지 못했을 때(실행기 거절 등) 실패로 남긴다. */
+  public void markFailed(Long answerId, int version, String reason) {
+    try {
+      save(answerId, version, a -> a.failed(reason));
+    } catch (RuntimeException e) {
+      log.error("답변 {} 실패 기록도 못 함: {}", answerId, e.getClass().getSimpleName());
+    }
+  }
+
+  private void run(Long answerId, int version) {
     Answer answer = answers.findById(answerId).orElse(null);
     if (answer == null || answer.getAudioVersion() != version) {
       return;
