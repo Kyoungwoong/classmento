@@ -16,7 +16,9 @@ describe("QuestionFormScreen", () => {
     vi.spyOn(api, "adminCategories").mockResolvedValue(tree);
     const create = vi.spyOn(api, "createQuestion");
     render(<QuestionFormScreen />);
-    fireEvent.click(await screen.findByRole("button", { name: "저장하기" }));
+    // 카테고리를 다 불러온 뒤에 누른다(저장 버튼은 불러오기 전에도 보인다)
+    await screen.findByRole("group", { name: "대분류" });
+    fireEvent.click(screen.getByRole("button", { name: "저장하기" }));
     // 대분류도 안 골랐으면 대분류 묶음에 알리고 첫 칩으로 포커스
     expect(screen.getByRole("group", { name: "대분류" })).toHaveAccessibleDescription(
       "대분류와 소분류를 골라 주세요.",

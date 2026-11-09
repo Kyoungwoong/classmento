@@ -18,8 +18,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, St
 }
 
 const variantClass: Record<Variant, string> = {
-  primary: "bg-primary text-white active:bg-primary-pressed",
-  secondary: "bg-primary-weak text-primary active:bg-blue-100",
+  primary: "bg-primary text-on-primary active:bg-primary-pressed",
+  secondary: "bg-navy-100 text-ink active:bg-navy-200",
   ghost: "bg-transparent text-text-sub active:bg-bg-muted",
   danger: "bg-danger text-white",
 };
@@ -27,7 +27,7 @@ const variantClass: Record<Variant, string> = {
 const sizeClass: Record<Size, string> = {
   lg: "h-14 px-5 text-body1 font-semibold rounded-md",
   md: "h-12 px-4 text-body2 font-semibold rounded-md",
-  sm: "h-9 px-3 text-caption font-medium rounded-sm",
+  sm: "h-11 px-3 text-body2 font-medium rounded-sm",
 };
 
 function buttonClass({ variant = "primary", size = "lg", fullWidth = false }: StyleProps) {

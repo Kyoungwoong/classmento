@@ -8,7 +8,7 @@ describe("SelectChip", () => {
     render(<SelectChip label="백엔드" selected onClick={onClick} />);
     const chip = screen.getByRole("button", { name: "백엔드" });
     expect(chip).toHaveAttribute("aria-pressed", "true");
-    expect(chip).toHaveClass("bg-primary-weak", "text-primary");
+    expect(chip).toHaveClass("bg-primary-weak", "text-accent");
     fireEvent.click(chip);
     expect(onClick).toHaveBeenCalled();
   });

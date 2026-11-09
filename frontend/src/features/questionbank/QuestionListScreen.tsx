@@ -156,7 +156,7 @@ export function QuestionListScreen() {
               type="button"
               aria-label="카테고리 다시 불러오기"
               onClick={loadTree}
-              className="-mr-2 inline-flex h-11 items-center px-2 text-body2 text-primary"
+              className="-mr-2 inline-flex h-11 items-center px-2 text-body2 text-accent"
             >
               다시 불러오기
             </button>

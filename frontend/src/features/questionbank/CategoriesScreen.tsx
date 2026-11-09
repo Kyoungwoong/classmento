@@ -189,7 +189,7 @@ export function CategoriesScreen() {
               type="button"
               aria-label={`${top.name}에 소분류 추가`}
               onClick={() => setEditing({ kind: "add", parentId: top.id })}
-              className={`${textButton} -ml-2 text-primary`}
+              className={`${textButton} -ml-2 text-accent`}
             >
               소분류 추가하기
             </button>
@@ -211,7 +211,7 @@ export function CategoriesScreen() {
             <button
               type="button"
               onClick={() => setEditing({ kind: "add", parentId: null })}
-              className={`${textButton} -ml-2 text-primary`}
+              className={`${textButton} -ml-2 text-accent`}
             >
               대분류 추가하기
             </button>

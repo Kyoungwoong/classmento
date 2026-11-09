@@ -35,6 +35,7 @@ export function UploadScreen() {
 
   return (
     <Screen
+      width="narrow"
       header={<TopBar />}
       cta={
         <BottomCTA caption="올린 이력서는 면접 질문을 만드는 데만 써요">
@@ -68,7 +69,7 @@ export function UploadScreen() {
               type="button"
               onClick={() => inputRef.current?.click()}
               disabled={loading}
-              className="-mr-2 h-11 px-2 font-semibold text-primary disabled:text-text-hint"
+              className="-mr-2 h-11 px-2 font-semibold text-accent disabled:text-text-hint"
             >
               바꾸기
             </button>

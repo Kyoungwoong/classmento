@@ -15,7 +15,7 @@ export function SelectChip({ label, selected, onClick }: SelectChipProps) {
       onClick={onClick}
       className={clsx(
         "inline-flex h-11 shrink-0 items-center rounded-full px-4 text-body2 transition-colors duration-100",
-        selected ? "bg-primary-weak font-semibold text-primary" : "bg-bg-muted text-text",
+        selected ? "bg-primary-weak font-semibold text-accent" : "bg-bg-muted text-text",
       )}
     >
       {label}

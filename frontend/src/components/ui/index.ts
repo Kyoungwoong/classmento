@@ -16,3 +16,7 @@ export { ChipGroup } from "./ChipGroup";
 export { ChoiceRow } from "./ChoiceRow";
 export { CheckMark } from "./CheckMark";
 export { ScoreBar } from "./ScoreBar";
+export { Panel } from "./Panel";
+export { Section, SectionHeading } from "./Section";
+export { StepList } from "./StepList";
+export { TwoColumn } from "./TwoColumn";

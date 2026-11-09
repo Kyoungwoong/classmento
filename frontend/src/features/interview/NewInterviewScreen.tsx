@@ -232,7 +232,7 @@ export function NewInterviewScreen() {
                         setResumesError(false);
                         setResumesTry((n) => n + 1);
                       }}
-                      className="-mt-2 inline-flex h-11 items-center px-4 text-caption text-primary"
+                      className="-mt-2 inline-flex h-11 items-center px-4 text-caption text-accent"
                     >
                       다시 불러오기
                     </button>
@@ -240,7 +240,7 @@ export function NewInterviewScreen() {
                   {needsResume && !preparing && (
                     <Link
                       href="/resume/upload"
-                      className="-mt-2 inline-flex h-11 items-center px-4 text-caption text-primary"
+                      className="-mt-2 inline-flex h-11 items-center px-4 text-caption text-accent"
                     >
                       이력서 올리러 가기
                     </Link>
@@ -287,7 +287,7 @@ export function NewInterviewScreen() {
                   setExperiences(null);
                   setExperiencesTry((n) => n + 1);
                 }}
-                className="-ml-2 inline-flex h-11 items-center px-2 text-caption text-primary"
+                className="-ml-2 inline-flex h-11 items-center px-2 text-caption text-accent"
               >
                 다시 불러오기
               </button>
@@ -304,7 +304,7 @@ export function NewInterviewScreen() {
               </p>
               <Link
                 href={`/resume/${resumeId}`}
-                className="-ml-2 inline-flex h-11 items-center px-2 text-caption text-primary"
+                className="-ml-2 inline-flex h-11 items-center px-2 text-caption text-accent"
               >
                 이력서 화면으로 가기
               </Link>
@@ -327,7 +327,7 @@ export function NewInterviewScreen() {
                       setExperienceId(e.id);
                     }
                   }}
-                  className="cursor-pointer rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="cursor-pointer rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   <ExperienceBanner experience={e} selectable selected={e.id === experienceId} />
                 </div>
