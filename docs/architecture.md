@@ -96,7 +96,8 @@ qb_question_job_role(question_id, job_role) · qb_question_tag(question_id, tag_
   임베딩 문장: "대분류 > 소분류 · 질문 · 태그(이름순)". 시드는 비워 두고 기동 시 채운다
 interview_session(id, user_id, type[EXPERIENCE|TECH|BEHAVIORAL|MIXED], level?, job_role?, resume_id?, experience_id?, status)  -- V7, 탭이 쓰는 조건만 저장
 interview_question(session_id, seq, text, intent?, kind[TECH|BEHAVIORAL], bank_question_id?, generated)              -- V7
-interview_answer(… 녹음·STT·평가)                                                                                    -- 예정(E3, V8)
+interview_answer(session_id, user_id, seq UNIQUE/세션, kind, audio_key, content_type, audio_version, status[UPLOADED|TRANSCRIBED|EVALUATED|FAILED], transcript?, failure_reason?, overall_score?, strength?, improvement?, suggestion?, prompt_version?, model?)  -- V8
+interview_answer_score(answer_id, criterion, score 1~5, evidence?)                                                    -- V8, 루브릭 기준별
 job_posting(id, user_id, text, embedding)
 credit_ledger / payment  → ADR 0003
 ```
