@@ -17,6 +17,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import org.hibernate.annotations.BatchSize;
 
 /**
  * 질문 은행의 질문. 소분류에만 속하고, 직무·태그는 ID 집합으로 가진다(다른 애그리거트는 ID로만 참조). 임베딩 벡터는 JPA로 매핑하지 않는다
@@ -46,12 +47,14 @@ public class Question {
   private Level level;
 
   @ElementCollection(fetch = FetchType.EAGER)
+  @BatchSize(size = 100) // 목록 조회 시 질문마다 따로 읽지 않게(N+1 방지)
   @CollectionTable(name = "qb_question_job_role", joinColumns = @JoinColumn(name = "question_id"))
   @Enumerated(EnumType.STRING)
   @Column(name = "job_role", nullable = false)
   private Set<JobRole> jobRoles = new LinkedHashSet<>();
 
   @ElementCollection(fetch = FetchType.EAGER)
+  @BatchSize(size = 100)
   @CollectionTable(name = "qb_question_tag", joinColumns = @JoinColumn(name = "question_id"))
   @Column(name = "tag_id", nullable = false)
   private Set<Long> tagIds = new LinkedHashSet<>();
