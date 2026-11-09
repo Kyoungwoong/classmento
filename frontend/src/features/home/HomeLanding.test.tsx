@@ -17,7 +17,9 @@ describe("HomeLanding", () => {
       "href",
       "/resume/upload",
     );
-    expect(screen.getByRole("figure", { name: "이력서에서 리포트까지 4단계" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("figure", { name: "내 이력서가 면접 리포트가 되는 과정" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "준비는 단순하게, 연습은 실전처럼" }),
     ).toBeInTheDocument();

@@ -40,71 +40,74 @@ export function SignupForm() {
   }
 
   return (
-    <Screen
-      width="narrow"
-      header={<TopBar />}
-      cta={
-        <BottomCTA>
-          <Button
-            type="submit"
-            form="signup-form"
-            loading={loading}
-            loadingText="가입하고 있어요"
-            disabled={!name || !email || password.length < 8}
-          >
-            가입하기
-          </Button>
-        </BottomCTA>
-      }
-    >
-      <div className="flex items-end justify-between gap-4">
-        <ScreenTitle title={"반가워요\n몇 가지만 알려주세요"} />
-        <Mascot mood="idle" size={72} className="mb-8 shrink-0 md:mb-10" />
-      </div>
-      <Panel>
-        <form id="signup-form" onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
-          <TextField
-            label="이름"
-            autoComplete="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <TextField
-            label="이메일"
-            type="email"
-            autoComplete="email"
-            inputMode="email"
-            placeholder="example@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            error={error?.field === "email" ? error.message : undefined}
-          />
-          <TextField
-            label="비밀번호 (8자 이상)"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onBlur={() => setPasswordTouched(true)}
-            error={passwordTooShort ? "8자 이상 입력해 주세요." : undefined}
-          />
-          {error?.field === "form" && (
-            <p role="alert" className="text-caption text-danger">
-              {error.message}
-            </p>
-          )}
-        </form>
-        <p className="mt-4 text-body2 text-text-sub">
-          이미 가입하셨나요?{" "}
-          <Link
-            href={`/login?next=${encodeURIComponent(next)}`}
-            className="inline-flex h-11 items-center font-semibold text-accent"
-          >
-            로그인
-          </Link>
-        </p>
-        <SocialButtons />
-      </Panel>
-    </Screen>
+    // 회색 바탕 위 흰 패널 — 면 대비로 폼을 한 덩어리로 보이게
+    <div className="bg-bg-subtle">
+      <Screen
+        width="narrow"
+        header={<TopBar />}
+        cta={
+          <BottomCTA>
+            <Button
+              type="submit"
+              form="signup-form"
+              loading={loading}
+              loadingText="가입하고 있어요"
+              disabled={!name || !email || password.length < 8}
+            >
+              가입하기
+            </Button>
+          </BottomCTA>
+        }
+      >
+        <div className="flex items-end justify-between gap-4">
+          <ScreenTitle title={"반가워요\n몇 가지만 알려주세요"} />
+          <Mascot mood="idle" size={72} className="mb-8 shrink-0 md:mb-10" />
+        </div>
+        <Panel>
+          <form id="signup-form" onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
+            <TextField
+              label="이름"
+              autoComplete="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <TextField
+              label="이메일"
+              type="email"
+              autoComplete="email"
+              inputMode="email"
+              placeholder="example@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              error={error?.field === "email" ? error.message : undefined}
+            />
+            <TextField
+              label="비밀번호 (8자 이상)"
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onBlur={() => setPasswordTouched(true)}
+              error={passwordTooShort ? "8자 이상 입력해 주세요." : undefined}
+            />
+            {error?.field === "form" && (
+              <p role="alert" className="text-caption text-danger">
+                {error.message}
+              </p>
+            )}
+          </form>
+          <p className="mt-4 text-body2 text-text-sub">
+            이미 가입하셨나요?{" "}
+            <Link
+              href={`/login?next=${encodeURIComponent(next)}`}
+              className="inline-flex h-11 items-center font-semibold text-accent"
+            >
+              로그인
+            </Link>
+          </p>
+          <SocialButtons />
+        </Panel>
+      </Screen>
+    </div>
   );
 }

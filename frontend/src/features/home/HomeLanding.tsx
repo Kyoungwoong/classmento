@@ -93,14 +93,13 @@ export function HomeLanding() {
       </Section>
 
       <Section tone="tint" aria-labelledby="flow-heading">
-        <div id="flow-heading">
-          <SectionHeading
-            tone="tint"
-            eyebrow="준비 흐름"
-            title="준비는 단순하게, 연습은 실전처럼"
-            description="네 단계면 충분해요. 처음이면 15분 정도 걸려요."
-          />
-        </div>
+        <SectionHeading
+          id="flow-heading"
+          tone="tint"
+          eyebrow="준비 흐름"
+          title="준비는 단순하게, 연습은 실전처럼"
+          description="네 단계면 충분해요. 처음이면 15분 정도 걸려요."
+        />
         <StepList steps={STEPS} onTint />
       </Section>
 
@@ -139,10 +138,12 @@ export function HomeLanding() {
         <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
           <SectionHeading
             tone="ink"
+            flush
             title="오늘은 질문 세 개만 답해 볼까요?"
-            description="가입하면 바로 시작할 수 있어요."
+            description="이력서 없이도 기술·인성 면접은 바로 볼 수 있어요."
           />
-          <ButtonLink href="/interview/new" className="md:mb-12 md:min-w-56">
+          {/* 히어로에 주요 버튼이 있으니 여기는 보조 모양(주요 버튼은 화면에 하나) */}
+          <ButtonLink href="/interview/new" variant="secondary" className="md:min-w-56">
             면접 시작하기
           </ButtonLink>
         </div>
