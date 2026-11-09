@@ -1,6 +1,8 @@
 package com.classmento.interview.presentation;
 
 import static org.hamcrest.Matchers.contains;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doThrow;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -11,11 +13,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.classmento.common.security.AuthUser;
 import com.classmento.identity.domain.AppUser;
+import com.classmento.llm.LlmClient;
+import com.classmento.llm.LlmUnavailableException;
 import com.classmento.support.IntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.ResultActions;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -134,6 +139,21 @@ class InterviewReportApiTest extends IntegrationTest {
                 .with(user(me)))
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.code").value("INTERVIEW_CLOSED"));
+  }
+
+  @MockitoSpyBean LlmClient llm;
+
+  @Test
+  void 종합_문장을_못_만들면_답변_피드백으로_대신한다() throws Exception {
+    doThrow(new LlmUnavailableException("down"))
+        .when(llm)
+        .generate(argThat(r -> r != null && r.promptName().startsWith("session-report")));
+    long id = interview("{\"type\":\"BEHAVIORAL\",\"count\":3}");
+    answerAll(id, 3);
+    finish(id, me).andExpect(status().isAccepted());
+    report(id, me)
+        .andExpect(jsonPath("$.status").value("READY"))
+        .andExpect(jsonPath("$.strength").value(org.hamcrest.Matchers.containsString("가짜 평가")));
   }
 
   @Test

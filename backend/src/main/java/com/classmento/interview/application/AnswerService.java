@@ -8,11 +8,10 @@ import com.classmento.interview.domain.AnswerStatus;
 import com.classmento.interview.domain.InterviewSession;
 import com.classmento.interview.domain.InterviewSessionRepository;
 import com.classmento.storage.FileStorage;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.core.task.TaskRejectedException;
@@ -120,8 +119,10 @@ public class AnswerService {
         tx.execute(
             s -> {
               InterviewSession locked = sessions.lockById(sessionId).orElseThrow();
-              Set<Integer> answered = new HashSet<>();
-              answers.findBySessionIdOrderBySeq(sessionId).forEach(a -> answered.add(a.getSeq()));
+              Map<Integer, AnswerStatus> answered = new HashMap<>();
+              answers
+                  .findBySessionIdOrderBySeq(sessionId)
+                  .forEach(a -> answered.put(a.getSeq(), a.getStatus()));
               locked.finish(answered);
               return locked;
             });

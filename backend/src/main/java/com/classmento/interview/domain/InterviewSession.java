@@ -134,7 +134,8 @@ public class InterviewSession {
   }
 
   /** 모든 질문에 답한 뒤에만, 한 번만 끝낼 수 있다(건너뛰기 없음). */
-  public void finish(Set<Integer> answeredSeqs) {
+  public void finish(java.util.Map<Integer, AnswerStatus> answers) {
+    Set<Integer> answeredSeqs = answers.keySet();
     if (status != SessionStatus.IN_PROGRESS) {
       throw new DomainException("ALREADY_FINISHED", "이미 끝난 면접이에요.");
     }

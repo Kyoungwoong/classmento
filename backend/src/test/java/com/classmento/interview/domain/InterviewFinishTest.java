@@ -4,7 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.classmento.common.domain.DomainException;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 
@@ -23,6 +24,14 @@ class InterviewFinishTest {
             .toList());
   }
 
+  private static Map<Integer, AnswerStatus> ready(int... seqs) {
+    Map<Integer, AnswerStatus> m = new HashMap<>();
+    for (int seq : seqs) {
+      m.put(seq, AnswerStatus.TRANSCRIBED);
+    }
+    return m;
+  }
+
   private static String code(Runnable r) {
     try {
       r.run();
@@ -35,16 +44,33 @@ class InterviewFinishTest {
   @Test
   void 모든_질문에_답해야_끝낼_수_있다() {
     InterviewSession s = session();
-    assertThat(code(() -> s.finish(Set.of(1, 2)))).isEqualTo("NOT_ALL_ANSWERED");
-    s.finish(Set.of(1, 2, 3));
+    assertThat(code(() -> s.finish(ready(1, 2)))).isEqualTo("NOT_ALL_ANSWERED");
+    s.finish(ready(1, 2, 3));
+    assertThat(s.getStatus()).isEqualTo(SessionStatus.FINISHED);
+  }
+
+  @Test
+  void 처리_중이거나_실패한_답변이_있으면_끝낼_수_없다() {
+    InterviewSession s = session();
+    Map<Integer, AnswerStatus> processing = ready(1, 2, 3);
+    processing.put(2, AnswerStatus.UPLOADED);
+    assertThat(code(() -> s.finish(processing))).isEqualTo("ANSWERS_PROCESSING");
+
+    Map<Integer, AnswerStatus> failed = ready(1, 2, 3);
+    failed.put(3, AnswerStatus.FAILED);
+    assertThat(code(() -> s.finish(failed))).isEqualTo("ANSWERS_FAILED");
+
+    Map<Integer, AnswerStatus> done = ready(1, 2, 3);
+    done.put(1, AnswerStatus.EVALUATED);
+    s.finish(done);
     assertThat(s.getStatus()).isEqualTo(SessionStatus.FINISHED);
   }
 
   @Test
   void 끝난_면접은_다시_끝낼_수_없고_답할_수도_없다() {
     InterviewSession s = session();
-    s.finish(Set.of(1, 2, 3));
-    assertThat(code(() -> s.finish(Set.of(1, 2, 3)))).isEqualTo("ALREADY_FINISHED");
+    s.finish(ready(1, 2, 3));
+    assertThat(code(() -> s.finish(ready(1, 2, 3)))).isEqualTo("ALREADY_FINISHED");
     assertThat(code(() -> s.requireAnswerable(1))).isEqualTo("INTERVIEW_CLOSED");
   }
 
@@ -54,7 +80,7 @@ class InterviewFinishTest {
     assertThat(code(() -> s.report(new SessionReport(3.5, "강점", "보완점", "p", "m"))))
         .isEqualTo("NOT_FINISHED");
 
-    s.finish(Set.of(1, 2, 3));
+    s.finish(ready(1, 2, 3));
     s.report(new SessionReport(3.5, "강점", "보완점", "p", "m"));
     assertThat(s.getStatus()).isEqualTo(SessionStatus.REPORTED);
     assertThat(s.getReport().overall()).isEqualTo(3.5);
