@@ -27,7 +27,10 @@ const STAGES: Stage[] = [
 export function ProcessIllustration() {
   return (
     <figure aria-labelledby="process-caption">
-      <figcaption id="process-caption" className="mb-5 text-caption font-semibold text-text-sub">
+      <figcaption
+        id="process-caption"
+        className="mb-5 pr-24 text-caption font-semibold text-text-sub md:pr-28"
+      >
         내 이력서가 면접 리포트가 되는 과정
       </figcaption>
       <ol className="grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-4 md:gap-x-2">

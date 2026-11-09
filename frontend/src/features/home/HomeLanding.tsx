@@ -140,7 +140,7 @@ export function HomeLanding() {
             tone="ink"
             flush
             title="오늘은 질문 세 개만 답해 볼까요?"
-            description="이력서 없이도 기술·인성 면접은 바로 볼 수 있어요."
+            description="질문 세 개면 10분 안에 끝나요."
           />
           {/* 히어로에 주요 버튼이 있으니 여기는 보조 모양(주요 버튼은 화면에 하나) */}
           <ButtonLink href="/interview/new" variant="secondary" className="md:min-w-56">
