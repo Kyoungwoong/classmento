@@ -19,6 +19,7 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -68,13 +69,11 @@ public class QuestionImportService {
       throw ApiException.badRequest("CSV 파일은 2MB까지 올릴 수 있어요.");
     }
     Parsed parsed = QuestionCsv.parse(utf8(bytes));
-    if (!parsed.ok()) {
-      return new Result(0, parsed.errors());
-    }
 
     List<Category> all = categories.findAll();
     List<Placed> placed = new ArrayList<>();
-    List<LineError> errors = new ArrayList<>();
+    // 형식 오류가 있어도 형식이 맞는 행은 카테고리까지 확인해서 한 번에 알려준다
+    List<LineError> errors = new ArrayList<>(parsed.errors());
     for (Row row : parsed.rows()) {
       String where = row.top() + " > " + row.sub();
       Category top = find(all, null, row.top());
@@ -88,6 +87,7 @@ public class QuestionImportService {
       }
     }
     if (!errors.isEmpty()) {
+      errors.sort(Comparator.comparingInt(LineError::line));
       return new Result(0, errors);
     }
 

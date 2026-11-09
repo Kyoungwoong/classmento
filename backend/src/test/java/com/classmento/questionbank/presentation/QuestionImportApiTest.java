@@ -93,6 +93,13 @@ class QuestionImportApiTest extends IntegrationTest {
   }
 
   @Test
+  void 형식_오류와_카테고리_오류를_한_번에_줄_순서대로_알려준다() throws Exception {
+    upload(HEADER + "CS,양자컴퓨팅,없는 소분류에 넣으려는 질문,신입,공통,,\n" + "CS,보안,짧아,신입,공통,,\n")
+        .andExpect(jsonPath("$.imported").value(0))
+        .andExpect(jsonPath("$.errors[*].line").value(org.hamcrest.Matchers.contains(2, 3)));
+  }
+
+  @Test
   void 형식_오류도_줄별로_알려주고_저장하지_않는다() throws Exception {
     upload(HEADER + "CS,네트워크,짧아,신입,공통,,\n")
         .andExpect(status().isOk())

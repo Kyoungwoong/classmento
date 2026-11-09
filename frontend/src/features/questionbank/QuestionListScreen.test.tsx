@@ -27,6 +27,10 @@ describe("QuestionListScreen", () => {
     expect(row).toHaveTextContent("네트워크 · 신입");
     fireEvent.click(row);
     expect(push).toHaveBeenCalledWith("/admin/questions/100");
+    expect(screen.getByRole("link", { name: "CSV로 올리기" })).toHaveAttribute(
+      "href",
+      "/admin/questions/import",
+    );
   });
 
   it("대분류를 고르면 소분류가 펼쳐지고, 고른 조건으로 다시 찾는다", async () => {

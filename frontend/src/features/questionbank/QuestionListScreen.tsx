@@ -130,6 +130,9 @@ export function QuestionListScreen() {
       header={<TopBar />}
       cta={
         <BottomCTA>
+          <ButtonLink href="/admin/questions/import" variant="secondary">
+            CSV로 올리기
+          </ButtonLink>
           <ButtonLink href="/admin/questions/new">질문 추가하기</ButtonLink>
         </BottomCTA>
       }
