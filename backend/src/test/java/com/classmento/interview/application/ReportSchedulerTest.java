@@ -70,4 +70,24 @@ class ReportSchedulerTest {
     scheduler.request(1L);
     assertThat(executor.queued).hasSize(1);
   }
+
+  @Test
+  void 진행_중에_요청이_오면_끝난_뒤_한_번_더_돌린다() {
+    // 진행 중인 작업이 답변을 읽은 뒤 마지막 평가가 끝난 경우: 그 요청을 버리면 종합이 빠질 수 있다
+    org.mockito.Mockito.doAnswer(
+            inv -> {
+              scheduler.request(1L); // 작업 도중 들어온 요청
+              return null;
+            })
+        .doNothing()
+        .when(writer)
+        .maybeReport(1L);
+
+    scheduler.request(1L);
+    executor.runAll(); // 첫 작업 → 끝나며 한 번 더 넣음
+    assertThat(executor.queued).hasSize(1);
+    executor.runAll();
+    verify(writer, times(2)).maybeReport(1L);
+    assertThat(executor.queued).isEmpty();
+  }
 }
