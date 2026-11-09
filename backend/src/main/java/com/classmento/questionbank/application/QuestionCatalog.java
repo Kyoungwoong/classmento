@@ -50,5 +50,13 @@ public class QuestionCatalog {
         .toList();
   }
 
+  /** 인성이 아닌 보이는 질문 중 벡터와 가까운 k개(경험 기반 면접의 후보). */
+  @Transactional(readOnly = true)
+  public List<Picked> nearestTech(float[] query, int k) {
+    return candidates.nearestTech(query, k).stream()
+        .map(c -> new Picked(c.id(), c.text(), c.intent()))
+        .toList();
+  }
+
   public record Picked(Long id, String text, String intent) {}
 }

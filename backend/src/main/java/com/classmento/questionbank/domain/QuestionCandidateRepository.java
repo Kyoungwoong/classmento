@@ -11,4 +11,7 @@ public interface QuestionCandidateRepository {
    * @param jobRole null이 아니면 그 직무나 COMMON인 질문만
    */
   List<Candidate> candidates(boolean behavioral, JobRole jobRole);
+
+  /** 인성이 아닌 보이는 질문 중 질의 벡터와 가까운 k개(임베딩이 있는 것만, 가까운 순). */
+  List<Candidate> nearestTech(float[] query, int k);
 }

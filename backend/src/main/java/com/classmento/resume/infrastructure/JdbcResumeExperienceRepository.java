@@ -6,6 +6,7 @@ import com.classmento.resume.domain.ResumeExperienceRepository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -63,6 +64,18 @@ public class JdbcResumeExperienceRepository implements ResumeExperienceRepositor
         "SELECT " + COLUMNS + " FROM resume_experience WHERE resume_id = ? ORDER BY seq",
         mapper(),
         resumeId);
+  }
+
+  @Override
+  public Optional<float[]> embeddingOf(Long resumeId, Long experienceId) {
+    return jdbc
+        .query(
+            "SELECT embedding::text FROM resume_experience WHERE resume_id = ? AND id = ?",
+            (rs, i) -> PgVectors.parse(rs.getString(1)),
+            resumeId,
+            experienceId)
+        .stream()
+        .findFirst();
   }
 
   @Override

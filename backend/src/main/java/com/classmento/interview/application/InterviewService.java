@@ -2,6 +2,7 @@ package com.classmento.interview.application;
 
 import com.classmento.common.web.ApiException;
 import com.classmento.interview.domain.Conditions;
+import com.classmento.interview.domain.Experience;
 import com.classmento.interview.domain.ExperienceSource;
 import com.classmento.interview.domain.InterviewLevel;
 import com.classmento.interview.domain.InterviewSession;
@@ -21,18 +22,26 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class InterviewService {
 
+  /** 경험 기반 면접에서 AI에 넘기는 질문 은행 후보 수 */
+  private static final int CANDIDATES = 10;
+
   private final InterviewSessionRepository sessions;
   private final QuestionSource questions;
   private final ExperienceSource experiences;
+  private final ExperienceQuestionWriter writer;
 
   public InterviewService(
-      InterviewSessionRepository sessions, QuestionSource questions, ExperienceSource experiences) {
+      InterviewSessionRepository sessions,
+      QuestionSource questions,
+      ExperienceSource experiences,
+      ExperienceQuestionWriter writer) {
     this.sessions = sessions;
     this.questions = questions;
     this.experiences = experiences;
+    this.writer = writer;
   }
 
-  @Transactional
+  /** 트랜잭션 없이: 경험 기반은 AI를 부르므로 외부 호출을 트랜잭션 밖에 둔다(저장은 save 한 번). */
   public InterviewSession create(Long userId, Command cmd) {
     Conditions c =
         new Conditions(
@@ -43,7 +52,7 @@ public class InterviewService {
           case TECH -> tech(userId, c, cmd.count());
           case BEHAVIORAL -> behavioral(cmd.count());
           case MIXED -> mixed(c, cmd.count());
-          case EXPERIENCE -> throw ApiException.badRequest("경험 기반 면접은 곧 열려요.");
+          case EXPERIENCE -> experience(userId, c, cmd.count());
         };
     return sessions.save(InterviewSession.start(userId, cmd.type(), cmd.count(), c, drafts));
   }
@@ -62,6 +71,13 @@ public class InterviewService {
     Set<String> prefer =
         c.narrowByResume() ? experiences.resumeSkills(userId, c.resumeId()) : Set.of();
     return questions.pick(QuestionKind.TECH, c.level(), c.jobRole(), prefer, count);
+  }
+
+  /** 경험 임베딩으로 질문 은행 kNN 후보를 뽑고, 경험 원문과 함께 AI가 질문을 만든다. */
+  private List<QuestionDraft> experience(Long userId, Conditions c, int count) {
+    Experience exp = experiences.experience(userId, c.resumeId(), c.experienceId());
+    List<QuestionDraft> candidates = questions.nearestTech(exp.embedding(), CANDIDATES);
+    return writer.write(exp, candidates, count);
   }
 
   private List<QuestionDraft> behavioral(int count) {

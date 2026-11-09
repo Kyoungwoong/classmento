@@ -11,8 +11,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.classmento.common.security.AuthUser;
+import com.classmento.embedding.EmbeddingClient;
 import com.classmento.identity.domain.AppUser;
 import com.classmento.resume.domain.Resume;
+import com.classmento.resume.domain.ResumeExperience;
+import com.classmento.resume.domain.ResumeExperienceRepository;
 import com.classmento.resume.domain.ResumeRepository;
 import com.classmento.support.IntegrationTest;
 import java.util.List;
@@ -165,6 +168,67 @@ class InterviewApiTest extends IntegrationTest {
     mockMvc
         .perform(get("/api/interviews").with(user(other)))
         .andExpect(jsonPath("$.length()").value(0));
+  }
+
+  @Autowired ResumeExperienceRepository experiences;
+  @Autowired EmbeddingClient embeddings;
+
+  /** 정리된 이력서와 경험 하나를 만들고 [resumeId, experienceId]를 돌려준다. */
+  private long[] parsedResumeWithExperience(AuthUser owner) {
+    Long resumeId =
+        resumes.save(new Resume(owner.id(), "r.pdf", "application/pdf", 1, "k")).getId();
+    jdbc.update("UPDATE resume SET status = 'PARSED' WHERE id = ?", resumeId);
+    ResumeExperience exp =
+        ResumeExperience.create(
+            0,
+            ResumeExperience.Type.PROJECT,
+            "실시간 재고 동기화",
+            "커머스",
+            "2024",
+            "Kafka 이벤트로 주문과 재고를 맞춤",
+            "주문 이벤트를 Kafka로 발행하고 재고 서비스가 소비",
+            List.of("Kafka", "Spring"));
+    experiences.replaceAll(
+        resumeId, List.of(exp), embeddings.embedAll(List.of("메시지 큐 Kafka 이벤트 재고")));
+    Long expId = experiences.findByResumeId(resumeId).get(0).id();
+    return new long[] {resumeId, expId};
+  }
+
+  private static String experienceBody(long resumeId, long experienceId) {
+    return "{\"type\":\"EXPERIENCE\",\"count\":3,\"resumeId\":%d,\"experienceId\":%d}"
+        .formatted(resumeId, experienceId);
+  }
+
+  @Test
+  void 경험_기반은_경험과_가까운_질문을_바탕으로_AI가_만든_질문을_낸다() throws Exception {
+    long[] ids = parsedResumeWithExperience(me);
+
+    long id =
+        idOf(
+            create(experienceBody(ids[0], ids[1]))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.type").value("EXPERIENCE"))
+                .andExpect(jsonPath("$.experienceId").value(ids[1]))
+                .andExpect(jsonPath("$.questions.length()").value(3))
+                .andExpect(jsonPath("$.questions[*].kind", everyItem(is("TECH")))));
+
+    // 가짜 응답(fake/question-experience.v1.json)의 질문은 모두 만든 질문
+    Integer generated =
+        jdbc.queryForObject(
+            "SELECT count(*) FROM interview_question WHERE session_id = ? AND generated",
+            Integer.class,
+            id);
+    org.assertj.core.api.Assertions.assertThat(generated).isEqualTo(3);
+  }
+
+  @Test
+  void 남의_경험이나_이력서에_없는_경험이면_404() throws Exception {
+    AuthUser other = createUser("other@test.com", AppUser.Role.USER);
+    long[] theirs = parsedResumeWithExperience(other);
+    create(experienceBody(theirs[0], theirs[1])).andExpect(status().isNotFound());
+
+    long[] mine = parsedResumeWithExperience(me);
+    create(experienceBody(mine[0], theirs[1])).andExpect(status().isNotFound());
   }
 
   @Test
