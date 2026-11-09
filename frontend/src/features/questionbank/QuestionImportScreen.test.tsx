@@ -76,6 +76,20 @@ describe("QuestionImportScreen", () => {
     expect(open).toHaveBeenCalledTimes(1);
   });
 
+  it("한 줄에 오류가 여러 개여도 줄 수로 센다", async () => {
+    vi.spyOn(api, "importQuestions").mockResolvedValue({
+      imported: 0,
+      errors: [
+        { line: 2, message: "큰따옴표가 닫히지 않았어요." },
+        { line: 2, message: "없는 카테고리예요: CS > 양자컴퓨팅" },
+      ],
+    });
+    render(<QuestionImportScreen />);
+    choose(csv());
+    fireEvent.click(screen.getByRole("button", { name: "올리기" }));
+    expect(await screen.findByRole("heading", { name: "1줄을 고쳐 주세요" })).toBeInTheDocument();
+  });
+
   it("2MB가 넘거나 CSV가 아니면 올리기 전에 알려준다", () => {
     const upload = vi.spyOn(api, "importQuestions");
     render(<QuestionImportScreen />);
