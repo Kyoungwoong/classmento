@@ -80,4 +80,20 @@ describe("SiteHeader", () => {
     await waitFor(() => expect(me).toHaveBeenCalled());
     expect(screen.queryByRole("link", { name: "로그인" })).not.toBeInTheDocument();
   });
+  it("로그아웃에 실패하면 상태를 그대로 두고 알려준다", async () => {
+    vi.spyOn(api, "me").mockResolvedValue({
+      authenticated: true,
+      user: { id: 1, email: "a@b.c", name: "a", role: "USER" },
+    });
+    vi.spyOn(api, "logout").mockRejectedValue(new Error("network"));
+    render(<SiteHeader />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "로그아웃" }));
+
+    expect(
+      await screen.findByText("로그아웃하지 못했어요. 다시 시도해 주세요."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "로그아웃" })).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+  });
 });
