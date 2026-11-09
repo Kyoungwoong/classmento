@@ -1,17 +1,22 @@
 package com.classmento.questionbank.presentation;
 
 import com.classmento.common.security.AuthUser;
+import com.classmento.common.web.ApiException;
+import com.classmento.questionbank.application.QuestionImportService;
 import com.classmento.questionbank.application.QuestionService;
 import com.classmento.questionbank.domain.JobRole;
 import com.classmento.questionbank.domain.Level;
 import com.classmento.questionbank.domain.QuestionSearchRepository.Filter;
+import com.classmento.questionbank.presentation.QuestionBankDtos.ImportResult;
 import com.classmento.questionbank.presentation.QuestionBankDtos.QuestionPage;
 import com.classmento.questionbank.presentation.QuestionBankDtos.QuestionRequest;
 import com.classmento.questionbank.presentation.QuestionBankDtos.QuestionView;
 import com.classmento.questionbank.presentation.QuestionBankDtos.SetActiveRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import java.io.IOException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -21,8 +26,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /** 질문 은행 질문 관리(ROLE_ADMIN, /api/admin/**). */
 @RestController
@@ -32,9 +39,11 @@ public class AdminQuestionController {
   private static final int MAX_SIZE = 100;
 
   private final QuestionService service;
+  private final QuestionImportService importService;
 
-  public AdminQuestionController(QuestionService service) {
+  public AdminQuestionController(QuestionService service, QuestionImportService importService) {
     this.service = service;
+    this.importService = importService;
   }
 
   /** 최신순. 조건은 모두 선택이고 함께 쓰면 AND. 숨긴 질문은 includeHidden=true일 때만. */
@@ -53,6 +62,18 @@ public class AdminQuestionController {
     Filter filter = new Filter(topCategoryId, categoryId, level, jobRole, tagId, q, includeHidden);
     return QuestionPage.of(
         service.search(filter, Math.max(page, 0), Math.min(Math.max(size, 1), MAX_SIZE)));
+  }
+
+  /** CSV 대량 등록(UTF-8, 2MB, 1000줄). 형식: docs/api/README.md */
+  @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+  @Operation(operationId = "importAdminQuestions")
+  public ImportResult importCsv(
+      @RequestPart("file") MultipartFile file, @AuthenticationPrincipal AuthUser user)
+      throws IOException {
+    if (file.getSize() > QuestionImportService.MAX_BYTES) {
+      throw ApiException.badRequest("CSV 파일은 2MB까지 올릴 수 있어요.");
+    }
+    return ImportResult.of(importService.importCsv(file.getBytes(), user.id()));
   }
 
   @GetMapping("/{id}")
