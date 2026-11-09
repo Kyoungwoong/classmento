@@ -69,7 +69,8 @@ public class ExperienceQuestionWriter {
         Item[] items = json.readValue(stripFence(llm.generate(request).text()), Item[].class);
         return valid(items, known);
       } catch (JacksonException e) {
-        log.warn("경험 질문 응답(JSON)을 읽지 못함({}번째): {}", attempt + 1, e.getOriginalMessage());
+        // 응답 본문(이력서 내용이 섞일 수 있음)은 로그에 남기지 않는다
+        log.warn("경험 질문 응답(JSON)을 읽지 못함({}번째): {}", attempt + 1, e.getClass().getSimpleName());
       } catch (LlmUnavailableException e) {
         log.warn("경험 질문 생성 실패, 질문 은행 후보로 대신: {}", e.getMessage());
         return List.of();
@@ -81,7 +82,13 @@ public class ExperienceQuestionWriter {
   private static List<QuestionDraft> valid(Item[] items, Set<Long> known) {
     List<QuestionDraft> out = new ArrayList<>();
     Set<Long> used = new HashSet<>();
+    if (items == null) {
+      return out;
+    }
     for (Item it : items) {
+      if (it == null) {
+        continue;
+      }
       String q = it.question() == null ? "" : it.question().strip();
       if (q.length() < TEXT_MIN || q.length() > TEXT_MAX) {
         continue;
