@@ -18,7 +18,8 @@ export function CategoriesScreen() {
   const [tree, setTree] = useState<CategoryTreeNode[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Editing>(null);
-  const [toggleError, setToggleError] = useState<string | null>(null);
+  // 숨기기 실패는 그 행 바로 아래에 보여준다
+  const [toggleError, setToggleError] = useState<{ id: number; message: string } | null>(null);
 
   const load = useCallback(() => {
     // 에러 지우기는 응답 뒤에(effect 안에서 바로 setState 하지 않게)
@@ -49,7 +50,7 @@ export function CategoriesScreen() {
     try {
       await done(api.updateCategory(id, { active }));
     } catch (err) {
-      setToggleError(actionError(err));
+      setToggleError({ id, message: actionError(err) });
     }
   }
 
@@ -66,6 +67,13 @@ export function CategoriesScreen() {
     );
   }
 
+  const rowError = (id: number) =>
+    toggleError?.id === id && (
+      <p role="alert" className="-mt-1 pb-2 text-caption text-danger">
+        {toggleError.message}
+      </p>
+    );
+
   const isRenaming = (id: number) => editing?.kind === "rename" && editing.id === id;
   const isAdding = (parentId: number | null) =>
     editing?.kind === "add" && editing.parentId === parentId;
@@ -80,7 +88,9 @@ export function CategoriesScreen() {
               ? "카테고리를 불러오지 못했어요"
               : "카테고리를 불러오고 있어요"
         }
-        description="질문은 소분류에 넣어요. 소분류 이름을 누르면 바꿀 수 있어요."
+        description={
+          loadError ? undefined : "질문은 소분류에 넣어요. 소분류 이름을 누르면 바꿀 수 있어요."
+        }
       />
 
       {loadError && (
@@ -91,10 +101,8 @@ export function CategoriesScreen() {
           </Button>
         </div>
       )}
-      {toggleError && (
-        <p role="alert" className="mb-4 text-body2 text-danger">
-          {toggleError}
-        </p>
+      {tree?.length === 0 && (
+        <p className="mb-4 text-body2 text-text-hint">아직 카테고리가 없어요</p>
       )}
 
       {tree?.map((top, i) => (
@@ -120,14 +128,15 @@ export function CategoriesScreen() {
                 onClick={() => toggle(top.id, !top.active)}
                 className={`${textButton} -mr-2 text-text-sub`}
               >
-                {top.active ? "숨기기" : "보이기"}
+                {top.active ? "숨기기" : "다시 보이기"}
               </button>
             </div>
           )}
+          {rowError(top.id)}
 
           <ul className="mt-2">
             {top.children.map((sub) => (
-              <li key={sub.id}>
+              <li key={sub.id} aria-label={sub.name}>
                 {isRenaming(sub.id) ? (
                   renameForm(sub.id, sub.name)
                 ) : (
@@ -135,6 +144,7 @@ export function CategoriesScreen() {
                     <button
                       type="button"
                       aria-label={`${sub.name} 이름 바꾸기`}
+                      aria-describedby={`category-${sub.id}-count`}
                       onClick={() => setEditing({ kind: "rename", id: sub.id })}
                       className="-mx-2 min-w-0 flex-1 rounded-sm px-2 py-1 text-left active:bg-bg-subtle"
                     >
@@ -143,7 +153,10 @@ export function CategoriesScreen() {
                       >
                         {sub.name}
                       </span>
-                      <span className="block text-body2 text-text-sub">
+                      <span
+                        id={`category-${sub.id}-count`}
+                        className="block text-body2 text-text-sub"
+                      >
                         {`질문 ${sub.questionCount}개${sub.active ? "" : " · 숨김"}`}
                       </span>
                     </button>
@@ -153,10 +166,11 @@ export function CategoriesScreen() {
                       onClick={() => toggle(sub.id, !sub.active)}
                       className={`${textButton} -mr-2 text-text-sub`}
                     >
-                      {sub.active ? "숨기기" : "보이기"}
+                      {sub.active ? "숨기기" : "다시 보이기"}
                     </button>
                   </div>
                 )}
+                {rowError(sub.id)}
               </li>
             ))}
           </ul>
