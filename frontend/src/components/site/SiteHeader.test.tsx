@@ -6,9 +6,11 @@ import { SiteHeader } from "./SiteHeader";
 const replace = vi.fn();
 const refresh = vi.fn();
 const router = { push: vi.fn(), replace, refresh, back: vi.fn() };
-vi.mock("next/navigation", () => ({ useRouter: () => router, usePathname: () => "/" }));
+let pathname = "/";
+vi.mock("next/navigation", () => ({ useRouter: () => router, usePathname: () => pathname }));
 
 afterEach(() => {
+  pathname = "/";
   vi.restoreAllMocks();
   replace.mockReset();
 });
@@ -56,5 +58,24 @@ describe("SiteHeader", () => {
       "true",
     );
     expect(screen.getByRole("navigation", { name: "모바일 메뉴" })).toBeInTheDocument();
+  });
+  it("모바일 메뉴는 Escape로 닫히고, 열면 첫 링크로 초점이 간다", async () => {
+    vi.spyOn(api, "me").mockResolvedValue({ authenticated: false });
+    render(<SiteHeader />);
+    fireEvent.click(screen.getByRole("button", { name: "메뉴 열기" }));
+    const mobile = screen.getByRole("navigation", { name: "모바일 메뉴" });
+    expect(mobile.querySelector("a")).toHaveFocus();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("navigation", { name: "모바일 메뉴" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "메뉴 열기" })).toHaveFocus();
+  });
+
+  it("로그인·회원가입 화면에서는 헤더의 로그인 버튼을 숨긴다(주요 행동은 하나)", async () => {
+    pathname = "/login";
+    const me = vi.spyOn(api, "me").mockResolvedValue({ authenticated: false });
+    render(<SiteHeader />);
+    await waitFor(() => expect(me).toHaveBeenCalled());
+    expect(screen.queryByRole("link", { name: "로그인" })).not.toBeInTheDocument();
   });
 });
