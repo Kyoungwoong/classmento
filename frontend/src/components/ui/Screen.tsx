@@ -2,41 +2,59 @@ import clsx from "clsx";
 import type { ReactNode } from "react";
 
 interface ScreenProps {
-  /** 상단 내비게이션 영역(뒤로가기 등). 없으면 비워둔다. */
+  /** 본문 위 작은 바(뒤로가기 등). 없으면 비워둔다. */
   header?: ReactNode;
-  /** 화면 하단에 고정되는 단 하나의 주요 행동. 보통 <BottomCTA>. */
+  /** 주요 행동 하나. 보통 <BottomCTA> — 모바일은 하단 고정, md 이상은 본문 끝에 놓인다. */
   cta?: ReactNode;
   children: ReactNode;
   className?: string;
+  /** site: 넓은 본문(1120px, 2단 가능) / narrow: 로그인·짧은 폼(560px) */
+  width?: "site" | "narrow";
 }
 
 /**
- * 모든 페이지의 기본 레이아웃. 모바일 폭(최대 480px) 단일 컬럼, 데스크톱에서도 같은 컬럼을 가운데 둔다.
- * 규칙: 한 화면에 하나의 일, 주요 행동은 cta 슬롯 하나 — docs/design/design-system.md
+ * 페이지 본문 뼈대. 사이트 헤더·푸터는 루트 레이아웃이 감싼다.
+ * 규칙: 주요 행동은 cta 슬롯 하나 — docs/design/design-system.md
  */
-export function Screen({ header, cta, children, className }: ScreenProps) {
+export function Screen({ header, cta, children, className, width = "site" }: ScreenProps) {
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-bg">
-      {header && <header className="flex h-14 items-center px-5">{header}</header>}
-      <main className={clsx("flex-1 px-5 pt-6", cta ? "pb-32" : "pb-10", className)}>
+    <main
+      className={clsx(
+        "mx-auto w-full px-5 md:px-8",
+        width === "narrow" ? "max-w-narrow" : "max-w-site",
+      )}
+    >
+      {header && <div className="flex h-14 items-center">{header}</div>}
+      <div
+        className={clsx(
+          header ? "pt-4 md:pt-6" : "pt-8 md:pt-14",
+          cta ? "pb-32 md:pb-20" : "pb-16 md:pb-20",
+          className,
+        )}
+      >
         {children}
-      </main>
-      {cta}
-    </div>
+        {cta}
+      </div>
+    </main>
   );
 }
 
 interface ScreenTitleProps {
   title: ReactNode;
   description?: ReactNode;
+  /** 제목 위 작은 라벨(예: "2단계 · 조건") */
+  eyebrow?: ReactNode;
 }
 
 /** 화면 상단의 큰 제목 + 한두 줄 설명. 제목은 사용자에게 말을 거는 구어체 한 문장. */
-export function ScreenTitle({ title, description }: ScreenTitleProps) {
+export function ScreenTitle({ title, description, eyebrow }: ScreenTitleProps) {
   return (
-    <div className="mb-8">
-      <h1 className="text-title1 whitespace-pre-line text-text-strong">{title}</h1>
-      {description && <p className="mt-2 text-body2 text-text-sub">{description}</p>}
+    <div className="mb-8 md:mb-10">
+      {eyebrow && <p className="mb-2 text-caption font-semibold text-accent">{eyebrow}</p>}
+      <h1 className="text-title1 whitespace-pre-line text-text-strong md:text-title1-lg">
+        {title}
+      </h1>
+      {description && <p className="mt-2 text-body2 text-text-sub md:text-body1">{description}</p>}
     </div>
   );
 }
