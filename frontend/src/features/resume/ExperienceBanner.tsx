@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Chip } from "@/components/ui";
+import { CheckMark, Chip } from "@/components/ui";
 import type { ExperienceView } from "@/lib/api/client";
 
 const TYPE_LABEL: Record<ExperienceView["type"], string> = {
@@ -34,7 +34,10 @@ export function ExperienceBanner({ experience, selected = false }: ExperienceBan
       <p className="text-caption text-text-sub">
         {[TYPE_LABEL[type], period].filter(Boolean).join(" · ")}
       </p>
-      <h3 className="mt-1 text-body1 font-semibold text-text-strong">{title}</h3>
+      <div className="mt-1 flex items-start gap-3">
+        <h3 className="min-w-0 flex-1 text-body1 font-semibold text-text-strong">{title}</h3>
+        {selected && <CheckMark shown />}
+      </div>
       {summary && <p className="mt-1 line-clamp-2 text-body2 text-text-sub">{summary}</p>}
       {shown.length > 0 && (
         <ul className="mt-3 flex flex-wrap gap-2" aria-label="사용한 기술">
