@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import type { ReactNode } from "react";
+import { TwoColumn } from "./TwoColumn";
 
 interface ScreenProps {
   /** 본문 위 작은 바(뒤로가기 등). 없으면 비워둔다. */
@@ -10,13 +11,25 @@ interface ScreenProps {
   className?: string;
   /** site: 넓은 본문(1120px, 2단 가능) / narrow: 로그인·짧은 폼(560px) */
   width?: "site" | "narrow";
+  /** 있으면 데스크톱 2단: 왼쪽 aside(질문·요약·단계), 오른쪽 본문 + 주요 행동. 모바일은 위아래로 쌓는다 */
+  aside?: ReactNode;
+  /** 스크롤해도 왼쪽 aside를 붙잡아 둔다 */
+  stickyAside?: boolean;
 }
 
 /**
  * 페이지 본문 뼈대. 사이트 헤더·푸터는 루트 레이아웃이 감싼다.
  * 규칙: 주요 행동은 cta 슬롯 하나 — docs/design/design-system.md
  */
-export function Screen({ header, cta, children, className, width = "site" }: ScreenProps) {
+export function Screen({
+  header,
+  cta,
+  children,
+  className,
+  width = "site",
+  aside,
+  stickyAside = false,
+}: ScreenProps) {
   return (
     <main
       className={clsx(
@@ -32,8 +45,17 @@ export function Screen({ header, cta, children, className, width = "site" }: Scr
           className,
         )}
       >
-        {children}
-        {cta}
+        {aside ? (
+          <TwoColumn aside={aside} stickyAside={stickyAside}>
+            {children}
+            {cta}
+          </TwoColumn>
+        ) : (
+          <>
+            {children}
+            {cta}
+          </>
+        )}
       </div>
     </main>
   );
