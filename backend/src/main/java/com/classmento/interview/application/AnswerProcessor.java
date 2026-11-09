@@ -29,6 +29,7 @@ public class AnswerProcessor {
   static final String STT_FAILED = "답변을 글자로 바꾸지 못했어요. 다시 시도해 주세요.";
   static final String SILENT = "답변이 들리지 않았어요. 다시 녹음해 주세요.";
   static final String EVAL_FAILED = "답변을 평가하지 못했어요. 다시 시도해 주세요.";
+  static final String UNEXPECTED = "답변을 처리하지 못했어요. 다시 시도해 주세요.";
   private static final Logger log = LoggerFactory.getLogger(AnswerProcessor.class);
 
   private final AnswerRepository answers;
@@ -59,7 +60,7 @@ public class AnswerProcessor {
       run(answerId, version);
     } catch (RuntimeException e) {
       log.error("답변 {} 처리 중 예상하지 못한 오류: {}", answerId, e.getClass().getSimpleName());
-      markFailed(answerId, version, EVAL_FAILED);
+      markFailed(answerId, version, UNEXPECTED);
     }
   }
 
