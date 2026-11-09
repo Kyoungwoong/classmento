@@ -62,9 +62,8 @@ export function QuestionImportScreen() {
     }
   }
 
+  /** 같은 파일을 고쳐서 다시 골라도 change가 일어나게 값을 비우고 연다. 고르면 choose()가 입력 화면으로 돌려놓는다. */
   function pickAgain() {
-    setResult(null);
-    setFile(null);
     if (inputRef.current) inputRef.current.value = "";
     inputRef.current?.click();
   }
@@ -121,6 +120,18 @@ export function QuestionImportScreen() {
         />
       )}
 
+      {/* 오류 화면에서도 [다른 파일 고르기]가 열 수 있게 파일 입력은 늘 그려 둔다 */}
+      <input
+        id={inputId}
+        ref={inputRef}
+        type="file"
+        accept=".csv,text/csv"
+        aria-invalid={!!fileError || undefined}
+        aria-describedby={fileError ? errorId : undefined}
+        onChange={(e) => choose(e.target.files?.[0])}
+        className="sr-only"
+      />
+
       {errors.length > 0 ? (
         <ul>
           {errors.map((e) => (
@@ -152,16 +163,7 @@ export function QuestionImportScreen() {
             <label htmlFor={inputId} className="mb-2 block text-caption text-text-sub">
               CSV 파일
             </label>
-            <input
-              id={inputId}
-              ref={inputRef}
-              type="file"
-              accept=".csv,text/csv"
-              aria-invalid={!!fileError || undefined}
-              aria-describedby={fileError ? errorId : undefined}
-              onChange={(e) => choose(e.target.files?.[0])}
-              className="sr-only"
-            />
+
             <div className="flex items-center gap-3 rounded-md bg-bg-muted px-4 py-3">
               <p className="min-w-0 flex-1 truncate text-body1 text-text-strong">
                 {file ? file.name : <span className="text-text-hint">파일을 골라 주세요</span>}
