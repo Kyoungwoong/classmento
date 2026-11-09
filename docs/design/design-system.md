@@ -18,12 +18,12 @@
 5. **데스크톱 2단, 모바일 1단.**
    - `TwoColumn`: 왼쪽은 제목·요약·안내, 오른쪽은 실제로 하는 일·목록
    - 요약 점수처럼 계속 보여야 하면 `stickyAside`
-6. **주요 행동은 하나.**
+6. **주요 행동은 하나.** 연두 primary 버튼은 한 화면에 하나다. 같은 행동을 다시 권할 때(홈 아래 남색 띠 등)는 secondary 모양으로 한다.
    - `BottomCTA`는 모바일에서 하단에 고정되고, md 이상에서는 본문 끝에 왼쪽 정렬로 놓인다.
    - 보조 행동은 `secondary` 하나까지
 7. **숫자는 크게, 캐릭터는 상태를 말할 때만.**
    - 점수·타이머는 `text-display`
-   - 마스코트는 히어로, 빈 상태, 로딩, 녹음 중, 결과에만 쓴다. 장식으로 반복하지 않는다.
+   - 마스코트(`Mascot`, 이름 "멘토리")는 히어로, 로그인·회원가입 인사(idle), 빈 상태, 로딩(thinking), 녹음 중(listening), 결과(happy), 문제(oops)에만 쓴다. 한 화면에 하나만 두고, 장식으로 반복하지 않는다.
 
 ## 토큰
 | 분류 | 값 | Tailwind |
@@ -96,6 +96,7 @@ Tailwind 기본 팔레트는 꺼져 있다(`--color-*: initial`). `bg-purple-500
 | `TagInput` | Notion식 태그: 입력하면 후보, Enter·쉼표로 만들기, 한글 조합 중 Enter 무시 |
 | `ProgressBar` | 진행도 (얇은 4px 연두 막대) |
 | `ScoreBar` | 기준 하나의 점수: 이름 + 숫자 + ProgressBar. 점수로 색을 바꾸지 않는다. 평균은 `decimals={1}` |
+| `Mascot` | 마스코트 멘토리(`components/site`). `mood` idle·listening·thinking·happy·oops, `label`을 주면 그림(role=img), 없으면 장식 |
 | `Toast` | "저장했어요" 같은 짧은 결과(남색 면). live region은 늘 두고 내용만 바꾼다 |
 
 아이콘: `lucide-react`. 버튼, 목록 행, 섹션 제목 앞에만 쓰고 크기는 20~24, 장식이면 `aria-hidden`이다.
