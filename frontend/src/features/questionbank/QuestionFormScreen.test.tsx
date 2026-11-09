@@ -21,6 +21,13 @@ describe("QuestionFormScreen", () => {
     expect(screen.getByText("질문은 5~300자로 입력해 주세요.")).toBeInTheDocument();
     expect(screen.getByText("난이도를 골라 주세요.")).toBeInTheDocument();
     expect(screen.getByText("직무를 하나 이상 골라 주세요.")).toBeInTheDocument();
+    // 칩 묶음은 라벨·에러와 이어져 있다(스크린리더)
+    expect(screen.getByRole("group", { name: "소분류" })).toHaveAccessibleDescription(
+      "소분류를 골라 주세요.",
+    );
+    expect(screen.getByRole("group", { name: "직무" })).toHaveAccessibleDescription(
+      "직무를 하나 이상 골라 주세요.",
+    );
     expect(create).not.toHaveBeenCalled();
   });
 

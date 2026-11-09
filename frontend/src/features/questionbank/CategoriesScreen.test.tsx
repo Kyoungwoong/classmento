@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/lib/api/client";
 import { CategoriesScreen } from "./CategoriesScreen";
@@ -32,6 +32,15 @@ describe("CategoriesScreen", () => {
     fireEvent.click(await screen.findByRole("button", { name: "네트워크 숨기기" }));
     await waitFor(() => expect(update).toHaveBeenCalledWith(11, { active: false }));
     await waitFor(() => expect(load).toHaveBeenCalledTimes(2));
+  });
+
+  it("숨기기에 실패하면 그 행 바로 아래에 알려준다", async () => {
+    vi.spyOn(api, "adminCategories").mockResolvedValue(tree);
+    vi.spyOn(api, "updateCategory").mockRejectedValue(new Error("x"));
+    render(<CategoriesScreen />);
+    fireEvent.click(await screen.findByRole("button", { name: "보안 숨기기" }));
+    const row = screen.getByRole("listitem", { name: "보안" });
+    expect(await within(row).findByText("잠시 후 다시 시도해 주세요.")).toBeInTheDocument();
   });
 
   it("소분류를 추가한다", async () => {

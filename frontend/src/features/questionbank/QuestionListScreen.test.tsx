@@ -52,6 +52,19 @@ describe("QuestionListScreen", () => {
     );
   });
 
+  it("카테고리를 못 불러오면 알려주고 다시 시도할 수 있다", async () => {
+    const tree$ = vi
+      .spyOn(api, "adminCategories")
+      .mockRejectedValueOnce(new Error("x"))
+      .mockResolvedValue(tree);
+    vi.spyOn(api, "adminQuestions").mockResolvedValue({ items: [], total: 0, page: 0, size: 20 });
+    render(<QuestionListScreen />);
+    expect(await screen.findByText("카테고리를 불러오지 못했어요")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "카테고리 다시 불러오기" }));
+    expect(await screen.findByRole("button", { name: "CS" })).toBeInTheDocument();
+    expect(tree$).toHaveBeenCalledTimes(2);
+  });
+
   it("조건에 맞는 질문이 없으면 알려준다", async () => {
     vi.spyOn(api, "adminCategories").mockResolvedValue(tree);
     vi.spyOn(api, "adminQuestions").mockResolvedValue({ items: [], total: 0, page: 0, size: 20 });
@@ -67,6 +80,7 @@ describe("QuestionListScreen", () => {
       .mockResolvedValue({ items: [question()], total: 1, page: 0, size: 20 });
     render(<QuestionListScreen />);
     expect(await screen.findByRole("alert")).toHaveTextContent("질문을 불러오지 못했어요.");
+    expect(screen.getByRole("heading", { name: "질문을 불러오지 못했어요" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "다시 시도하기" }));
     expect(await screen.findByRole("button", { name: /TCP와 UDP/ })).toBeInTheDocument();
     expect(load).toHaveBeenCalledTimes(2);
