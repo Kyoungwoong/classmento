@@ -114,4 +114,22 @@ describe("useRecorder", () => {
     expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledTimes(1);
     expect(result.current.state).toBe("recording");
   });
+  it("마이크를 여는 중에 화면을 떠나면 열린 마이크를 바로 끈다", async () => {
+    let resolve!: (s: unknown) => void;
+    const late = { stop: vi.fn() };
+    vi.mocked(navigator.mediaDevices.getUserMedia).mockReturnValueOnce(
+      new Promise((r) => (resolve = r)) as Promise<MediaStream>,
+    );
+    const { result, unmount } = renderHook(() => useRecorder());
+    let pending!: Promise<void>;
+    act(() => {
+      pending = result.current.start();
+    });
+    unmount();
+    await act(async () => {
+      resolve({ getTracks: () => [late] });
+      await pending;
+    });
+    expect(late.stop).toHaveBeenCalled();
+  });
 });
