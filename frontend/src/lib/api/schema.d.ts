@@ -27,7 +27,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["get"];
+        get: operations["getAdminQuestion"];
         put: operations["update"];
         post?: never;
         delete?: never;
@@ -534,7 +534,7 @@ export interface operations {
             };
         };
     };
-    get: {
+    getAdminQuestion: {
         parameters: {
             query?: never;
             header?: never;

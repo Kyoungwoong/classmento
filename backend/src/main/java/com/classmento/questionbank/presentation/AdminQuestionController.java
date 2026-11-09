@@ -56,6 +56,7 @@ public class AdminQuestionController {
   }
 
   @GetMapping("/{id}")
+  @Operation(operationId = "getAdminQuestion")
   public QuestionView get(@PathVariable Long id) {
     return QuestionView.of(service.get(id));
   }
