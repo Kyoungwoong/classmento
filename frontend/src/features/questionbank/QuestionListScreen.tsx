@@ -6,6 +6,7 @@ import {
   BottomCTA,
   Button,
   ButtonLink,
+  ChipGroup,
   ListRow,
   Screen,
   ScreenTitle,
@@ -16,6 +17,7 @@ import {
   TopBar,
 } from "@/components/ui";
 import { adminError } from "@/features/admin/adminError";
+import { Chevron } from "@/features/admin/Chevron";
 import {
   api,
   type CategoryTreeNode,
@@ -49,12 +51,23 @@ export function QuestionListScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const latest = useRef(0);
 
+  const [treeError, setTreeError] = useState(false);
+
+  const loadTree = useCallback(
+    () =>
+      api
+        .adminCategories()
+        .then((next) => {
+          setTree(next);
+          setTreeError(false);
+        })
+        .catch(() => setTreeError(true)),
+    [],
+  );
+
   useEffect(() => {
-    api
-      .adminCategories()
-      .then(setTree)
-      .catch(() => undefined);
-  }, []);
+    loadTree();
+  }, [loadTree]);
 
   // 검색어는 입력이 멈춘 뒤에 반영
   useEffect(() => {
@@ -117,12 +130,31 @@ export function QuestionListScreen() {
       }
     >
       <ScreenTitle
-        title={items ? `질문이 ${total}개 있어요` : "질문을 불러오고 있어요"}
+        title={
+          items
+            ? `질문이 ${total}개 있어요`
+            : error
+              ? "질문을 불러오지 못했어요"
+              : "질문을 불러오고 있어요"
+        }
         description="최근에 넣은 순서예요."
       />
 
       <div className="flex flex-col gap-4">
-        <div className="-mx-5 scrollbar-none flex gap-2 overflow-x-auto px-5">
+        {treeError && (
+          <div className="flex items-center justify-between">
+            <p className="text-body2 text-text-sub">카테고리를 불러오지 못했어요</p>
+            <button
+              type="button"
+              aria-label="카테고리 다시 불러오기"
+              onClick={loadTree}
+              className="-mr-2 inline-flex h-11 items-center px-2 text-body2 text-primary"
+            >
+              다시 불러오기
+            </button>
+          </div>
+        )}
+        <ChipGroup label="대분류">
           <SelectChip
             label="전체"
             selected={filter.topCategoryId === undefined}
@@ -140,9 +172,9 @@ export function QuestionListScreen() {
               }
             />
           ))}
-        </div>
+        </ChipGroup>
         {top && (
-          <div className="-mx-5 scrollbar-none flex gap-2 overflow-x-auto px-5">
+          <ChipGroup label="소분류">
             <SelectChip
               label={`${top.name} 전체`}
               selected={filter.categoryId === undefined}
@@ -156,7 +188,7 @@ export function QuestionListScreen() {
                 onClick={() => setFilter((f) => ({ ...f, categoryId: c.id }))}
               />
             ))}
-          </div>
+          </ChipGroup>
         )}
         <SegmentedControl
           label="난이도"
@@ -197,6 +229,7 @@ export function QuestionListScreen() {
                 <ListRow
                   title={q.text}
                   titleLines={2}
+                  trailing={<Chevron />}
                   description={describe(q)}
                   onClick={() => router.push(`/admin/questions/${q.id}`)}
                 />
