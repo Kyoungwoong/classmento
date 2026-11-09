@@ -40,6 +40,7 @@ export function SiteHeader() {
   if (lastPath !== pathname) {
     setLastPath(pathname);
     setOpen(false);
+    setLogoutFailed(false);
   }
 
   useEffect(() => {
