@@ -4,6 +4,7 @@ import com.classmento.common.domain.DomainException;
 import com.classmento.embedding.EmbeddingUnavailableException;
 import com.classmento.llm.LlmUnavailableException;
 import com.classmento.speech.SttUnavailableException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -40,6 +41,10 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ApiError> handleBadCredentials(BadCredentialsException e) {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
         .body(new ApiError("LOGIN_FAILED", "이메일 또는 비밀번호가 맞지 않아요."));
+  }
+
+  public ResponseEntity<ApiError> handleDataIntegrity(DataIntegrityViolationException e) {
+    throw new UnsupportedOperationException("TODO");
   }
 
   @ExceptionHandler(MaxUploadSizeExceededException.class)
