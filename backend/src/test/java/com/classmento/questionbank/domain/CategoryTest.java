@@ -76,6 +76,12 @@ class CategoryTest {
     assertThat(Category.nameKey(" Java Script ")).isEqualTo(Category.nameKey("javascript"));
   }
 
+  /** DB 유니크 인덱스(Postgres \s, 유니코드 공백 포함)와 같은 기준이어야 서비스 검사를 지나 DB에서 막히는 일이 없다. */
+  @Test
+  void 중복_판단용_키는_유니코드_공백도_무시한다() {
+    assertThat(Category.nameKey("Java Script　")).isEqualTo(Category.nameKey("javascript"));
+  }
+
   @Test
   void 숨기고_다시_보일_수_있다() {
     Category top = Category.top("CS", 0);

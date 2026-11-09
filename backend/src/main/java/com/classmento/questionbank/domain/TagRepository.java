@@ -10,6 +10,8 @@ public interface TagRepository {
 
   Optional<Tag> findByKey(String key);
 
+  List<Tag> findAllById(Iterable<Long> ids);
+
   /**
    * 자동완성. 키에 검색어가 들어간 태그를, 앞부분이 일치하는 것부터 최대 limit개.
    *

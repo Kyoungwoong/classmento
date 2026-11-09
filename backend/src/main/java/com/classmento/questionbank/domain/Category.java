@@ -56,7 +56,7 @@ public class Category {
 
   /** 같은 부모 아래 이름 중복 판단용: 공백 제거 + 소문자. */
   public static String nameKey(String name) {
-    return name == null ? "" : name.replaceAll("\\s+", "").toLowerCase(Locale.ROOT);
+    return name == null ? "" : name.replaceAll("(?U)\\s+", "").toLowerCase(Locale.ROOT);
   }
 
   public void rename(String name) {

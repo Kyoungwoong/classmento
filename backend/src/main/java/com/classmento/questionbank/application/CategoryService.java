@@ -4,8 +4,10 @@ import com.classmento.common.domain.DomainException;
 import com.classmento.common.web.ApiException;
 import com.classmento.questionbank.domain.Category;
 import com.classmento.questionbank.domain.CategoryRepository;
+import com.classmento.questionbank.domain.QuestionSearchRepository;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,15 +20,18 @@ public class CategoryService {
       Comparator.comparingInt(Category::getSortOrder).thenComparing(Category::getId);
 
   private final CategoryRepository categories;
+  private final QuestionSearchRepository questionSearch;
 
-  public CategoryService(CategoryRepository categories) {
+  public CategoryService(CategoryRepository categories, QuestionSearchRepository questionSearch) {
     this.categories = categories;
+    this.questionSearch = questionSearch;
   }
 
-  /** 대분류(정렬순) → 소분류(정렬순). 숨긴 것도 포함한다(관리 화면). */
+  /** 대분류(정렬순) → 소분류(정렬순) + 소분류별 질문 수. 숨긴 것도 포함한다(관리 화면). */
   @Transactional(readOnly = true)
   public List<CategoryNode> tree() {
     List<Category> all = categories.findAll();
+    Map<Long, Long> counts = questionSearch.countByCategory();
     return all.stream()
         .filter(Category::isTop)
         .sorted(ORDER)
@@ -37,7 +42,8 @@ public class CategoryService {
                     all.stream()
                         .filter(c -> Objects.equals(c.getParentId(), top.getId()))
                         .sorted(ORDER)
-                        .toList()))
+                        .toList(),
+                    counts))
         .toList();
   }
 
@@ -87,6 +93,12 @@ public class CategoryService {
     }
   }
 
-  /** 대분류와 그 소분류. */
-  public record CategoryNode(Category top, List<Category> children) {}
+  /** 대분류와 그 소분류. questionCounts: 소분류 ID → 질문 수(없으면 0). */
+  public record CategoryNode(
+      Category top, List<Category> children, Map<Long, Long> questionCounts) {
+
+    public long questionCount(Category sub) {
+      return questionCounts.getOrDefault(sub.getId(), 0L);
+    }
+  }
 }

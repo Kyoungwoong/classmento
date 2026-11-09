@@ -128,4 +128,31 @@ class CategoryAdminApiTest extends IntegrationTest {
         .perform(get("/api/admin/categories").with(user(normal)))
         .andExpect(status().isForbidden());
   }
+
+  private ResultActions patchCategory(long id, String body) throws Exception {
+    return mockMvc.perform(
+        patch("/api/admin/categories/" + id)
+            .with(csrf())
+            .with(user(admin))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(body));
+  }
+
+  @Test
+  void 없는_카테고리_수정은_404_빈_이름은_400() throws Exception {
+    patchCategory(999999, "{\"name\":\"새 이름\"}").andExpect(status().isNotFound());
+    long top = idOf(create("{\"name\":\"모바일\"}"));
+    patchCategory(top, "{\"name\":\"   \"}").andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void 순서를_바꾸면_트리_순서가_바뀐다() throws Exception {
+    long top = idOf(create("{\"name\":\"모바일\"}"));
+    patchCategory(top, "{\"sortOrder\":-1}")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.sortOrder").value(-1));
+    mockMvc
+        .perform(get("/api/admin/categories").with(user(admin)))
+        .andExpect(jsonPath("$[0].name").value("모바일"));
+  }
 }

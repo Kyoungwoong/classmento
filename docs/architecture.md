@@ -19,7 +19,7 @@
 |---|---|---|---|---|
 | `identity` 회원 | `AppUser`, `Email`(값 객체), `AppUserRepository` | `SignupService`, `MemberQueryService`, `AdminSeeder` | `persistence.AppUserJpaRepository`, `security.*`(SecurityConfig, 소셜, UserDetails, `AuthUsers`) | `AuthController`, `AdminController` |
 | `resume` 이력서 | `Resume`(상태 전이), `ResumeExperience`, `ExperienceFactory`, `ParsedResume`, `ResumeFileType`, `TextChunker`, `ResumeRepository`, `ResumeChunkRepository`, `ResumeExperienceRepository` | `ResumeService`, `ResumeProcessor`, `ResumeParser`, `ExperienceSync`, `TextExtractor`(포트) | `ResumeJpaRepository`, `JdbcResumeChunkRepository`·`JdbcResumeExperienceRepository`(pgvector), `PdfDocxTextExtractor`, 실행기 | `ResumeController` |
-| `questionbank` 질문 은행 | `Category`(2단계·숨김), `Tag`, `CategoryRepository`, `TagRepository` (질문은 다음 PR) | `CategoryService`, `TagService` | `CategoryJpaRepository`, `TagJpaRepository`(자동완성 native query) | `AdminCategoryController`, `AdminTagController` |
+| `questionbank` 질문 은행 | `Category`(2단계·숨김), `Tag`, `Question`(소분류만·직무·태그 ID), `QuestionEmbeddingText`, 포트 `CategoryRepository`·`TagRepository`·`QuestionRepository`·`QuestionSearchRepository`·`QuestionEmbeddingRepository` | `CategoryService`, `TagService`, `QuestionService`(임베딩 prepare → 트랜잭션 save), `QuestionEmbeddingBackfill`(기동 시 빈 임베딩 채우기) | `*JpaRepository`, `JdbcQuestionSearchRepository`(필터 조합), `JdbcQuestionEmbeddingRepository`(전역 kNN, HNSW) | `AdminCategoryController`, `AdminTagController`, `AdminQuestionController` |
 | `interview` | (예정, 4유형 ADR 0004) | | | |
 | `evaluation` | (예정) | | | |
 
@@ -92,7 +92,9 @@ spring_session, spring_session_attributes      -- 로그인 세션
 ```
 qb_category(id, parent_id?, name, sort_order, active, seeded)   -- V5, 대분류 → 소분류 2단계, 형제 이름 유니크(공백·대소문자 무시)
 qb_tag(id, name, name_key UNIQUE, seeded)                         -- V5
-qb_question(…, embedding vector(1536) + HNSW)                       -- 예정(PR B)
+qb_question(id, category_id → 소분류, text, level, intent?, active, seeded, created_by?, embedding vector(1536)?)  -- V6, HNSW(전역 kNN)
+qb_question_job_role(question_id, job_role) · qb_question_tag(question_id, tag_id)                                  -- V6
+  임베딩 문장: "대분류 > 소분류 · 질문 · 태그(이름순)". 시드는 비워 두고 기동 시 채운다
 interview_session(id, user_id, mode[TECH|RESUME_TECH|DEEP_DIVE|BEHAVIORAL], resume_id?, config(jsonb), status)
 question(id, session_id, seq, parent_question_id?, depth, text, intent, source)
 answer(id, question_id, audio_key, transcript, duration_ms) / evaluation(..., model, prompt_version)

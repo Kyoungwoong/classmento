@@ -29,6 +29,20 @@ class TagTest {
   }
 
   @Test
+  void 소문자로_바꾸면_길어지는_글자도_키가_20자를_넘지_않게_막는다() {
+    // 'İ'(U+0130)는 Locale.ROOT 소문자로 바꾸면 2글자(i + 결합점)가 된다
+    assertThatThrownBy(() -> Tag.of("İ".repeat(20)))
+        .isInstanceOf(DomainException.class)
+        .extracting(e -> ((DomainException) e).code())
+        .isEqualTo("INVALID_TAG");
+  }
+
+  @Test
+  void 유니코드_공백도_정리한다() {
+    assertThat(Tag.of("Spring 　Boot").getName()).isEqualTo("Spring Boot");
+  }
+
+  @Test
   void 쉼표는_태그_구분자라_이름에_쓸_수_없다() {
     assertThatThrownBy(() -> Tag.of("a,b")).isInstanceOf(DomainException.class);
   }
