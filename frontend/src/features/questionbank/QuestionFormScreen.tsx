@@ -25,9 +25,9 @@ const TEXT_MIN = 5;
 const TEXT_MAX = 300;
 const INTENT_MAX = 200;
 
-type Field = "category" | "text" | "level" | "jobRoles";
+type Field = "top" | "category" | "text" | "level" | "jobRoles";
 type Errors = Partial<Record<Field, string>>;
-const FIELD_ORDER: Field[] = ["category", "text", "level", "jobRoles"];
+const FIELD_ORDER: Field[] = ["top", "category", "text", "level", "jobRoles"];
 
 const suggestTags = (q: string) => api.suggestTags(q);
 const createTag = (name: string) => api.createTag(name).then((r) => r.tag);
@@ -52,6 +52,7 @@ export function QuestionFormScreen({ id }: { id?: number }) {
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState(false);
+  const topRef = useRef<HTMLDivElement>(null);
   const categoryRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
   const levelRef = useRef<HTMLDivElement>(null);
@@ -102,7 +103,8 @@ export function QuestionFormScreen({ id }: { id?: number }) {
   function validate(): Errors {
     const e: Errors = {};
     const len = text.trim().length;
-    if (subId === null) e.category = "소분류를 골라 주세요.";
+    if (topId === null) e.top = "대분류와 소분류를 골라 주세요.";
+    else if (subId === null) e.category = "소분류를 골라 주세요.";
     if (len < TEXT_MIN || len > TEXT_MAX) e.text = "질문은 5~300자로 입력해 주세요.";
     if (level === null) e.level = "난이도를 골라 주세요.";
     if (jobRoles.length === 0) e.jobRoles = "직무를 하나 이상 골라 주세요.";
@@ -116,7 +118,13 @@ export function QuestionFormScreen({ id }: { id?: number }) {
     if (Object.keys(e).length > 0 || subId === null || level === null) {
       // 화면 아래에서 눌렀어도 무엇이 틀렸는지 보이게 첫 번째 칸으로
       const first = FIELD_ORDER.find((k) => e[k]);
-      const refs = { category: categoryRef, text: textRef, level: levelRef, jobRoles: jobRolesRef };
+      const refs = {
+        top: topRef,
+        category: categoryRef,
+        text: textRef,
+        level: levelRef,
+        jobRoles: jobRolesRef,
+      };
       const el = first && refs[first].current;
       el?.scrollIntoView?.({ behavior: "smooth", block: "center" });
       (el?.querySelector<HTMLElement>("button, textarea") ?? el)?.focus?.({ preventScroll: true });
@@ -205,7 +213,7 @@ export function QuestionFormScreen({ id }: { id?: number }) {
       {ready && (
         <div className="flex flex-col gap-8">
           <div className="flex flex-col gap-6">
-            <ChipGroup label="대분류">
+            <ChipGroup ref={topRef} label="대분류" error={errors.top}>
               {tops.map((t) => (
                 <SelectChip
                   key={t.id}
@@ -242,8 +250,13 @@ export function QuestionFormScreen({ id }: { id?: number }) {
           />
 
           <div ref={levelRef}>
-            <SegmentedControl label="난이도" options={LEVELS} value={level} onChange={setLevel} />
-            {errors.level && <p className="mt-2 text-caption text-danger">{errors.level}</p>}
+            <SegmentedControl
+              label="난이도"
+              options={LEVELS}
+              value={level}
+              error={errors.level}
+              onChange={setLevel}
+            />
           </div>
 
           <ChipGroup
