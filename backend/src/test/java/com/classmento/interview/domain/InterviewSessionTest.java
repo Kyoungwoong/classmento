@@ -93,6 +93,34 @@ class InterviewSessionTest {
   }
 
   @Test
+  void 탭이_쓰지_않는_조건은_저장하지_않는다() {
+    Conditions all = new Conditions(InterviewLevel.JUNIOR, JobRole.BACKEND, 5L, 6L, false);
+
+    InterviewSession behavioral =
+        InterviewSession.start(7L, InterviewType.BEHAVIORAL, 3, all, drafts(3));
+    assertThat(behavioral.getResumeId()).isNull();
+    assertThat(behavioral.getExperienceId()).isNull();
+    assertThat(behavioral.getLevel()).isNull();
+
+    InterviewSession techNoNarrow =
+        InterviewSession.start(7L, InterviewType.TECH, 3, all, drafts(3));
+    assertThat(techNoNarrow.getResumeId()).isNull(); // 좁히지 않으면 이력서를 쓰지 않는다
+    assertThat(techNoNarrow.getLevel()).isEqualTo(InterviewLevel.JUNIOR);
+
+    Conditions narrow = new Conditions(InterviewLevel.JUNIOR, JobRole.BACKEND, 5L, 6L, true);
+    InterviewSession techNarrow =
+        InterviewSession.start(7L, InterviewType.TECH, 3, narrow, drafts(3));
+    assertThat(techNarrow.getResumeId()).isEqualTo(5L);
+    assertThat(techNarrow.getExperienceId()).isNull();
+  }
+
+  @Test
+  void 혼합은_이력서로_좁히지_않는다() {
+    Conditions narrow = new Conditions(InterviewLevel.JUNIOR, JobRole.BACKEND, null, null, true);
+    InterviewSession.requireValid(InterviewType.MIXED, 3, narrow); // RESUME_REQUIRED 아님
+  }
+
+  @Test
   void 만든_질문은_은행_번호가_없다() {
     QuestionDraft g =
         QuestionDraft.generated("이 프로젝트에서 Redis를 고른 이유는요?", "선택 근거", QuestionKind.TECH);

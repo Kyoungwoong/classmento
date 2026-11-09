@@ -12,10 +12,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.classmento.common.security.AuthUser;
 import com.classmento.identity.domain.AppUser;
+import com.classmento.resume.domain.Resume;
+import com.classmento.resume.domain.ResumeRepository;
 import com.classmento.support.IntegrationTest;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.ResultActions;
 import tools.jackson.databind.json.JsonMapper;
@@ -119,12 +122,23 @@ class InterviewApiTest extends IntegrationTest {
     create("{\"count\":3}").andExpect(status().isBadRequest());
   }
 
+  @Autowired ResumeRepository resumes;
+
   @Test
-  void 남의_이력서로_좁히면_404() throws Exception {
+  void 남의_이력서로_좁히면_404_쓰지_않는_이력서_번호는_저장하지_않는다() throws Exception {
+    AuthUser other = createUser("other@test.com", AppUser.Role.USER);
+    long theirs = resumes.save(new Resume(other.id(), "r.pdf", "application/pdf", 1, "k")).getId();
+
     create(
             "{\"type\":\"TECH\",\"count\":3,\"level\":\"JUNIOR\",\"jobRole\":\"BACKEND\","
-                + "\"resumeId\":999999,\"narrowByResume\":true}")
+                + "\"resumeId\":%d,\"narrowByResume\":true}".formatted(theirs))
         .andExpect(status().isNotFound());
+    create(
+            "{\"type\":\"BEHAVIORAL\",\"count\":3,\"resumeId\":%d,\"experienceId\":1}"
+                .formatted(theirs))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.resumeId").doesNotExist())
+        .andExpect(jsonPath("$.experienceId").doesNotExist());
   }
 
   @Test

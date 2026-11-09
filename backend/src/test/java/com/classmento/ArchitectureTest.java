@@ -148,7 +148,10 @@ class ArchitectureTest {
   static final ArchRule resume과_questionbank는_interview에_의존하지_않는다 =
       noClasses()
           .that()
-          .resideInAnyPackage("com.classmento.resume..", "com.classmento.questionbank..")
+          .resideInAnyPackage(
+              "com.classmento.identity..",
+              "com.classmento.resume..",
+              "com.classmento.questionbank..")
           .should()
           .dependOnClassesThat()
           .resideInAPackage("com.classmento.interview..");
