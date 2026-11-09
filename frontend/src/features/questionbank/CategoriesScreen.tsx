@@ -111,10 +111,10 @@ export function CategoriesScreen() {
             renameForm(top.id, top.name)
           ) : (
             <div className="flex items-center gap-2">
-              <h2 className="min-w-0 flex-1 truncate text-title2 text-text-strong">
-                {top.name}
-                {!top.active && <span className="ml-2 text-body2 text-text-hint">숨김</span>}
-              </h2>
+              <h2 className="min-w-0 truncate text-title2 text-text-strong">{top.name}</h2>
+              {/* 이름이 길어도 숨김 상태는 잘리지 않게 */}
+              {!top.active && <span className="shrink-0 text-body2 text-text-hint">숨김</span>}
+              <span className="flex-1" />
               <button
                 type="button"
                 aria-label={`${top.name} 이름 바꾸기`}
