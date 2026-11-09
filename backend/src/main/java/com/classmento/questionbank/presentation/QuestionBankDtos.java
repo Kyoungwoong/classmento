@@ -83,8 +83,10 @@ public final class QuestionBankDtos {
           @Size(min = Question.TEXT_MIN, max = Question.TEXT_MAX, message = "질문은 5~300자로 입력해 주세요.")
           String text,
       @NotNull(message = "난이도를 골라 주세요.") Level level,
-      @NotEmpty(message = "직무를 하나 이상 골라 주세요.") Set<JobRole> jobRoles,
-      @Size(max = Question.TAGS_MAX, message = "태그는 10개까지 붙일 수 있어요.") Set<Long> tagIds,
+      @NotEmpty(message = "직무를 하나 이상 골라 주세요.")
+          Set<@NotNull(message = "직무를 다시 골라 주세요.") JobRole> jobRoles,
+      @Size(max = Question.TAGS_MAX, message = "태그는 10개까지 붙일 수 있어요.")
+          Set<@NotNull(message = "태그를 다시 골라 주세요.") Long> tagIds,
       @Size(max = Question.INTENT_MAX, message = "질문 의도는 200자까지예요.") String intent) {
 
     Command toCommand() {
