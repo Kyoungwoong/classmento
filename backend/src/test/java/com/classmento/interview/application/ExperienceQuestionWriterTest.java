@@ -8,6 +8,7 @@ import com.classmento.interview.domain.QuestionKind;
 import com.classmento.llm.LlmClient;
 import com.classmento.llm.LlmRequest;
 import com.classmento.llm.LlmResponse;
+import com.classmento.llm.LlmUnavailableException;
 import com.classmento.llm.PromptLoader;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,7 @@ class ExperienceQuestionWriterTest {
           QuestionDraft.fromBank(13L, "캐시 정합성은 어떻게 지키나요?", "캐시", QuestionKind.TECH));
 
   /** 호출마다 answers를 차례로 돌려주는 가짜 LLM */
-  private static final class ScriptedLlm implements LlmClient {
+  private static class ScriptedLlm implements LlmClient {
     final List<String> answers;
     final List<LlmRequest> calls = new ArrayList<>();
     final boolean available;
@@ -114,5 +115,30 @@ class ExperienceQuestionWriterTest {
     assertThat(BANK_IDS.apply(writer(llm).write(EXP, CANDIDATES, 3)))
         .containsExactly(11L, 12L, 13L);
     assertThat(llm.calls).isEmpty();
+  }
+
+  @Test
+  void 응답이_null이거나_항목이_null이어도_후보로_채운다() {
+    ScriptedLlm llm = new ScriptedLlm(true, "[null, {\"question\":\"이벤트 순서가 바뀌면 어떻게 하셨나요?\"}]");
+    List<QuestionDraft> drafts = writer(llm).write(EXP, CANDIDATES, 2);
+    assertThat(drafts.get(0).text()).isEqualTo("이벤트 순서가 바뀌면 어떻게 하셨나요?");
+    assertThat(BANK_IDS.apply(drafts)).containsExactly(null, 11L);
+
+    ScriptedLlm nothing = new ScriptedLlm(true, "null");
+    assertThat(BANK_IDS.apply(writer(nothing).write(EXP, CANDIDATES, 2))).containsExactly(11L, 12L);
+  }
+
+  @Test
+  void AI_호출이_실패하면_다시_부르지_않고_후보로_대신한다() {
+    ScriptedLlm failing =
+        new ScriptedLlm(true, "[]") {
+          @Override
+          public LlmResponse generate(LlmRequest request) {
+            calls.add(request);
+            throw new LlmUnavailableException("timeout", null);
+          }
+        };
+    assertThat(BANK_IDS.apply(writer(failing).write(EXP, CANDIDATES, 2))).containsExactly(11L, 12L);
+    assertThat(failing.calls).hasSize(1);
   }
 }
