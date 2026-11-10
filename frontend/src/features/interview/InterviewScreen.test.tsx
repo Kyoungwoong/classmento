@@ -338,3 +338,100 @@ describe("InterviewScreen 꼬리질문", () => {
     expect(await screen.findByRole("heading", { name: "꼬리질문이에요" })).toBeInTheDocument();
   });
 });
+
+describe("InterviewScreen 꼬리질문 끝내기·실패", () => {
+  it("끝내기가 꼬리를 고르는 중이라 거절되면 기다렸다가 다시 끝낸다", async () => {
+    vi.spyOn(api, "interview").mockResolvedValue(
+      withFollowUps([
+        { seq: 1, text: "질문 1번이에요", followUp: "CLOSED", answerStatus: "EVALUATED" },
+        { seq: 2, text: "질문 2번이에요", followUp: "NONE" },
+      ]),
+    );
+    vi.spyOn(api, "uploadAnswer").mockResolvedValue({ seq: 2, status: "UPLOADED" });
+    const finish = vi
+      .spyOn(api, "finishInterview")
+      .mockRejectedValueOnce(new ApiError(409, "FOLLOW_UP_PENDING", "고르는 중"))
+      .mockResolvedValueOnce(interview([1, 2, 3]));
+    Object.assign(recorder, { state: "recorded", blob: new Blob(["v"]), url: "blob:x" });
+    render(<InterviewScreen id={7} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "면접 끝내기" }));
+
+    expect(await screen.findByText("다음 질문을 고르고 있어요")).toBeInTheDocument();
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/interview/7/report"), {
+      timeout: 4000,
+    });
+    expect(finish).toHaveBeenCalledTimes(2);
+  });
+
+  it("끝내려는데 그 사이 꼬리가 붙었으면 그 꼬리로 간다", async () => {
+    const before = withFollowUps([
+      { seq: 1, text: "질문 1번이에요", followUp: "CLOSED", answerStatus: "EVALUATED" },
+      { seq: 2, text: "질문 2번이에요", followUp: "NONE" },
+    ]);
+    const after = withFollowUps([
+      { seq: 1, text: "질문 1번이에요", followUp: "ASKED", answerStatus: "EVALUATED" },
+      { seq: 3, text: "늦게 붙은 꼬리예요", parentSeq: 1, depth: 1, followUp: "NONE" },
+      { seq: 2, text: "질문 2번이에요", followUp: "NONE", answerStatus: "UPLOADED" },
+    ]);
+    vi.spyOn(api, "interview").mockResolvedValueOnce(before).mockResolvedValue(after);
+    vi.spyOn(api, "uploadAnswer").mockResolvedValue({ seq: 2, status: "UPLOADED" });
+    vi.spyOn(api, "finishInterview").mockRejectedValueOnce(
+      new ApiError(409, "NOT_ALL_ANSWERED", "모든 질문에 답해 주세요"),
+    );
+    Object.assign(recorder, { state: "recorded", blob: new Blob(["v"]), url: "blob:x" });
+    render(<InterviewScreen id={7} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "면접 끝내기" }));
+
+    expect(await screen.findByRole("heading", { name: "늦게 붙은 꼬리예요" })).toBeInTheDocument();
+  });
+
+  it("다시 평가가 실패하면 원인을 알린다", async () => {
+    vi.spyOn(api, "interview").mockResolvedValue(
+      withFollowUps([
+        {
+          seq: 1,
+          text: "질문 1번이에요",
+          followUp: "ASKED",
+          answerStatus: "FAILED",
+          retryable: true,
+        },
+      ]),
+    );
+    vi.spyOn(api, "retryAnswer").mockRejectedValue(
+      new ApiError(409, "NOT_FAILED", "이미 다시 처리하고 있어요."),
+    );
+    render(<InterviewScreen id={7} />);
+    fireEvent.click(await screen.findByRole("button", { name: "다시 평가하기" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("이미 다시 처리하고 있어요.");
+  });
+
+  it("꼬리가 붙지 않은 답은 평가 실패여도 다시 녹음할 수 있다", async () => {
+    vi.spyOn(api, "interview").mockResolvedValue(
+      withFollowUps([
+        {
+          seq: 1,
+          text: "질문 1번이에요",
+          followUp: "CLOSED",
+          answerStatus: "FAILED",
+          retryable: true,
+        },
+      ]),
+    );
+    render(<InterviewScreen id={7} />);
+    fireEvent.click(await screen.findByRole("button", { name: "다시 녹음" }));
+    expect(recorder.start).toHaveBeenCalled();
+  });
+
+  it("올리기가 서버에서 거절되면 그 이유를 보여 준다", async () => {
+    vi.spyOn(api, "interview").mockResolvedValue(interview());
+    vi.spyOn(api, "uploadAnswer").mockRejectedValue(
+      new ApiError(409, "FOLLOW_UP_ASKED", "이 답변을 바탕으로 꼬리질문을 이미 했어요."),
+    );
+    Object.assign(recorder, { state: "recorded", blob: new Blob(["v"]), url: "blob:x" });
+    render(<InterviewScreen id={7} />);
+    fireEvent.click(await screen.findByRole("button", { name: "다음 질문" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("꼬리질문을 이미 했어요");
+  });
+});
