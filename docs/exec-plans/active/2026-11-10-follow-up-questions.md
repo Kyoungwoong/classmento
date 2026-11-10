@@ -1,6 +1,6 @@
 # 꼬리질문 — 답을 듣고 AI가 한 번 더 파고들기
 
-진행: [x] F1 도메인·DB · [x] F2 생성 · [ ] F3 API·계약 · [ ] F4 화면
+진행: [x] F1 도메인·DB · [x] F2 생성 · [x] F3 API·계약 · [ ] F4 화면
 
 ADR: [0008](../../adr/0008-follow-up-questions.md)
 

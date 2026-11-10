@@ -14,6 +14,7 @@ const created: InterviewView = {
   id: 9,
   type: "TECH",
   status: "IN_PROGRESS",
+  maxFollowUps: 0,
   questions: [],
   createdAt: "2026-11-09T00:00:00Z",
 };

@@ -16,6 +16,7 @@ const view: ReportView = {
   items: [
     {
       seq: 2,
+      depth: 0,
       question: "팀원과 의견이 달랐던 경험을 말해 주세요.",
       intent: "갈등 조정",
       kind: "BEHAVIORAL",
@@ -98,6 +99,7 @@ describe("ReportItemScreen", () => {
       items: [
         {
           seq: 3,
+          depth: 0,
           question: "마지막 질문이에요.",
           kind: "BEHAVIORAL",
           answerStatus: null as never,

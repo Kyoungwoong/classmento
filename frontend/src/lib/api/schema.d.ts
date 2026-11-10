@@ -501,6 +501,11 @@ export interface components {
             /** Format: int64 */
             experienceId?: number;
             narrowByResume?: boolean;
+            /**
+             * Format: int32
+             * @description 질문 하나에 붙일 꼬리질문 최대 수(0~2, 없으면 0). 인성 면접은 0만
+             */
+            followUps?: number;
         };
         InterviewQuestionView: {
             /** Format: int32 */
@@ -511,6 +516,13 @@ export interface components {
             /** @enum {string} */
             answerStatus?: "UPLOADED" | "TRANSCRIBED" | "EVALUATED" | "FAILED";
             failureReason?: string;
+            /** Format: int32 */
+            parentSeq?: number;
+            /** Format: int32 */
+            depth: number;
+            /** @enum {string} */
+            followUp: "NONE" | "AWAITING" | "ASKED" | "CLOSED";
+            retryable: boolean;
         };
         InterviewView: {
             /** Format: int64 */
@@ -527,6 +539,8 @@ export interface components {
             resumeId?: number;
             /** Format: int64 */
             experienceId?: number;
+            /** Format: int32 */
+            maxFollowUps: number;
             questions: components["schemas"]["InterviewQuestionView"][];
             /** Format: date-time */
             createdAt: string;
@@ -638,6 +652,10 @@ export interface components {
         ReportItemView: {
             /** Format: int32 */
             seq: number;
+            /** Format: int32 */
+            parentSeq?: number;
+            /** Format: int32 */
+            depth: number;
             question: string;
             intent?: string;
             /** @enum {string} */
