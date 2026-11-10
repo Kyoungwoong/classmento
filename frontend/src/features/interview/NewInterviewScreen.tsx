@@ -8,7 +8,6 @@ import {
   Button,
   ChipGroup,
   ChoiceRow,
-  Panel,
   ProgressBar,
   Screen,
   ScreenTitle,
@@ -17,6 +16,7 @@ import {
   Toggle,
   TopBar,
 } from "@/components/ui";
+import { HandNote, NoteSheet } from "@/components/note";
 import { ExperienceBanner } from "@/features/resume/ExperienceBanner";
 import { JOB_ROLES, LEVELS } from "@/features/questionbank/labels";
 import { StepProgress, type ProgressStep } from "./StepProgress";
@@ -193,15 +193,20 @@ export function NewInterviewScreen() {
         <ProgressBar value={progress} label="면접 만들기 진행도" />
       </div>
       <div className="hidden md:block">
-        <p className="mb-2 text-caption font-semibold text-accent">새 면접</p>
-        <p className="text-title2 text-text-strong">몇 가지만 고르면 바로 시작해요</p>
-        <Panel className="mt-6">
-          <StepProgress
-            label="면접 만들기 단계"
-            steps={steps.map((k) => stepInfo[k])}
-            current={steps.indexOf(step)}
-          />
-        </Panel>
+        {/* 노트 첫 장에 적는 면접 계획: 지금 단계가 연한 연두 행 */}
+        <NoteSheet>
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-caption font-semibold text-text-sub">면접 계획</p>
+            <HandNote className="-rotate-2">금방 끝나요</HandNote>
+          </div>
+          <div className="mt-3 -ml-4">
+            <StepProgress
+              label="면접 만들기 단계"
+              steps={steps.map((k) => stepInfo[k])}
+              current={steps.indexOf(step)}
+            />
+          </div>
+        </NoteSheet>
       </div>
     </>
   );
