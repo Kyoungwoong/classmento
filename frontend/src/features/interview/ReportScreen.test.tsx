@@ -217,6 +217,8 @@ describe("ReportScreen 마스코트", () => {
     const { container, unmount } = render(<ReportScreen id={7} />);
     await screen.findByRole("heading", { name: "면접이 끝났어요" });
     expect(container.querySelector("[data-mood]")).toHaveAttribute("data-mood", "happy");
+    // 채점된 답안지: 종합 점수는 도장
+    expect(screen.getByRole("img", { name: /^종합 \d\.\d점, 5점 만점$/ })).toBeInTheDocument();
     unmount();
 
     vi.spyOn(api, "interviewReport").mockResolvedValue(report({ status: "EVALUATING" }));

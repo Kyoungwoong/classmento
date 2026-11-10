@@ -240,7 +240,7 @@ describe("InterviewScreen", () => {
 });
 
 describe("InterviewScreen 마스코트", () => {
-  it("녹음 중이면 듣는 표정, 기다릴 때는 대기 표정", async () => {
+  it("녹음 중이면 듣는 표정, 기다릴 때는 마스코트 없이 마이크 안내", async () => {
     vi.spyOn(api, "interview").mockResolvedValue(interview());
     Object.assign(recorder, { state: "recording", elapsed: 5 });
     const { container, rerender } = render(<InterviewScreen id={7} />);
@@ -249,6 +249,8 @@ describe("InterviewScreen 마스코트", () => {
 
     Object.assign(recorder, { state: "idle", elapsed: 0 });
     rerender(<InterviewScreen id={7} />);
-    expect(container.querySelector("[data-mood]")).toHaveAttribute("data-mood", "idle");
+    // 대기(idle)는 마스코트를 쓰지 않는 상태(design-system 원칙 7)
+    expect(container.querySelector("[data-mood]")).toBeNull();
+    expect(screen.getByText("준비되면 답변을 시작해요. 결론부터 말해 보세요.")).toBeInTheDocument();
   });
 });
