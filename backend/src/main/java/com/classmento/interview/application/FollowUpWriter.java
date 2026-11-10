@@ -8,18 +8,20 @@ import com.classmento.interview.domain.QuestionKind;
 import com.classmento.llm.LlmClient;
 import com.classmento.llm.LlmRequest;
 import com.classmento.llm.PromptLoader;
+import jakarta.annotation.PreDestroy;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -41,32 +43,58 @@ public class FollowUpWriter {
   private static final int TEXT_MIN = 5;
   private static final int TEXT_MAX = 300;
   private static final int INTENT_MAX = 200;
-  private static final Logger log = LoggerFactory.getLogger(FollowUpWriter.class);
 
-  /** 시간 제한을 걸기 위해 LLM 호출만 따로 돌리는 스레드(늦은 호출은 버린다). */
-  private static final ExecutorService CALLS =
-      Executors.newCachedThreadPool(
-          r -> {
-            Thread t = new Thread(r, "follow-up-llm");
-            t.setDaemon(true);
-            return t;
-          });
+  /** 근거 최소 길이(공백 정리 뒤). "캐시"처럼 짧으면 어느 답에나 들어 있어 근거가 되지 못한다. */
+  static final int BASIS_MIN = 6;
+
+  private static final Logger log = LoggerFactory.getLogger(FollowUpWriter.class);
 
   private final LlmClient llm;
   private final PromptLoader prompts;
   private final ObjectMapper json;
   private final Duration timeout;
 
+  /**
+   * 시간 제한을 걸기 위해 LLM 호출만 따로 돌리는 스레드. 크기를 묶어 둔다: 제한 시간이 지난 호출은 결과를 버리지만 HTTP는 클라이언트 타임아웃까지 스레드를
+   * 잡으므로, AI가 느려져도 스레드·동시 호출이 끝없이 늘지 않게(넘치면 꼬리 없이 넘어간다).
+   */
+  private final ExecutorService calls;
+
   @Autowired
   public FollowUpWriter(
-      LlmClient llm,
-      PromptLoader prompts,
-      ObjectMapper json,
-      @Value("${classmento.interview.follow-up-timeout:5s}") Duration timeout) {
+      LlmClient llm, PromptLoader prompts, ObjectMapper json, InterviewProperties props) {
+    this(llm, prompts, json, props.followUpTimeout(), props.followUpConcurrency());
+  }
+
+  FollowUpWriter(LlmClient llm, PromptLoader prompts, ObjectMapper json, Duration timeout) {
+    this(llm, prompts, json, timeout, 4);
+  }
+
+  private FollowUpWriter(
+      LlmClient llm, PromptLoader prompts, ObjectMapper json, Duration timeout, int concurrency) {
     this.llm = llm;
     this.prompts = prompts;
     this.json = json;
     this.timeout = timeout;
+    this.calls =
+        new ThreadPoolExecutor(
+            concurrency,
+            concurrency,
+            30,
+            TimeUnit.SECONDS,
+            new SynchronousQueue<>(),
+            r -> {
+              Thread t = new Thread(r, "follow-up-llm");
+              t.setDaemon(true);
+              return t;
+            },
+            new ThreadPoolExecutor.AbortPolicy());
+    ((ThreadPoolExecutor) this.calls).allowCoreThreadTimeOut(true);
+  }
+
+  @PreDestroy
+  void shutdown() {
+    calls.shutdownNow();
   }
 
   /**
@@ -79,8 +107,13 @@ public class FollowUpWriter {
     }
     LlmRequest request = new LlmRequest(PROMPT, prompts.load(PROMPT), message(ctx, chain));
     String text;
-    CompletableFuture<String> call =
-        CompletableFuture.supplyAsync(() -> llm.generate(request).text(), CALLS);
+    CompletableFuture<String> call;
+    try {
+      call = CompletableFuture.supplyAsync(() -> llm.generate(request).text(), calls);
+    } catch (RejectedExecutionException e) {
+      log.warn("꼬리질문 AI 호출이 몰려 건너뜀");
+      return Optional.empty();
+    }
     try {
       text = call.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
     } catch (TimeoutException e) {
@@ -110,7 +143,7 @@ public class FollowUpWriter {
     }
     String lastAnswer = normalize(chain.get(chain.size() - 1).answer());
     String basis = normalize(it.basis());
-    if (basis.isEmpty() || !lastAnswer.contains(basis)) {
+    if (basis.length() < BASIS_MIN || !lastAnswer.contains(basis)) {
       return Optional.empty();
     }
     String q = it.question() == null ? "" : it.question().strip();

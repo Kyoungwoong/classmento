@@ -162,18 +162,22 @@ public class AnswerService {
    * 진행 화면이 면접을 다시 불러올 때: 답은 있는데 꼬리질문을 아직 정하지 못한 질문이 있으면(생성 중이거나 중간에 끊김) 다시 정하게 한다. 세션마다 하나만 돌고, 이미
    * 정하는 중인 답은 건너뛴다.
    */
-  public List<Answer> answersForProgress(InterviewSession s) {
+  public Progress progress(InterviewSession s) {
     List<Answer> list = answersOf(s.getId());
     if (s.getStatus() == SessionStatus.IN_PROGRESS && s.getMaxFollowUps() > 0) {
       Map<Integer, AnswerStatus> statuses = new HashMap<>();
       list.forEach(a -> statuses.put(a.getSeq(), a.getStatus()));
       if (!s.awaitingFollowUps(statuses).isEmpty()) {
         followUps.request(s.getId());
-        return answersOf(s.getId());
+        // 복구가 바로 끝났으면(동기 실행) 새 꼬리를 보여 준다. 비동기면 다음 폴링에서 보인다
+        return new Progress(sessions.findById(s.getId()).orElse(s), answersOf(s.getId()));
       }
     }
-    return list;
+    return new Progress(s, list);
   }
+
+  /** 진행 화면에 보여 줄 면접과 답변. */
+  public record Progress(InterviewSession session, List<Answer> answers) {}
 
   private void start(Answer a) {
     Long id = a.getId();

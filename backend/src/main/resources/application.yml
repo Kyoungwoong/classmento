@@ -71,8 +71,11 @@ classmento:
     # true면 업로드 요청 안에서 바로 처리(테스트용). 기본은 백그라운드 스레드.
     sync-processing: false
   interview:
-    # true면 답변 STT·평가를 업로드 요청 안에서 바로 처리(테스트용).
+    # true면 답변 STT·꼬리질문·평가를 업로드 요청 안에서 바로 처리(테스트용).
     sync-processing: false
+    # 꼬리질문 AI 호출 제한 시간(다음 질문까지 8초 목표, ADR 0008)과 동시 호출 상한
+    follow-up-timeout: 5s
+    follow-up-concurrency: 8
   social:
     google-client-id: ${GOOGLE_CLIENT_ID:}
     google-client-secret: ${GOOGLE_CLIENT_SECRET:}

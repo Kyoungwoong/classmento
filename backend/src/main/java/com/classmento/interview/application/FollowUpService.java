@@ -42,8 +42,10 @@ public class FollowUpService {
   /** 공백을 뺀 글자 수가 이보다 적으면 더 파고들 거리가 없다고 본다. */
   static final int SHORT_ANSWER = 30;
 
-  /** 이보다 짧은 답에서만 "모르겠습니다"류를 포기로 본다(긴 답 속 "처음엔 모르겠어서…"는 제외). */
-  private static final int GIVE_UP_WITHIN = 80;
+  /**
+   * 이보다 짧은 답에서만 "모르겠습니다"류를 포기로 본다. "Redis는 써 봤는데 Kafka는 모르겠습니다"처럼 파고들 거리가 있는 답은 AI가 판단하게 짧게 잡는다.
+   */
+  private static final int GIVE_UP_WITHIN = 40;
 
   private static final Pattern GIVE_UP = Pattern.compile("모르겠|모릅니다|기억이안나|생각이안나");
   private static final Logger log = LoggerFactory.getLogger(FollowUpService.class);
@@ -73,11 +75,20 @@ public class FollowUpService {
       return;
     }
     long started = System.nanoTime();
+    // 잠그기 전에 답변 엔티티를 저장 트랜잭션에 올리지 않도록 세션 번호는 밖에서 미리 읽어 둔다(아래 store 참고)
+    Long sessionId = answers.findById(answerId).map(Answer::getSessionId).orElse(null);
     try {
-      run(answerId, version);
+      if (sessionId != null) {
+        run(answerId, version);
+      }
     } catch (RuntimeException e) {
       log.warn("답변 {} 꼬리질문 판단 실패, 닫음: {}", answerId, e.getClass().getSimpleName());
-      store(answerId, version, Optional.empty());
+      try {
+        store(sessionId, answerId, version, Optional.empty());
+      } catch (RuntimeException again) {
+        // 닫기도 못 했으면 AWAITING으로 남는다 → 진행 화면 조회·끝내기 거절 때 복구가 다시 정한다
+        log.warn("답변 {} 꼬리질문 닫기도 실패: {}", answerId, again.getClass().getSimpleName());
+      }
     } finally {
       deciding.remove(answerId);
       log.info("답변 {} 꼬리질문 판단 {}ms", answerId, (System.nanoTime() - started) / 1_000_000);
@@ -116,7 +127,7 @@ public class FollowUpService {
       return;
     }
     if (isShort(answer.getTranscript())) {
-      store(answerId, version, Optional.empty());
+      store(s.getId(), answerId, version, Optional.empty());
       return;
     }
     Optional<QuestionDraft> draft =
@@ -124,7 +135,7 @@ public class FollowUpService {
             new Context(
                 s.getType(), s.getJobRole(), s.getLevel(), s.getMaxFollowUps() - q.getDepth()),
             chain(s, q, answer));
-    store(answerId, version, draft);
+    store(s.getId(), answerId, version, draft);
   }
 
   /** 본 질문부터 이 질문까지(질문·의도·답). 마지막 턴이 방금 받은 답이다. */
@@ -144,15 +155,20 @@ public class FollowUpService {
     return List.copyOf(turns);
   }
 
-  /** 잠그고 다시 확인한 뒤 꼬리를 붙이거나(draft 있음) 닫는다. 그 사이 다시 녹음했거나 이미 정했으면 버린다. */
-  private void store(Long answerId, int version, Optional<QuestionDraft> draft) {
+  /**
+   * 잠그고 다시 확인한 뒤 꼬리를 붙이거나(draft 있음) 닫는다. 그 사이 다시 녹음했거나 이미 정했으면 버린다.
+   *
+   * <p>주의: 이 트랜잭션에서는 잠그기 전에 세션·답변을 읽지 않는다. 먼저 읽으면 영속성 컨텍스트에 올라간 옛 상태를 {@code lockById}가 그대로 돌려줘(행은
+   * 잠그지만 다시 읽지 않음) 그 사이 다시 녹음한 것을 놓친다. 그래서 세션 번호를 밖에서 받는다. 답변 처리는 실행기 스레드에서 돌아 요청의 영속성 컨텍스트(OSIV)와도
+   * 섞이지 않는다.
+   */
+  private void store(Long sessionId, Long answerId, int version, Optional<QuestionDraft> draft) {
+    if (sessionId == null) {
+      return;
+    }
     tx.executeWithoutResult(
         t -> {
-          Answer peek = answers.findById(answerId).orElse(null);
-          if (peek == null) {
-            return;
-          }
-          InterviewSession s = sessions.lockById(peek.getSessionId()).orElse(null);
+          InterviewSession s = sessions.lockById(sessionId).orElse(null);
           Answer a = answers.lockById(answerId).orElse(null);
           if (s == null
               || a == null

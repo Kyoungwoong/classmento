@@ -1,6 +1,6 @@
 package com.classmento.interview.infrastructure;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.classmento.interview.application.InterviewProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SyncTaskExecutor;
@@ -20,15 +20,13 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 public class InterviewExecutorConfig {
 
   @Bean
-  TaskExecutor answerFastExecutor(
-      @Value("${classmento.interview.sync-processing:false}") boolean sync) {
-    return sync ? new SyncTaskExecutor() : pool("answer-", 4, 8, 50);
+  TaskExecutor answerFastExecutor(InterviewProperties props) {
+    return props.syncProcessing() ? new SyncTaskExecutor() : pool("answer-", 4, 8, 50);
   }
 
   @Bean
-  TaskExecutor interviewExecutor(
-      @Value("${classmento.interview.sync-processing:false}") boolean sync) {
-    return sync ? new SyncTaskExecutor() : pool("interview-", 2, 4, 200);
+  TaskExecutor interviewExecutor(InterviewProperties props) {
+    return props.syncProcessing() ? new SyncTaskExecutor() : pool("interview-", 2, 4, 200);
   }
 
   private static TaskExecutor pool(String prefix, int core, int max, int queue) {
