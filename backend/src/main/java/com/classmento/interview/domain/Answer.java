@@ -236,6 +236,11 @@ public class Answer {
     return status;
   }
 
+  /** 실패했지만 글자는 있어 다시 녹음하지 않고 평가만 다시 하면 되는지({@link #retry()}가 글자부터 이어 간다). */
+  public boolean isEvaluationRetryable() {
+    return status == AnswerStatus.FAILED && transcript != null && !transcript.isBlank();
+  }
+
   public String getTranscript() {
     return transcript;
   }

@@ -67,11 +67,7 @@ public final class InterviewDtos {
       boolean retryable) {
 
     static InterviewQuestionView of(InterviewQuestion q, Answer a) {
-      boolean retryable =
-          a != null
-              && a.getStatus() == AnswerStatus.FAILED
-              && a.getTranscript() != null
-              && !a.getTranscript().isBlank();
+      boolean retryable = a != null && a.isEvaluationRetryable();
       return new InterviewQuestionView(
           q.getSeq(),
           q.getText(),

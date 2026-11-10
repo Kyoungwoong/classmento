@@ -60,11 +60,13 @@ class InterviewFollowUpApiTest extends IntegrationTest {
   }
 
   private ResultActions answer(long id, int seq) throws Exception {
-    return mockMvc.perform(
-        multipart("/api/interviews/" + id + "/questions/" + seq + "/answer")
-            .file(new MockMultipartFile("audio", "a.webm", "audio/webm", "webm".getBytes()))
-            .with(csrf())
-            .with(user(me)));
+    return mockMvc
+        .perform(
+            multipart("/api/interviews/" + id + "/questions/" + seq + "/answer")
+                .file(new MockMultipartFile("audio", "a.webm", "audio/webm", "webm".getBytes()))
+                .with(csrf())
+                .with(user(me)))
+        .andExpect(status().isAccepted());
   }
 
   @Test
@@ -81,15 +83,10 @@ class InterviewFollowUpApiTest extends IntegrationTest {
 
   @Test
   void 옵션을_빼면_꼬리_없이_만든다() throws Exception {
-    String res =
-        create("{\"type\":\"TECH\",\"count\":3,\"level\":\"JUNIOR\",\"jobRole\":\"BACKEND\"}")
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.maxFollowUps").value(0))
-            .andExpect(jsonPath("$.questions[0].followUp").value("NONE"))
-            .andReturn()
-            .getResponse()
-            .getContentAsString();
-    json.readTree(res);
+    create("{\"type\":\"TECH\",\"count\":3,\"level\":\"JUNIOR\",\"jobRole\":\"BACKEND\"}")
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.maxFollowUps").value(0))
+        .andExpect(jsonPath("$.questions[0].followUp").value("NONE"));
   }
 
   @Test
@@ -99,6 +96,10 @@ class InterviewFollowUpApiTest extends IntegrationTest {
         .andExpect(jsonPath("$.code").value("FOLLOW_UPS_NOT_ALLOWED"));
     create(
             "{\"type\":\"TECH\",\"count\":3,\"level\":\"JUNIOR\",\"jobRole\":\"BACKEND\",\"followUps\":3}")
+        .andExpect(status().isConflict())
+        .andExpect(jsonPath("$.code").value("INVALID_FOLLOW_UPS"));
+    create(
+            "{\"type\":\"TECH\",\"count\":3,\"level\":\"JUNIOR\",\"jobRole\":\"BACKEND\",\"followUps\":-1}")
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.code").value("INVALID_FOLLOW_UPS"));
   }
