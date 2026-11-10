@@ -12,7 +12,7 @@ import {
   ScreenTitle,
   TopBar,
 } from "@/components/ui";
-import { NoteSheet, Stamp, StickyNote } from "@/components/note";
+import { NoteSheet, StickyNote } from "@/components/note";
 import { Mascot } from "@/components/site/Mascot";
 import { api, ApiError, type ReportItemView } from "@/lib/api/client";
 import { criterionLabel } from "./labels";
@@ -120,10 +120,18 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
       <div className="flex flex-col gap-6">
         {item.scores.length > 0 && (
           <Panel>
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-baseline justify-between gap-4">
               <h2 className="text-body1 font-semibold text-text-strong">기준별 점수</h2>
               {evaluated && item.overall != null && (
-                <Stamp score={item.overall} label="이 문항" size="md" className="-mt-2" />
+                <p
+                  aria-label={`이 문항 ${item.overall.toFixed(1)}점, 5점 만점`}
+                  className="flex items-baseline gap-1"
+                >
+                  <span className="text-display text-text-strong tabular-nums">
+                    {item.overall.toFixed(1)}
+                  </span>
+                  <span className="text-body2 text-text-sub">/ 5</span>
+                </p>
               )}
             </div>
             <ul className="mt-5 flex flex-col gap-5">
