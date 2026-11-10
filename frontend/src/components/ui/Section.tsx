@@ -19,6 +19,8 @@ interface SectionProps {
   /** 띠 제목(`SectionHeading id`)으로 섹션 이름을 붙일 때 */
   "aria-labelledby"?: string;
   id?: string;
+  /** 위아래 여백을 줄인다(리포트 머리처럼 작업 화면 맨 위 띠) */
+  compact?: boolean;
 }
 
 /**
@@ -26,9 +28,18 @@ interface SectionProps {
  * 한 페이지에서 같은 톤 띠를 연달아 두지 않는다(plain → tint → plain …).
  * tint 띠 안에는 `Panel tone="tint"`를 두지 않는다(면이 사라진다).
  */
-export function Section({ tone = "plain", children, className, ...rest }: SectionProps) {
+export function Section({
+  tone = "plain",
+  compact = false,
+  children,
+  className,
+  ...rest
+}: SectionProps) {
   return (
-    <section className={clsx(toneClass[tone], "py-14 md:py-24", className)} {...rest}>
+    <section
+      className={clsx(toneClass[tone], compact ? "py-10 md:py-14" : "py-14 md:py-24", className)}
+      {...rest}
+    >
       <div className="mx-auto w-full max-w-site px-5 md:px-8">{children}</div>
     </section>
   );

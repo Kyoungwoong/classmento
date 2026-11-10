@@ -16,8 +16,10 @@ import {
   Toggle,
   TopBar,
 } from "@/components/ui";
+import { HandNote, NoteSheet } from "@/components/note";
 import { ExperienceBanner } from "@/features/resume/ExperienceBanner";
 import { JOB_ROLES, LEVELS } from "@/features/questionbank/labels";
+import { StepProgress, type ProgressStep } from "./StepProgress";
 import {
   api,
   ApiError,
@@ -173,6 +175,41 @@ export function NewInterviewScreen() {
   // 인성은 조건 단계가 없다
   const steps: Step[] = type === "BEHAVIORAL" ? ["type", "count"] : ["type", "conditions", "count"];
   const progress = (steps.indexOf(step) + 1) / steps.length;
+  const chosen = TYPES.find((t) => t.value === type);
+  const stepInfo: Record<Step, ProgressStep> = {
+    type: { key: "type", label: "면접 종류", hint: chosen?.title ?? "네 가지 중에서 골라요" },
+    conditions: {
+      key: "conditions",
+      label: "조건",
+      hint: type === "EXPERIENCE" ? "경험 하나 고르기" : "직무와 연차",
+    },
+    count: { key: "count", label: "질문 수", hint: "3·5·7개 중에서" },
+  };
+
+  // 모바일: 위 진행 막대 / 데스크톱: 왼쪽 단계 목록
+  const aside = (
+    <>
+      <div className="md:hidden">
+        <ProgressBar value={progress} label="면접 만들기 진행도" />
+      </div>
+      <div className="hidden md:block">
+        {/* 노트 첫 장에 적는 면접 계획: 지금 단계가 연한 연두 행 */}
+        <NoteSheet>
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="text-caption font-semibold text-text-sub">면접 계획</p>
+            <HandNote className="-rotate-2">금방 끝나요</HandNote>
+          </div>
+          <div className="mt-3 -ml-4">
+            <StepProgress
+              label="면접 만들기 단계"
+              steps={steps.map((k) => stepInfo[k])}
+              current={steps.indexOf(step)}
+            />
+          </div>
+        </NoteSheet>
+      </div>
+    </>
+  );
 
   const cta =
     step === "count" ? (
@@ -192,10 +229,12 @@ export function NewInterviewScreen() {
     );
 
   return (
-    <Screen header={<TopBar onBack={goBack} />} cta={<BottomCTA>{cta}</BottomCTA>}>
-      <div className="mb-6">
-        <ProgressBar value={progress} label="면접 만들기 진행도" />
-      </div>
+    <Screen
+      header={<TopBar onBack={goBack} />}
+      aside={aside}
+      stickyAside
+      cta={<BottomCTA>{cta}</BottomCTA>}
+    >
       {step === "type" && (
         <>
           <ScreenTitle title="어떤 면접을 볼까요?" description="질문은 모두 말로 답해요." />

@@ -46,7 +46,14 @@ describe("ReportItemScreen", () => {
       "src",
       "/api/interviews/7/questions/2/audio",
     );
-    expect(screen.getByText("그때 저는 먼저 서로의 기준을 정리했습니다.")).toBeInTheDocument();
+    const transcript = screen.getByText(
+      (_, el) =>
+        el?.tagName === "P" && el.textContent === "그때 저는 먼저 서로의 기준을 정리했습니다.",
+    );
+    // 채점 근거로 인용된 부분은 답변 안에서 형광펜으로 표시한다
+    expect(transcript.querySelector("mark")).toHaveTextContent("서로의 기준을 정리했습니다");
+    // 문항 점수는 큰 숫자(도장은 리포트 종합에만)
+    expect(screen.getByText("이 문항 3.3점, 5점 만점")).toHaveClass("sr-only");
     expect(screen.getByRole("progressbar", { name: "구체성 4점" })).toBeInTheDocument();
     expect(screen.getByText("“서로의 기준을 정리했습니다”")).toBeInTheDocument();
     expect(screen.getByText("상황을 구체적으로 말했어요.")).toBeInTheDocument();
