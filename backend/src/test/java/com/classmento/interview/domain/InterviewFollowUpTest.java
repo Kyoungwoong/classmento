@@ -146,12 +146,24 @@ class InterviewFollowUpTest {
                         1, QuestionDraft.generated("협업은요?", null, QuestionKind.BEHAVIORAL))))
         .isEqualTo("INVALID_FOLLOW_UP");
     assertThat(code(() -> s.addFollowUp(1, follow("  질문   2 ")))).isEqualTo("DUPLICATE_QUESTION");
+    assertThat(code(() -> s.addFollowUp(1, follow("가".repeat(301)))))
+        .isEqualTo("INVALID_FOLLOW_UP");
+    assertThat(
+            code(
+                () ->
+                    s.addFollowUp(
+                        1,
+                        QuestionDraft.generated(
+                            "의도가 긴 꼬리질문이에요?", "나".repeat(201), QuestionKind.TECH))))
+        .isEqualTo("INVALID_FOLLOW_UP");
 
     s.closeFollowUp(1);
     s.closeFollowUp(2);
     s.closeFollowUp(3);
     s.finish(answered(s));
     assertThat(code(() -> s.addFollowUp(1, follow("끝난 뒤 꼬리")))).isEqualTo("INTERVIEW_CLOSED");
+    s.closeFollowUp(1); // 끝난 면접에서는 아무 일도 없다
+    assertThat(s.question(1).getFollowUp()).isEqualTo(FollowUpState.CLOSED);
   }
 
   @Test
