@@ -1,12 +1,21 @@
 import clsx from "clsx";
 
-/** 채점 도장: 기울어진 원형 이중 테두리 안에 점수. 종합 점수(리포트, 홈 미리보기)에만 쓴다. */
-export function Stamp({ score, className }: { score: number; className?: string }) {
+/** 채점 도장: 기울어진 원형 이중 테두리 안에 점수. 점수(리포트 종합·문항, 홈 미리보기)에만 쓴다. */
+export function Stamp({
+  score,
+  className,
+  label = "종합",
+}: {
+  score: number;
+  className?: string;
+  /** 읽히는 이름 앞부분(기본 "종합", 문항 상세는 "이 문항") */
+  label?: string;
+}) {
   const value = score.toFixed(1);
   return (
     <div
       role="img"
-      aria-label={`종합 ${value}점, 5점 만점`}
+      aria-label={`${label} ${value}점, 5점 만점`}
       className={clsx(
         "relative inline-flex size-32 shrink-0 -rotate-12 flex-col items-center justify-center rounded-full border-4 border-accent text-accent md:size-40",
         className,

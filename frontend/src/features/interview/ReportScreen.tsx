@@ -12,9 +12,9 @@ import {
   ScoreBar,
   ScreenTitle,
   Section,
-  TopBar,
   TwoColumn,
 } from "@/components/ui";
+import { GridPaper, HandNote, NoteSheet, Stamp } from "@/components/note";
 import { Mascot } from "@/components/site/Mascot";
 import { api, ApiError, type ReportItemView, type ReportView } from "@/lib/api/client";
 import { criterionLabel } from "./labels";
@@ -114,7 +114,6 @@ export function ReportScreen({ id }: { id: number }) {
     }
   }
 
-  const header = <TopBar onBack={() => router.push("/")} />;
   const practice = (
     <BottomCTA>
       <ButtonLink href="/interview/new">다시 연습하기</ButtonLink>
@@ -126,7 +125,6 @@ export function ReportScreen({ id }: { id: number }) {
     const failed = shown && !shown.notFound;
     return (
       <Screen
-        header={header}
         cta={
           failed ? (
             <BottomCTA>
@@ -150,62 +148,65 @@ export function ReportScreen({ id }: { id: number }) {
 
   return (
     <main>
-      {/* 머리 띠(연한 연두): 결과 한 줄 + 종합 점수 + 마스코트 + 잘한 점·보완할 점 */}
-      <Section tone="tint" compact aria-labelledby="report-heading">
-        <div className="flex items-center justify-between gap-6">
-          <div aria-live="polite" className="min-w-0">
-            <p className="mb-2 text-caption font-semibold text-accent">면접 리포트</p>
-            <h1 id="report-heading" className="text-title1 text-text-strong md:text-title1-lg">
-              {ready ? "면접이 끝났어요" : "답변을 평가하고 있어요"}
-            </h1>
-            {!ready && (
-              <p className="mt-2 text-body2 text-text md:text-body1">
-                끝나면 이 화면에 바로 보여 드려요.
-              </p>
+      {/* 머리: 모눈 위 채점된 답안지 한 장 — 제목 + 도장(종합) + 마스코트 + 잘한 점·보완할 점 */}
+      <section aria-labelledby="report-heading" className="relative isolate bg-paper">
+        <GridPaper />
+        <div className="mx-auto w-full max-w-site px-5 pt-8 pb-12 md:px-8 md:pt-12 md:pb-16">
+          <NoteSheet>
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+              <div aria-live="polite" className="min-w-0">
+                <p className="text-caption font-semibold text-text-sub">면접 리포트</p>
+                <h1
+                  id="report-heading"
+                  className="mt-2 text-title1 text-text-strong md:text-title1-lg"
+                >
+                  {ready ? "면접이 끝났어요" : "답변을 평가하고 있어요"}
+                </h1>
+                {!ready && (
+                  <p className="mt-2 text-body2 text-text-sub md:text-body1">
+                    끝나면 이 화면에 바로 보여 드려요.
+                  </p>
+                )}
+                {overall != null && (
+                  <HandNote className="mt-3 inline-block -rotate-2">수고했어요!</HandNote>
+                )}
+              </div>
+              <div className="flex shrink-0 items-end gap-2">
+                <Mascot mood={ready ? "happy" : "thinking"} size={72} className="md:size-24" />
+                {overall != null && <Stamp score={overall} />}
+              </div>
+            </div>
+
+            {error && (
+              <div role="alert" className="mt-6">
+                <p className="text-body2 text-danger">
+                  평가 결과를 불러오지 못했어요. 연결을 확인하고 다시 불러와 주세요.
+                </p>
+                <button
+                  type="button"
+                  onClick={reload}
+                  className="inline-flex h-11 items-center text-body2 font-semibold text-accent"
+                >
+                  다시 불러오기
+                </button>
+              </div>
             )}
+
             {overall != null && (
-              <p
-                className="mt-6 flex items-baseline gap-2"
-                aria-label={`종합 ${overall.toFixed(1)}점, 5점 만점`}
-              >
-                <span className="text-hero text-text-strong tabular-nums">
-                  {overall.toFixed(1)}
-                </span>
-                <span className="text-body1 text-text">/ 5</span>
-              </p>
+              <dl className="mt-8 grid gap-6 border-t border-dashed border-rule pt-6 md:grid-cols-2 md:gap-10">
+                <div>
+                  <dt className="text-caption font-semibold text-text-strong">잘한 점</dt>
+                  <dd className="mt-2 text-body1 text-text">{report.strength}</dd>
+                </div>
+                <div>
+                  <dt className="text-caption font-semibold text-text-strong">보완할 점</dt>
+                  <dd className="mt-2 text-body1 text-text">{report.improvement}</dd>
+                </div>
+              </dl>
             )}
-          </div>
-          <Mascot mood={ready ? "happy" : "thinking"} size={88} className="md:size-36" />
+          </NoteSheet>
         </div>
-
-        {error && (
-          <div role="alert" className="mt-6">
-            <p className="text-body2 text-danger">
-              평가 결과를 불러오지 못했어요. 연결을 확인하고 다시 불러와 주세요.
-            </p>
-            <button
-              type="button"
-              onClick={reload}
-              className="inline-flex h-11 items-center text-body2 font-semibold text-accent"
-            >
-              다시 불러오기
-            </button>
-          </div>
-        )}
-
-        {overall != null && (
-          <dl className="mt-8 grid gap-4 md:grid-cols-2">
-            <Panel>
-              <dt className="text-caption font-semibold text-accent">잘한 점</dt>
-              <dd className="mt-2 text-body1 text-text">{report.strength}</dd>
-            </Panel>
-            <Panel>
-              <dt className="text-caption font-semibold text-accent">보완할 점</dt>
-              <dd className="mt-2 text-body1 text-text">{report.improvement}</dd>
-            </Panel>
-          </dl>
-        )}
-      </Section>
+      </section>
 
       {/* 아래: 왼쪽 기준별 점수(붙잡아 둠) · 오른쪽 문항 목록 + 다시 연습하기 */}
       <Section compact>
