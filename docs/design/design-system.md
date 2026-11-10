@@ -115,7 +115,7 @@ Tailwind 기본 팔레트는 꺼져 있다(`--color-*: initial`). `bg-purple-500
 | `Stamp` | 채점 도장(role=img "종합 N점, 5점 만점", `label="이 문항"`, `size` lg 리포트 머리 · md 패널 안) |
 | `StickyNote` | 노랑 포스트잇 + 테이프, 손글씨 제목. 팁 하나 |
 | `StepProgress` | 세로 단계 목록(`features/interview`): 끝난 단계 연두 원+체크, 지금 단계 연한 연두 행(`aria-current="step"`). 새 면접 왼쪽 열 |
-| `markEvidence` | 답변 글자에서 채점 근거 인용을 노랑 `<mark>`로 칠한다(`features/interview`). 문항 상세 |
+| `markEvidence` | 답변 글자에서 채점 근거 인용을 노랑 `<mark>`로 칠한다(두 군데까지, `features/interview`). 문항 상세 |
 | `CheckList` | 네모 칸 + 손 체크 할 일 목록(준비 단계). 끝난 항목은 "완료"로 읽힌다 |
 
 아이콘: `lucide-react`. 버튼, 목록 행, 섹션 제목 앞에만 쓰고 크기는 20~24, 장식이면 `aria-hidden`이다.

@@ -6,7 +6,6 @@ import {
   BottomCTA,
   Button,
   ButtonLink,
-  Panel,
   ProgressBar,
   Screen,
   ScreenTitle,
@@ -272,9 +271,9 @@ export function InterviewScreen({ id }: { id: number }) {
           : null;
   const StateIcon = finishOnly ? Flag : recorder.state === "recorded" ? Headphones : Mic;
 
-  // 왼쪽: 진행도 + 질문을 적은 노트 한 장
-  const aside = (
-    <div>
+  // 한 장면: 질문을 적은 노트 한 장(본문 폭 전체) — 위에 질문, 아래 줄 친 "답란"에서 말로 답한다
+  return (
+    <Screen header={<TopBar onBack={() => router.push("/")} />} cta={<BottomCTA>{cta}</BottomCTA>}>
       <div className="flex items-center gap-3">
         <div className="flex-1">
           <ProgressBar value={(index + 1) / total} label="면접 진행도" />
@@ -288,65 +287,61 @@ export function InterviewScreen({ id }: { id: number }) {
         <h1 className="mt-2 text-title1 whitespace-pre-line text-text-strong md:text-title1-lg">
           {question.text}
         </h1>
-      </NoteSheet>
-    </div>
-  );
 
-  return (
-    <Screen
-      header={<TopBar onBack={() => router.push("/")} />}
-      aside={aside}
-      stickyAside
-      cta={<BottomCTA>{cta}</BottomCTA>}
-    >
-      {/* 오른쪽: 답변 녹음 — 이 화면의 할 일 묶음 하나라 연한 연두 면(글자는 text-text) */}
-      <Panel tone="tint" className="flex flex-col items-center text-center">
-        {mood ? (
-          <Mascot mood={mood} size={112} />
-        ) : (
-          <span className="flex size-16 items-center justify-center rounded-full bg-bg text-ink ring-1 ring-rule">
-            <StateIcon size={28} aria-hidden />
-          </span>
-        )}
-        {recorder.state === "recording" && (
-          <div className="mt-4">
-            <p className="text-display text-text-strong tabular-nums" aria-live="off">
-              {mmss(recorder.elapsed)}
-            </p>
-            <p role="status" className="mt-1 text-body2 text-text">
-              녹음하고 있어요. 3분이 되면 저절로 멈춰요.
-            </p>
-          </div>
-        )}
-        {finishOnly && !error && (
-          <p className="mt-4 text-body2 text-text">
-            모든 질문에 답했어요. 면접을 끝내면 리포트를 볼 수 있어요.
-          </p>
-        )}
-        {!finishOnly && recorder.state === "recorded" && recorder.url && (
-          <div className="mt-4 w-full">
-            {!error && (
-              <p className="mb-3 text-body2 text-text">
-                {isLast
-                  ? "다시 들어 보고 괜찮으면 면접을 끝내요."
-                  : "다시 들어 보고 괜찮으면 다음으로 넘어가요."}
-              </p>
+        {/* 답란: 점선 아래 연한 연두 면. 노트 안에 Panel을 넣지 않는다 */}
+        <div className="mt-8 border-t border-dashed border-rule pt-6 md:mt-10 md:pt-8">
+          <p className="text-caption font-semibold text-text-sub">답란</p>
+          <div className="mt-3 flex flex-col items-center gap-4 rounded-lg bg-bg-tint px-5 py-8 text-center md:flex-row md:items-center md:gap-8 md:px-8 md:text-left">
+            {mood ? (
+              <Mascot mood={mood} size={96} />
+            ) : (
+              <span className="flex size-16 shrink-0 items-center justify-center rounded-full bg-bg text-ink ring-1 ring-rule">
+                <StateIcon size={28} aria-hidden />
+              </span>
             )}
-            <audio controls src={recorder.url} className="w-full" />
+            <div className="w-full min-w-0 flex-1">
+              {recorder.state === "recording" && (
+                <>
+                  <p className="text-display text-text-strong tabular-nums" aria-live="off">
+                    {mmss(recorder.elapsed)}
+                  </p>
+                  <p role="status" className="mt-1 text-body2 text-text">
+                    녹음하고 있어요. 3분이 되면 저절로 멈춰요.
+                  </p>
+                </>
+              )}
+              {finishOnly && !error && (
+                <p className="text-body1 text-text">
+                  모든 질문에 답했어요. 면접을 끝내면 리포트를 볼 수 있어요.
+                </p>
+              )}
+              {!finishOnly && recorder.state === "recorded" && recorder.url && (
+                <>
+                  {!error && (
+                    <p className="mb-3 text-body1 text-text">
+                      {isLast
+                        ? "다시 들어 보고 괜찮으면 면접을 끝내요."
+                        : "다시 들어 보고 괜찮으면 다음으로 넘어가요."}
+                    </p>
+                  )}
+                  <audio controls src={recorder.url} className="w-full" />
+                </>
+              )}
+              {!finishOnly && recorder.state === "idle" && !error && (
+                <p className="text-body1 text-text">
+                  준비되면 답변을 시작해요. 결론부터 말해 보세요.
+                </p>
+              )}
+              {shownError && (
+                // 두 줄이 넘을 수 있는 문장이라 왼쪽 정렬
+                <p role="alert" className="mt-2 text-left text-body2 text-danger">
+                  {shownError}
+                </p>
+              )}
+            </div>
           </div>
-        )}
-        {!finishOnly && recorder.state === "idle" && !error && (
-          <p className="mt-4 text-body2 text-text">
-            준비되면 답변을 시작해요. 결론부터 말해 보세요.
-          </p>
-        )}
-        {shownError && (
-          // 두 줄이 넘을 수 있는 문장이라 왼쪽 정렬
-          <p role="alert" className="mt-4 w-full text-left text-body2 text-danger">
-            {shownError}
-          </p>
-        )}
-      </Panel>
+        </div>
+      </NoteSheet>
     </Screen>
   );
 }
