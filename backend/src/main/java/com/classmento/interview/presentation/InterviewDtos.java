@@ -5,6 +5,7 @@ import com.classmento.interview.application.ReportQuery;
 import com.classmento.interview.domain.Answer;
 import com.classmento.interview.domain.AnswerStatus;
 import com.classmento.interview.domain.Evaluation;
+import com.classmento.interview.domain.FollowUpState;
 import com.classmento.interview.domain.InterviewLevel;
 import com.classmento.interview.domain.InterviewQuestion;
 import com.classmento.interview.domain.InterviewSession;
@@ -32,26 +33,51 @@ public final class InterviewDtos {
       JobRole jobRole,
       Long resumeId,
       Long experienceId,
-      Boolean narrowByResume) {
+      Boolean narrowByResume,
+      @Schema(description = "질문 하나에 붙일 꼬리질문 최대 수(0~2, 없으면 0). 인성 면접은 0만") Integer followUps) {
 
     Command toCommand() {
       return new Command(
-          type, count, level, jobRole, resumeId, experienceId, Boolean.TRUE.equals(narrowByResume));
+          type,
+          count,
+          level,
+          jobRole,
+          resumeId,
+          experienceId,
+          Boolean.TRUE.equals(narrowByResume),
+          followUps == null ? 0 : followUps);
     }
   }
 
-  /** answerStatus: 답하지 않았으면 없음. failureReason: 실패했을 때 원인과 할 일. */
-  @Schema(requiredProperties = {"seq", "text", "kind"})
+  /**
+   * answerStatus: 답하지 않았으면 없음. failureReason: 실패했을 때 원인과 할 일. 꼬리질문(ADR 0008): parentSeq(꼬리면 바로 앞
+   * 질문), depth(0 = 본 질문), followUp(AWAITING이면서 답이 있으면 다음 질문을 고르는 중). retryable: 글자는 있고 평가만 실패해 다시
+   * 녹음하지 않고 다시 평가하면 되는 실패.
+   */
+  @Schema(requiredProperties = {"seq", "text", "kind", "depth", "followUp", "retryable"})
   public record InterviewQuestionView(
-      int seq, String text, QuestionKind kind, AnswerStatus answerStatus, String failureReason) {
+      int seq,
+      String text,
+      QuestionKind kind,
+      AnswerStatus answerStatus,
+      String failureReason,
+      Integer parentSeq,
+      int depth,
+      FollowUpState followUp,
+      boolean retryable) {
 
     static InterviewQuestionView of(InterviewQuestion q, Answer a) {
+      boolean retryable = a != null && a.isEvaluationRetryable();
       return new InterviewQuestionView(
           q.getSeq(),
           q.getText(),
           q.getKind(),
           a == null ? null : a.getStatus(),
-          a == null ? null : a.getFailureReason());
+          a == null ? null : a.getFailureReason(),
+          q.getParentSeq(),
+          q.getDepth(),
+          q.getFollowUp(),
+          retryable);
     }
   }
 
@@ -63,7 +89,8 @@ public final class InterviewDtos {
     }
   }
 
-  @Schema(requiredProperties = {"id", "type", "status", "questions", "createdAt"})
+  /** questions는 화면 순서(본 질문 → 그 꼬리들 → 다음 본 질문). maxFollowUps: 질문 하나에 붙는 꼬리질문 최대 수. */
+  @Schema(requiredProperties = {"id", "type", "status", "maxFollowUps", "questions", "createdAt"})
   public record InterviewView(
       Long id,
       InterviewType type,
@@ -72,6 +99,7 @@ public final class InterviewDtos {
       JobRole jobRole,
       Long resumeId,
       Long experienceId,
+      int maxFollowUps,
       List<InterviewQuestionView> questions,
       Instant createdAt) {
 
@@ -90,6 +118,7 @@ public final class InterviewDtos {
           s.getJobRole(),
           s.getResumeId(),
           s.getExperienceId(),
+          s.getMaxFollowUps(),
           s.getQuestions().stream()
               .map(q -> InterviewQuestionView.of(q, bySeq.get(q.getSeq())))
               .toList(),
@@ -114,9 +143,11 @@ public final class InterviewDtos {
   public record CriterionView(String criterion, double average) {}
 
   /** 문항 하나. 답하지 않았으면 answerStatus부터 비어 있고, 평가 전이면 점수·피드백이 비어 있다. */
-  @Schema(requiredProperties = {"seq", "question", "kind", "scores"})
+  @Schema(requiredProperties = {"seq", "question", "kind", "depth", "scores"})
   public record ReportItemView(
       int seq,
+      Integer parentSeq,
+      int depth,
       String question,
       String intent,
       QuestionKind kind,
@@ -136,6 +167,8 @@ public final class InterviewDtos {
       Evaluation e = it.evaluation();
       return new ReportItemView(
           q.getSeq(),
+          q.getParentSeq(),
+          q.getDepth(),
           q.getText(),
           q.getIntent(),
           q.getKind(),

@@ -26,12 +26,16 @@ function interview(answered: number[] = []): InterviewView {
     id: 7,
     type: "TECH",
     status: "IN_PROGRESS",
+    maxFollowUps: 0,
     createdAt: "2026-11-09T00:00:00Z",
     questions: [1, 2, 3].map((seq) => ({
       seq,
       text: `질문 ${seq}번이에요`,
       kind: "TECH",
       answerStatus: answered.includes(seq) ? "EVALUATED" : undefined,
+      depth: 0,
+      followUp: "NONE",
+      retryable: false,
     })),
   };
 }

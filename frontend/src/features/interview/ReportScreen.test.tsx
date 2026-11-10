@@ -23,6 +23,7 @@ function report(overrides: Partial<ReportView> = {}): ReportView {
     items: [
       {
         seq: 1,
+        depth: 0,
         question: "TCP와 UDP의 차이를 설명해 주세요.",
         kind: "TECH",
         answerStatus: "EVALUATED",
@@ -31,6 +32,7 @@ function report(overrides: Partial<ReportView> = {}): ReportView {
       },
       {
         seq: 2,
+        depth: 0,
         question: "프로세스와 스레드의 차이는요?",
         kind: "TECH",
         answerStatus: "FAILED",
@@ -166,6 +168,7 @@ describe("ReportScreen", () => {
     const r = report({ status: "EVALUATING", overall: null as never });
     r.items[1] = {
       seq: 2,
+      depth: 0,
       question: "프로세스와 스레드의 차이는요?",
       kind: "TECH",
       answerStatus: null as never,
