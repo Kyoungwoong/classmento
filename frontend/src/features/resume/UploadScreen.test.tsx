@@ -31,7 +31,9 @@ describe("UploadScreen", () => {
     Object.assign(over, { dataTransfer: { files: [], types: ["Files"], dropEffect: "copy" } });
     sheet.dispatchEvent(over);
     expect(over.defaultPrevented).toBe(true); // 기본 동작(파일 열기) 막기
-    expect((over as unknown as { dataTransfer: { dropEffect: string } }).dataTransfer.dropEffect).toBe("none");
+    expect(
+      (over as unknown as { dataTransfer: { dropEffect: string } }).dataTransfer.dropEffect,
+    ).toBe("none");
 
     drop(sheet, new File(["y"], "other.pdf", { type: "application/pdf" }));
     expect(screen.queryByText("other.pdf")).toBeNull();

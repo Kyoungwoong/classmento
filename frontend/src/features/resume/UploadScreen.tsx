@@ -38,8 +38,13 @@ export function UploadScreen() {
   }
 
   function onDragOver(e: DragEvent) {
-    if (loading || !e.dataTransfer.types.includes("Files")) return;
-    e.preventDefault(); // 놓기 허용
+    if (!e.dataTransfer.types.includes("Files")) return;
+    // 기본 동작(브라우저가 파일을 열어 화면을 떠나는 것)은 늘 막는다
+    e.preventDefault();
+    if (loading) {
+      e.dataTransfer.dropEffect = "none"; // 올리는 중: 놓기 거부 커서
+      return;
+    }
     setDragging(true);
   }
 
@@ -81,6 +86,7 @@ export function UploadScreen() {
 
         {/* 노트 전체가 놓는 자리: 파일을 고른 뒤에도 끌어다 놓아 바꿀 수 있다 */}
         <NoteSheet
+          data-dropzone
           active={dragging}
           onDragOver={onDragOver}
           onDragLeave={() => setDragging(false)}
