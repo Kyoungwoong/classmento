@@ -12,6 +12,8 @@ import {
   ScreenTitle,
   TopBar,
 } from "@/components/ui";
+import { Flag, Headphones, Mic } from "lucide-react";
+import { NoteSheet } from "@/components/note";
 import { Mascot, type MascotMood } from "@/components/site/Mascot";
 import { api, ApiError, type InterviewView } from "@/lib/api/client";
 import { useRecorder } from "./useRecorder";
@@ -259,17 +261,18 @@ export function InterviewScreen({ id }: { id: number }) {
     );
 
   const shownError = error ?? micError;
-  // 마스코트 표정이 지금 상태를 말한다: 녹음 중 듣기 · 올리는 중 생각 · 문제 · 그 밖엔 대기
-  const mood: MascotMood =
+  // 마스코트는 상태를 말할 때만: 녹음 중 듣기 · 올리는 중 생각 · 문제. 대기·다시 듣기는 아이콘(design-system 원칙 7)
+  const mood: MascotMood | null =
     recorder.state === "recording"
       ? "listening"
       : busy !== null
         ? "thinking"
         : shownError
           ? "oops"
-          : "idle";
+          : null;
+  const StateIcon = finishOnly ? Flag : recorder.state === "recorded" ? Headphones : Mic;
 
-  // 왼쪽: 진행도 + 질문(크게)
+  // 왼쪽: 진행도 + 질문을 적은 노트 한 장
   const aside = (
     <div>
       <div className="flex items-center gap-3">
@@ -278,12 +281,14 @@ export function InterviewScreen({ id }: { id: number }) {
         </div>
         <span className="text-caption text-text-sub">{`${index + 1} / ${total}`}</span>
       </div>
-      <p className="mt-8 inline-flex rounded-full bg-highlight-weak px-3 py-1 text-caption font-semibold text-ink">
-        {KIND_LABEL[question.kind]}
-      </p>
-      <h1 className="mt-4 text-title1 whitespace-pre-line text-text-strong md:text-title1-lg">
-        {question.text}
-      </h1>
+      <NoteSheet className="mt-6">
+        <p className="text-caption font-semibold text-text-sub">
+          {`질문 ${index + 1} · ${KIND_LABEL[question.kind]}`}
+        </p>
+        <h1 className="mt-2 text-title1 whitespace-pre-line text-text-strong md:text-title1-lg">
+          {question.text}
+        </h1>
+      </NoteSheet>
     </div>
   );
 
@@ -294,28 +299,34 @@ export function InterviewScreen({ id }: { id: number }) {
       stickyAside
       cta={<BottomCTA>{cta}</BottomCTA>}
     >
-      {/* 오른쪽: 녹음 패널 */}
-      <Panel className="flex flex-col items-center text-center">
-        <Mascot mood={mood} size={112} />
+      {/* 오른쪽: 답변 녹음 — 이 화면의 할 일 묶음 하나라 연한 연두 면(글자는 text-text) */}
+      <Panel tone="tint" className="flex flex-col items-center text-center">
+        {mood ? (
+          <Mascot mood={mood} size={112} />
+        ) : (
+          <span className="flex size-16 items-center justify-center rounded-full bg-bg text-ink ring-1 ring-rule">
+            <StateIcon size={28} aria-hidden />
+          </span>
+        )}
         {recorder.state === "recording" && (
           <div className="mt-4">
             <p className="text-display text-text-strong tabular-nums" aria-live="off">
               {mmss(recorder.elapsed)}
             </p>
-            <p role="status" className="mt-1 text-body2 text-text-sub">
+            <p role="status" className="mt-1 text-body2 text-text">
               녹음하고 있어요. 3분이 되면 저절로 멈춰요.
             </p>
           </div>
         )}
         {finishOnly && !error && (
-          <p className="mt-4 text-body2 text-text-sub">
+          <p className="mt-4 text-body2 text-text">
             모든 질문에 답했어요. 면접을 끝내면 리포트를 볼 수 있어요.
           </p>
         )}
         {!finishOnly && recorder.state === "recorded" && recorder.url && (
           <div className="mt-4 w-full">
             {!error && (
-              <p className="mb-3 text-body2 text-text-sub">
+              <p className="mb-3 text-body2 text-text">
                 {isLast
                   ? "다시 들어 보고 괜찮으면 면접을 끝내요."
                   : "다시 들어 보고 괜찮으면 다음으로 넘어가요."}
@@ -325,12 +336,13 @@ export function InterviewScreen({ id }: { id: number }) {
           </div>
         )}
         {!finishOnly && recorder.state === "idle" && !error && (
-          <p className="mt-4 text-body2 text-text-sub">
+          <p className="mt-4 text-body2 text-text">
             준비되면 답변을 시작해요. 결론부터 말해 보세요.
           </p>
         )}
         {shownError && (
-          <p role="alert" className="mt-4 text-body2 text-danger">
+          // 두 줄이 넘을 수 있는 문장이라 왼쪽 정렬
+          <p role="alert" className="mt-4 w-full text-left text-body2 text-danger">
             {shownError}
           </p>
         )}
