@@ -195,7 +195,11 @@ export function NewInterviewScreen() {
       label: "조건",
       hint: type === "EXPERIENCE" ? "경험 하나 고르기" : "직무와 연차",
     },
-    count: { key: "count", label: "질문 수", hint: "3·5·7개 중에서" },
+    count: {
+      key: "count",
+      label: "질문 수",
+      hint: type === "BEHAVIORAL" ? "3·5·7개 중에서" : "질문 수 · 꼬리질문",
+    },
   };
 
   // 모바일: 위 진행 막대 / 데스크톱: 왼쪽 단계 목록
@@ -433,7 +437,7 @@ export function NewInterviewScreen() {
                 onChange={setFollowUps}
               />
               <p className="mt-2 text-caption text-text-sub">
-                답을 듣고 그 답에서 한 번 더 파고들어요. 기술 질문에만 붙어요.
+                답을 듣고 그 답에서 더 파고들어요. 기술 질문에만 붙어요.
               </p>
             </div>
           )}

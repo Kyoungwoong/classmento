@@ -1,5 +1,6 @@
 "use client";
 
+import { CornerLeftUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -90,7 +91,7 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
     <div>
       <ScreenTitle
         eyebrow={
-          item.depth > 0 ? `${rootNumber}번 질문의 꼬리 ${item.depth}` : `${rootNumber}번 질문`
+          item.depth > 0 ? `질문 ${rootNumber}의 꼬리 ${item.depth}` : `${rootNumber}번 질문`
         }
         title={item.question}
         description={item.intent ? `이 질문으로 보려는 것: ${item.intent}` : undefined}
@@ -98,9 +99,9 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
       {item.parentSeq != null && (
         <Link
           href={`/interview/${id}/report/${item.parentSeq}`}
-          className="-mt-4 mb-6 inline-flex h-11 items-center text-body2 font-semibold text-accent"
+          className="-mt-4 mb-6 inline-flex h-11 items-center gap-1 text-body2 font-semibold text-accent"
         >
-          앞 질문 보기
+          <CornerLeftUp size={20} aria-hidden />앞 질문 보기
         </Link>
       )}
       {item.answerStatus && (

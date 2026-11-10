@@ -268,7 +268,11 @@ export function ReportScreen({ id }: { id: number }) {
                     <>
                       <button
                         type="button"
-                        aria-label={`${it.seq}번 다시 평가하기`}
+                        aria-label={
+                          it.depth > 0
+                            ? `${numbers.get(it.seq)}번 질문의 꼬리 ${it.depth} 다시 평가하기`
+                            : `${numbers.get(it.seq)}번 다시 평가하기`
+                        }
                         disabled={retrying === it.seq}
                         onClick={() => retry(it.seq)}
                         className="-mt-2 inline-flex h-11 items-center text-caption text-accent disabled:text-text-hint"
