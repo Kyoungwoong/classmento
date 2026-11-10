@@ -1,5 +1,7 @@
 "use client";
 
+import clsx from "clsx";
+import { Check } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import {
@@ -98,8 +100,8 @@ export function ResumeScreen() {
 
 function Processing({ status }: { status?: string }) {
   const steps = [
-    { key: "UPLOADED", label: "글자를 읽고 있어요" },
-    { key: "EXTRACTED", label: "경력과 기술을 정리하고 있어요" },
+    { key: "UPLOADED", doing: "글자를 읽고 있어요", done: "글자를 읽었어요" },
+    { key: "EXTRACTED", doing: "경력과 기술을 정리하고 있어요", done: "경력과 기술을 정리했어요" },
   ];
   const current = status === "EXTRACTED" ? 1 : 0;
   return (
@@ -114,13 +116,18 @@ function Processing({ status }: { status?: string }) {
             {steps.map((s, i) => (
               <li
                 key={s.key}
-                className={
-                  i <= current
-                    ? "py-2 text-body1 text-text-strong"
-                    : "py-2 text-body1 text-text-hint"
-                }
+                aria-current={i === current ? "step" : undefined}
+                className={clsx(
+                  "flex items-center gap-2 py-2 text-body1",
+                  i < current
+                    ? "text-text"
+                    : i === current
+                      ? "font-semibold text-text-strong"
+                      : "text-text-hint",
+                )}
               >
-                {s.label}
+                {i < current && <Check size={20} aria-hidden className="text-accent" />}
+                {i < current ? s.done : s.doing}
               </li>
             ))}
           </ol>

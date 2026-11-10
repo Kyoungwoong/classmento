@@ -20,7 +20,9 @@ describe("ResumeScreen 상태 그림", () => {
       await screen.findByRole("heading", { name: "이력서를 읽고 있어요" }),
     ).toBeInTheDocument();
     expect(container.querySelector("[data-mood]")).toHaveAttribute("data-mood", "thinking");
-    expect(container.querySelector("[aria-current='step']")).toHaveTextContent("글자를 읽고 있어요");
+    expect(container.querySelector("[aria-current='step']")).toHaveTextContent(
+      "글자를 읽고 있어요",
+    );
   });
 
   it("정리 단계면 앞 단계는 끝난 말로 바뀐다", async () => {
