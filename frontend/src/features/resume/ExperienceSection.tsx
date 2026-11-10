@@ -106,7 +106,7 @@ export function ExperienceSection({
           )}
         </div>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="grid gap-3 md:grid-cols-2">
           {items.map((e) => (
             <li key={e.id}>
               <ExperienceBanner experience={e} />

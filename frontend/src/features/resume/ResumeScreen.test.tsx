@@ -16,7 +16,9 @@ describe("ResumeScreen 상태 그림", () => {
   it("읽는 중이면 생각하는 마스코트와 단계", async () => {
     vi.spyOn(api, "resume").mockResolvedValue({ ...base, status: "UPLOADED" } as ResumeDetail);
     const { container } = render(<ResumeScreen />);
-    expect(await screen.findByRole("heading", { name: "이력서를 읽고 있어요" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "이력서를 읽고 있어요" }),
+    ).toBeInTheDocument();
     expect(container.querySelector("[data-mood]")).toHaveAttribute("data-mood", "thinking");
   });
 
