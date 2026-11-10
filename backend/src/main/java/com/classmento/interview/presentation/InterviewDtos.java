@@ -103,7 +103,7 @@ public final class InterviewDtos {
 
     static InterviewSummary of(InterviewSession s) {
       return new InterviewSummary(
-          s.getId(), s.getType(), s.getStatus(), s.getQuestions().size(), s.getCreatedAt());
+          s.getId(), s.getType(), s.getStatus(), s.rootCount(), s.getCreatedAt());
     }
   }
 
