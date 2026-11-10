@@ -43,6 +43,12 @@ const TYPES: readonly { value: Type; title: string; description: string }[] = [
   { value: "BEHAVIORAL", title: "인성 면접", description: "자기소개부터 협업 경험까지 물어봐요" },
   { value: "MIXED", title: "기술 + 인성", description: "실제 면접처럼 번갈아 물어봐요" },
 ];
+/** 질문 하나에 붙일 꼬리질문 최대 수(ADR 0008). 인성 면접에는 없다 */
+const FOLLOW_UPS = [
+  { value: "0", label: "없음" },
+  { value: "1", label: "한 번" },
+  { value: "2", label: "두 번" },
+] as const;
 const COUNTS = [
   { value: "3", label: "3개" },
   { value: "5", label: "5개" },
@@ -67,6 +73,7 @@ export function NewInterviewScreen() {
   const [level, setLevel] = useState<Level | null>(null);
   const [narrow, setNarrow] = useState(false);
   const [count, setCount] = useState<"3" | "5" | "7">("3");
+  const [followUps, setFollowUps] = useState<"0" | "1" | "2">("1");
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -133,7 +140,7 @@ export function NewInterviewScreen() {
   async function create() {
     if (!type) return;
     const n = Number(count);
-    const body: CreateInterviewRequest =
+    const base: CreateInterviewRequest =
       type === "EXPERIENCE"
         ? {
             type,
@@ -153,6 +160,11 @@ export function NewInterviewScreen() {
           : type === "MIXED"
             ? { type, count: n, level: level ?? undefined, jobRole: jobRole ?? undefined }
             : { type, count: n };
+    // 인성 면접은 꼬리질문이 없다(서버도 0만 받는다)
+    const body: CreateInterviewRequest = {
+      ...base,
+      followUps: type === "BEHAVIORAL" ? 0 : Number(followUps),
+    };
     setCreating(true);
     setError(null);
     try {
@@ -412,6 +424,19 @@ export function NewInterviewScreen() {
             description="질문 하나에 2~3분 정도 걸려요."
           />
           <SegmentedControl label="질문 수" options={COUNTS} value={count} onChange={setCount} />
+          {type !== "BEHAVIORAL" && (
+            <div className="mt-8">
+              <SegmentedControl
+                label="꼬리질문"
+                options={FOLLOW_UPS}
+                value={followUps}
+                onChange={setFollowUps}
+              />
+              <p className="mt-2 text-caption text-text-sub">
+                답을 듣고 그 답에서 한 번 더 파고들어요. 기술 질문에만 붙어요.
+              </p>
+            </div>
+          )}
         </>
       )}
 

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -16,6 +17,7 @@ import { NoteSheet, StickyNote } from "@/components/note";
 import { Mascot } from "@/components/site/Mascot";
 import { api, ApiError, type ReportItemView } from "@/lib/api/client";
 import { criterionLabel } from "./labels";
+import { rootNumbers } from "./questionLabels";
 import { markEvidence } from "./markEvidence";
 
 /**
@@ -24,6 +26,7 @@ import { markEvidence } from "./markEvidence";
 export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
   const router = useRouter();
   const [item, setItem] = useState<ReportItemView | null | undefined>(undefined);
+  const [rootNumber, setRootNumber] = useState(seq);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const invalid = !Number.isInteger(id) || id <= 0 || !Number.isInteger(seq) || seq <= 0;
@@ -32,7 +35,10 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
     if (invalid) return;
     api
       .interviewReport(id)
-      .then((r) => setItem(r.items.find((it) => it.seq === seq) ?? null))
+      .then((r) => {
+        setRootNumber(rootNumbers(r.items).get(seq) ?? seq);
+        setItem(r.items.find((it) => it.seq === seq) ?? null);
+      })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) {
           router.replace(`/login?next=/interview/${id}/report/${seq}`);
@@ -83,10 +89,20 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
   const aside = (
     <div>
       <ScreenTitle
-        eyebrow={`${seq}번 질문`}
+        eyebrow={
+          item.depth > 0 ? `${rootNumber}번 질문의 꼬리 ${item.depth}` : `${rootNumber}번 질문`
+        }
         title={item.question}
         description={item.intent ? `이 질문으로 보려는 것: ${item.intent}` : undefined}
       />
+      {item.parentSeq != null && (
+        <Link
+          href={`/interview/${id}/report/${item.parentSeq}`}
+          className="-mt-4 mb-6 inline-flex h-11 items-center text-body2 font-semibold text-accent"
+        >
+          앞 질문 보기
+        </Link>
+      )}
       {item.answerStatus && (
         <NoteSheet role="region" aria-labelledby="answer-heading">
           <h2 id="answer-heading" className="text-body1 font-semibold text-text-strong">

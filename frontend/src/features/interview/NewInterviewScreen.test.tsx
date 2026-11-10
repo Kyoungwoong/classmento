@@ -100,6 +100,7 @@ describe("NewInterviewScreen", () => {
         count: 3,
         resumeId: 3,
         experienceId: 31,
+        followUps: 1,
       }),
     );
   });
@@ -131,6 +132,7 @@ describe("NewInterviewScreen", () => {
         jobRole: "BACKEND",
         narrowByResume: true,
         resumeId: 3,
+        followUps: 1,
       }),
     );
   });
@@ -151,6 +153,7 @@ describe("NewInterviewScreen", () => {
         count: 3,
         level: "NEW",
         jobRole: "FRONTEND",
+        followUps: 1,
       }),
     );
   });
