@@ -47,7 +47,8 @@ describe("ReportItemScreen", () => {
       "/api/interviews/7/questions/2/audio",
     );
     const transcript = screen.getByText(
-      (_, el) => el?.tagName === "P" && el.textContent === "그때 저는 먼저 서로의 기준을 정리했습니다.",
+      (_, el) =>
+        el?.tagName === "P" && el.textContent === "그때 저는 먼저 서로의 기준을 정리했습니다.",
     );
     // 채점 근거로 인용된 부분은 답변 안에서 형광펜으로 표시한다
     expect(transcript.querySelector("mark")).toHaveTextContent("서로의 기준을 정리했습니다");
