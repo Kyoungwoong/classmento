@@ -77,3 +77,15 @@ describe("노트 부품", () => {
     expect(screen.getByText("3분이면 한 문제")).toHaveClass("font-hand");
   });
 });
+
+describe("NoteSheet active", () => {
+  it("active면 종이 면은 그대로 두고(글자 대비 유지) 진한 연두 테두리와 연두 고리", () => {
+    render(
+      <NoteSheet active aria-label="노트">
+        <p>파일</p>
+      </NoteSheet>,
+    );
+    const sheet = screen.getByLabelText("노트");
+    expect(sheet).toHaveClass("bg-paper", "border-accent", "ring-4", "ring-primary");
+  });
+});

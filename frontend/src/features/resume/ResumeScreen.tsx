@@ -1,7 +1,9 @@
 "use client";
 
+import clsx from "clsx";
+import { Check } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   BottomCTA,
   Button,
@@ -15,6 +17,8 @@ import {
   Toast,
   TopBar,
 } from "@/components/ui";
+import { GridPaper, NoteSheet } from "@/components/note";
+import { Mascot } from "@/components/site/Mascot";
 import { api, ApiError, type ParsedResume, type ResumeDetail } from "@/lib/api/client";
 import { ExperienceSection } from "./ExperienceSection";
 import { Section } from "./ResumeSection";
@@ -33,31 +37,38 @@ export function ResumeScreen() {
   if (error) {
     const notFound = error.status === 404;
     return (
-      <Screen
-        header={<TopBar />}
-        cta={
-          <BottomCTA>
-            {notFound ? (
-              <ButtonLink href="/resume/upload">이력서 올리기</ButtonLink>
-            ) : (
-              <Button onClick={() => window.location.reload()}>다시 시도하기</Button>
-            )}
-          </BottomCTA>
-        }
-      >
-        <ScreenTitle
-          title={notFound ? "이력서를 찾을 수 없어요" : "이력서를 불러오지 못했어요"}
-          description={notFound ? "지워졌거나 다른 계정의 이력서예요." : error.message}
-        />
-      </Screen>
+      <OnPaper>
+        <Screen
+          width="narrow"
+          header={<TopBar />}
+          cta={
+            <BottomCTA>
+              {notFound ? (
+                <ButtonLink href="/resume/upload">이력서 올리기</ButtonLink>
+              ) : (
+                <Button onClick={() => window.location.reload()}>다시 시도하기</Button>
+              )}
+            </BottomCTA>
+          }
+        >
+          <Mascot mood="oops" size={96} className="mb-6" />
+          <ScreenTitle
+            title={notFound ? "이력서를 찾을 수 없어요" : "이력서를 불러오지 못했어요"}
+            description={notFound ? "지워졌거나 다른 계정의 이력서예요." : error.message}
+          />
+        </Screen>
+      </OnPaper>
     );
   }
   // 처음 불러오는 중: 처리 중 화면과 구분 (이미 끝난 이력서를 "읽고 있어요"로 보이지 않게)
   if (!resume) {
     return (
-      <Screen header={<TopBar />}>
-        <p className="text-body2 text-text-hint">이력서를 불러오고 있어요</p>
-      </Screen>
+      <OnPaper>
+        <Screen width="narrow" header={<TopBar />}>
+          <Mascot mood="thinking" size={96} className="mb-6" />
+          <p className="text-body2 text-text-sub">이력서를 불러오고 있어요</p>
+        </Screen>
+      </OnPaper>
     );
   }
   if (resume.status === "UPLOADED" || resume.status === "EXTRACTED") {
@@ -65,19 +76,23 @@ export function ResumeScreen() {
   }
   if (resume.status === "FAILED") {
     return (
-      <Screen
-        header={<TopBar />}
-        cta={
-          <BottomCTA>
-            <ButtonLink href="/resume/upload">다시 올리기</ButtonLink>
-          </BottomCTA>
-        }
-      >
-        <ScreenTitle
-          title="이력서를 읽지 못했어요"
-          description={resume.failureReason ?? "다른 파일로 다시 올려주세요."}
-        />
-      </Screen>
+      <OnPaper>
+        <Screen
+          width="narrow"
+          header={<TopBar />}
+          cta={
+            <BottomCTA>
+              <ButtonLink href="/resume/upload">다시 올리기</ButtonLink>
+            </BottomCTA>
+          }
+        >
+          <Mascot mood="oops" size={96} className="mb-6" />
+          <ScreenTitle
+            title="이력서를 읽지 못했어요"
+            description={resume.failureReason ?? "다른 파일로 다시 올려주세요."}
+          />
+        </Screen>
+      </OnPaper>
     );
   }
   return <ParsedView resume={resume} onSaved={setResume} />;
@@ -85,27 +100,50 @@ export function ResumeScreen() {
 
 function Processing({ status }: { status?: string }) {
   const steps = [
-    { key: "UPLOADED", label: "글자를 읽고 있어요" },
-    { key: "EXTRACTED", label: "경력과 기술을 정리하고 있어요" },
+    { key: "UPLOADED", doing: "글자를 읽고 있어요", done: "글자를 읽었어요" },
+    { key: "EXTRACTED", doing: "경력과 기술을 정리하고 있어요", done: "경력과 기술을 정리했어요" },
   ];
   const current = status === "EXTRACTED" ? 1 : 0;
   return (
-    <Screen header={<TopBar back={false} />}>
-      <ScreenTitle title="이력서를 읽고 있어요" description="보통 30초 안에 끝나요." />
-      <ProgressBar value={status === "EXTRACTED" ? 0.7 : 0.3} label="이력서 처리 진행률" />
-      <ol className="mt-6" aria-live="polite">
-        {steps.map((s, i) => (
-          <li
-            key={s.key}
-            className={
-              i <= current ? "py-2 text-body1 text-text-strong" : "py-2 text-body1 text-text-hint"
-            }
-          >
-            {s.label}
-          </li>
-        ))}
-      </ol>
-    </Screen>
+    <OnPaper>
+      <Screen width="narrow" header={<TopBar back={false} />}>
+        <Mascot mood="thinking" size={112} className="mb-6" />
+        <ScreenTitle title="이력서를 읽고 있어요" description="보통 30초 안에 끝나요." />
+        {/* 노트를 읽는 장면: 단계 한 장 */}
+        <NoteSheet>
+          <ProgressBar value={status === "EXTRACTED" ? 0.7 : 0.3} label="이력서 처리 진행률" />
+          <ol className="mt-4" aria-live="polite">
+            {steps.map((s, i) => (
+              <li
+                key={s.key}
+                aria-current={i === current ? "step" : undefined}
+                className={clsx(
+                  "flex items-center gap-2 py-2 text-body1",
+                  i < current
+                    ? "text-text"
+                    : i === current
+                      ? "font-semibold text-text-strong"
+                      : "text-text-hint",
+                )}
+              >
+                {i < current && <Check size={20} aria-hidden className="text-accent" />}
+                {i < current ? s.done : s.doing}
+              </li>
+            ))}
+          </ol>
+        </NoteSheet>
+      </Screen>
+    </OnPaper>
+  );
+}
+
+/** 이력서 화면들의 바탕: 업로드 화면과 이어지는 모눈 + 종이 면 */
+function OnPaper({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative isolate flex-1 bg-paper">
+      <GridPaper />
+      {children}
+    </div>
   );
 }
 
@@ -148,84 +186,118 @@ function ParsedView({
 
   const { profile, educations } = draft;
 
+  const cta = (
+    <BottomCTA>
+      {dirty ? (
+        <Button onClick={save} loading={saving} loadingText="저장하고 있어요">
+          고친 내용 저장하기
+        </Button>
+      ) : (
+        <ButtonLink href="/interview/new">면접 준비하기</ButtonLink>
+      )}
+    </BottomCTA>
+  );
+
+  // 위: 모눈 위 "정리 노트"(프로필 + 기술). 아래: 경험(넓게) · 학력(좁게)
   return (
-    <Screen
-      header={<TopBar />}
-      cta={
-        <BottomCTA>
-          {dirty ? (
-            <Button onClick={save} loading={saving} loadingText="저장하고 있어요">
-              고친 내용 저장하기
-            </Button>
-          ) : (
-            <ButtonLink href="/interview/new">면접 준비하기</ButtonLink>
-          )}
-        </BottomCTA>
-      }
-    >
-      <ScreenTitle
-        title={"이렇게 정리했어요\n빠진 기술이 있으면 더해 주세요"}
-        description={resume.filename}
-      />
-
-      <Section title="기본 정보">
-        <ListRow title={profile.name ?? "이름 없음"} description={profileLine(profile)} />
-      </Section>
-
-      <Section title="기술" count={draft.skills.length}>
-        <div className="flex flex-wrap gap-2 pt-2">
-          {draft.skills.map((s) => (
-            <Chip
-              key={s}
-              label={s}
-              onRemove={() => setDraft({ ...draft, skills: draft.skills.filter((x) => x !== s) })}
-            />
-          ))}
+    <main>
+      <section aria-labelledby="resume-heading" className="relative isolate bg-paper">
+        <GridPaper />
+        <div className="mx-auto w-full max-w-site px-5 pb-12 md:px-8 md:pb-16">
+          <div className="flex h-14 items-center">
+            <TopBar />
+          </div>
+          <div className="pt-4 md:pt-6">
+            <p className="text-caption font-semibold text-text-sub">{resume.filename}</p>
+            <h1 id="resume-heading" className="mt-2 text-title1 text-text-strong md:text-title1-lg">
+              이렇게 정리했어요
+            </h1>
+            <p className="mt-2 text-body2 text-text md:text-body1">
+              빠진 기술이 있으면 더해 주세요.
+            </p>
+          </div>
+          <NoteSheet className="mt-8">
+            <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">
+              <div className="lg:col-span-4">
+                <h2 className="text-caption font-semibold text-text-sub">기본 정보</h2>
+                <p className="mt-2 text-title2 text-text-strong">{profile.name ?? "이름 없음"}</p>
+                {profileLine(profile) && (
+                  <p className="mt-1 text-body2 text-text">{profileLine(profile)}</p>
+                )}
+              </div>
+              <div className="lg:col-span-8">
+                <h2 className="text-caption font-semibold text-text-sub">
+                  기술 <span className="text-text-hint">{draft.skills.length}</span>
+                </h2>
+                {draft.skills.length === 0 ? (
+                  <p className="py-2 text-body2 text-text-hint">찾지 못했어요</p>
+                ) : (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {draft.skills.map((s) => (
+                      <Chip
+                        key={s}
+                        label={s}
+                        onRemove={() =>
+                          setDraft({ ...draft, skills: draft.skills.filter((x) => x !== s) })
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
+                <form
+                  className="mt-4 flex items-end gap-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    addSkill();
+                  }}
+                >
+                  <TextField
+                    label="빠진 기술 추가"
+                    placeholder="예: Docker"
+                    value={newSkill}
+                    onChange={(e) => setNewSkill(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    size="md"
+                    className="h-14"
+                    disabled={!newSkill.trim()}
+                  >
+                    추가하기
+                  </Button>
+                </form>
+              </div>
+            </div>
+          </NoteSheet>
         </div>
-        <form
-          className="mt-4 flex items-end gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            addSkill();
-          }}
-        >
-          <TextField
-            label="빠진 기술 추가"
-            placeholder="예: Docker"
-            value={newSkill}
-            onChange={(e) => setNewSkill(e.target.value)}
-            className="flex-1"
-          />
-          <Button
-            type="submit"
-            variant="secondary"
-            size="md"
-            className="h-14"
-            disabled={!newSkill.trim()}
-          >
-            추가하기
-          </Button>
-        </form>
-      </Section>
+      </section>
 
-      <ExperienceSection
-        resumeId={resume.id}
-        version={resume.parsed}
-        onResync={() => api.updateParsed(resume.id, resume.parsed!).then(onSaved)}
-      />
-
-      <Section title="학력" count={educations.length}>
-        {educations.map((e, i) => (
-          <ListRow
-            key={i}
-            title={e.school ?? ""}
-            description={[e.major, e.period].filter(Boolean).join(" · ")}
+      <div className="mx-auto grid w-full max-w-site gap-12 px-5 pt-12 pb-32 md:px-8 md:pt-16 md:pb-20 lg:grid-cols-12 lg:gap-10">
+        <div className="lg:col-span-8">
+          <ExperienceSection
+            resumeId={resume.id}
+            version={resume.parsed}
+            onResync={() => api.updateParsed(resume.id, resume.parsed!).then(onSaved)}
           />
-        ))}
-      </Section>
+        </div>
+        <div className="lg:col-span-4">
+          <Section title="학력" count={educations.length}>
+            {educations.map((e, i) => (
+              <ListRow
+                key={i}
+                title={e.school ?? ""}
+                description={[e.major, e.period].filter(Boolean).join(" · ")}
+              />
+            ))}
+          </Section>
+        </div>
+        <div className="lg:col-span-12">{cta}</div>
+      </div>
 
       <Toast open={!!toast} message={toast ?? ""} />
-    </Screen>
+    </main>
   );
 }
 

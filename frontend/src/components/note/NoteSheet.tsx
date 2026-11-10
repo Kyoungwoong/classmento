@@ -7,17 +7,27 @@ interface NoteSheetProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   /** 왼쪽 연두 여백선(기본 켬). 폭이 좁은 곳은 끈다 */
   margin?: boolean;
+  /** 강조 상태(예: 파일을 끌어다 놓는 중): 진한 연두 테두리 + 연두 고리. 면은 종이 그대로(안쪽 글자 대비 유지) */
+  active?: boolean;
 }
 
 /**
  * 노트 한 장: 미색 종이 면 + 윗변 스프링 구멍 + 왼쪽 연두 여백선.
  * 섹션의 주인공 묶음 하나에 쓴다(섹션마다 한 장까지). 노트 안에 노트를 넣지 않는다.
  */
-export function NoteSheet({ children, margin = true, className, ...rest }: NoteSheetProps) {
+export function NoteSheet({
+  children,
+  margin = true,
+  active = false,
+  className,
+  ...rest
+}: NoteSheetProps) {
   return (
     <div
       className={clsx(
-        "relative rounded-lg border border-rule bg-paper pt-12 pr-5 pb-6 md:pr-8 md:pb-8",
+        "relative rounded-lg border pt-12 pr-5 pb-6 transition-colors md:pr-8 md:pb-8",
+        "bg-paper",
+        active ? "border-accent ring-4 ring-primary" : "border-rule",
         margin ? "pl-10 md:pl-14" : "pl-5 md:pl-8",
         className,
       )}

@@ -69,7 +69,7 @@ export function ExperienceSection({
     <Section
       title="경험"
       count={items?.length}
-      description="곧 경험 하나를 골라 그 경험으로 면접을 볼 수 있어요."
+      description="경험 하나를 골라 그 경험으로 면접을 볼 수 있어요."
       showEmpty={false}
     >
       {error ? (
@@ -106,7 +106,7 @@ export function ExperienceSection({
           )}
         </div>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="grid gap-3 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
           {items.map((e) => (
             <li key={e.id}>
               <ExperienceBanner experience={e} />
