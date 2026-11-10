@@ -77,6 +77,8 @@ export function InterviewScreen({ id }: { id: number }) {
   const [finishFailed, setFinishFailed] = useState(false);
   const [loadFailed, setLoadFailed] = useState<"notFound" | "error" | null>(null);
   const [attempt, setAttempt] = useState(0);
+  // 평가만 실패한 답이지만 꼬리가 없어 다시 녹음하기로 고른 질문
+  const [recordInstead, setRecordInstead] = useState<number | null>(null);
   // 화면을 떠나면 끝내기 재시도를 멈춘다(나중에 리포트로 끌려가지 않게)
   const alive = useRef(true);
   useEffect(() => {
@@ -169,7 +171,8 @@ export function InterviewScreen({ id }: { id: number }) {
   const waitsForFollowUp = question.followUp === "AWAITING";
   const isLast = remaining.length === 0 && !waitsForFollowUp;
   // 글자는 있고 평가만 실패: 다시 녹음하지 않고 다시 평가한다
-  const evaluateOnly = question.answerStatus === "FAILED" && question.retryable;
+  const evaluateOnly =
+    question.answerStatus === "FAILED" && question.retryable && recordInstead !== question.seq;
   // 모든 질문을 올렸으면(새로고침·끝내기 실패 뒤) 다시 녹음하지 않고 끝내기만 한다
   const allAnswered = view.questions.every((q) =>
     q.answerStatus === "FAILED" ? false : Boolean(q.answerStatus) || done.has(q.seq),
@@ -200,7 +203,11 @@ export function InterviewScreen({ id }: { id: number }) {
         if (open) {
           setSeq(open.seq);
           recorder.reset();
-          setError(null);
+          setError(
+            open.answerStatus === "FAILED"
+              ? (open.failureReason ?? "답변을 처리하지 못했어요. 다시 시도해 주세요.")
+              : null,
+          );
         } else if (fresh !== null) {
           setError("면접을 끝내지 못했어요. 다시 시도해 주세요.");
           setFinishFailed(true);
@@ -244,9 +251,14 @@ export function InterviewScreen({ id }: { id: number }) {
     setBusy("올리고 있어요");
     try {
       await api.uploadAnswer(id, seq, recorder.blob);
-    } catch {
+    } catch (err) {
       setUploadFailed(true);
-      setError("답변을 올리지 못했어요. 연결을 확인하고 다시 올려 주세요.");
+      // 서버가 이유를 들어 거절했으면(예: 꼬리질문이 이미 붙어 다시 녹음 불가) 그 이유를, 아니면 연결 문제로 안내
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "답변을 올리지 못했어요. 연결을 확인하고 다시 올려 주세요.",
+      );
       setBusy(null);
       return;
     }
@@ -336,9 +348,24 @@ export function InterviewScreen({ id }: { id: number }) {
         {finishFailed ? "다시 끝내기" : "면접 끝내기"}
       </Button>
     ) : evaluateOnly && recorder.state === "idle" ? (
-      <Button loading={busy !== null} loadingText={busy ?? undefined} onClick={retryEvaluation}>
-        다시 평가하기
-      </Button>
+      <>
+        {/* 꼬리가 이 답을 근거로 하지 않았으면 다시 녹음도 할 수 있다(평가가 계속 실패할 때 빠져나갈 길) */}
+        {question.followUp !== "ASKED" && busy === null && (
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setRecordInstead(question.seq);
+              setError(null);
+              recorder.start();
+            }}
+          >
+            다시 녹음
+          </Button>
+        )}
+        <Button loading={busy !== null} loadingText={busy ?? undefined} onClick={retryEvaluation}>
+          다시 평가하기
+        </Button>
+      </>
     ) : recorder.state === "recording" ? (
       <Button onClick={recorder.stop}>답변 끝내기</Button>
     ) : recorder.state === "recorded" && busy !== null ? (
