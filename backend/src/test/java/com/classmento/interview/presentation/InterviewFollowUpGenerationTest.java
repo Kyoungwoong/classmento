@@ -6,7 +6,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -31,6 +33,7 @@ import com.classmento.interview.domain.JobRole;
 import com.classmento.interview.domain.QuestionDraft;
 import com.classmento.interview.domain.QuestionKind;
 import com.classmento.llm.LlmClient;
+import com.classmento.llm.LlmUnavailableException;
 import com.classmento.speech.SttClient;
 import com.classmento.speech.Transcript;
 import com.classmento.support.IntegrationTest;
@@ -228,5 +231,36 @@ class InterviewFollowUpGenerationTest extends IntegrationTest {
     // 진행 화면이 다시 불러오면 새 답으로 다시 정한다
     mockMvc.perform(get("/api/interviews/" + id).with(user(me))).andExpect(status().isOk());
     assertThat(reload(id).question(1).getFollowUp()).isEqualTo(FollowUpState.ASKED);
+  }
+
+  @Test
+  void 꼬리가_붙은_답의_평가가_실패해도_다시_평가로_풀린다() throws Exception {
+    doThrow(new LlmUnavailableException("평가 API 오류"))
+        .when(llm)
+        .generate(argThat(r -> r != null && r.promptName().startsWith("answer-evaluation")));
+    long id =
+        session(InterviewType.TECH, 1, QuestionKind.TECH, QuestionKind.TECH, QuestionKind.TECH);
+    answer(id, 1);
+    assertThat(reload(id).question(1).getFollowUp()).isEqualTo(FollowUpState.ASKED);
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT status FROM interview_answer WHERE session_id = ? AND seq = 1",
+                String.class,
+                id))
+        .isEqualTo(AnswerStatus.FAILED.name());
+
+    // 다시 녹음은 막히지만(꼬리가 이 답을 근거로 했으므로) 다시 평가하면 된다
+    answer(id, 1).andExpect(status().isConflict());
+    reset(llm);
+    mockMvc
+        .perform(post("/api/interviews/" + id + "/questions/1/retry").with(csrf()).with(user(me)))
+        .andExpect(status().isAccepted());
+    assertThat(
+            jdbc.queryForObject(
+                "SELECT status FROM interview_answer WHERE session_id = ? AND seq = 1",
+                String.class,
+                id))
+        .isEqualTo(AnswerStatus.EVALUATED.name());
+    assertThat(reload(id).getQuestions()).hasSize(4); // 꼬리는 그대로 하나
   }
 }
