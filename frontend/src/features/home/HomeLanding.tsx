@@ -17,7 +17,6 @@ const PREP = [
     title: "이력서 올리기",
     description:
       "PDF·DOCX를 올리면 경력과 프로젝트를 경험 단위로 정리해요. 없어도 시작할 수 있어요.",
-    done: true,
   },
   {
     title: "면접 고르기",
@@ -168,6 +167,7 @@ export function HomeLanding() {
           </NoteSheet>
           <StickyNote
             title="처음이라면"
+            level="h3"
             className="mx-auto w-full max-w-64 self-start lg:col-span-4 lg:mx-0 lg:mt-12"
           >
             질문 세 개면 10분 안에 끝나요.

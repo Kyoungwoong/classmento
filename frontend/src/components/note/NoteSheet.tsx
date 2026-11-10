@@ -26,7 +26,7 @@ export function NoteSheet({ children, margin = true, className, ...rest }: NoteS
       <div
         data-holes
         aria-hidden="true"
-        className="absolute inset-x-0 top-4 flex justify-center gap-6 md:gap-8"
+        className="absolute inset-x-0 top-4 flex justify-center gap-6 overflow-hidden px-3 md:gap-8"
       >
         {Array.from({ length: HOLES }, (_, i) => (
           <span key={i} className="size-3 rounded-full bg-bg-muted ring-1 ring-rule" />
