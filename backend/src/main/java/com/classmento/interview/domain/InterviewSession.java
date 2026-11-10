@@ -34,6 +34,11 @@ public class InterviewSession {
   /** 질문 하나에 붙일 수 있는 꼬리질문 최대 수(없음·한 번·두 번). */
   public static final int MAX_FOLLOW_UPS = 2;
 
+  /** 질문·의도 최대 길이(interview_question.text VARCHAR(300), intent VARCHAR(200)). */
+  static final int TEXT_MAX = 300;
+
+  static final int INTENT_MAX = 200;
+
   private static final Comparator<InterviewQuestion> DISPLAY_ORDER =
       Comparator.comparingInt(InterviewQuestion::getRootSeq)
           .thenComparingInt(InterviewQuestion::getDepth);
@@ -185,7 +190,11 @@ public class InterviewSession {
     if (parent.getFollowUp() != FollowUpState.AWAITING) {
       throw new DomainException("FOLLOW_UP_DECIDED", "이 질문의 꼬리질문은 이미 정했어요.");
     }
-    if (draft.kind() != QuestionKind.TECH || draft.text() == null || draft.text().isBlank()) {
+    if (draft.kind() != QuestionKind.TECH
+        || draft.text() == null
+        || draft.text().isBlank()
+        || draft.text().length() > TEXT_MAX
+        || (draft.intent() != null && draft.intent().length() > INTENT_MAX)) {
       throw new DomainException("INVALID_FOLLOW_UP", "꼬리질문은 기술 질문 한 문장이어야 해요.");
     }
     String key = normalize(draft.text());
@@ -203,6 +212,9 @@ public class InterviewSession {
 
   /** 꼬리를 붙이지 않기로 한다. 이미 정한 질문이면 아무 일도 없다(같은 결과가 두 번 와도 안전). */
   public void closeFollowUp(int seq) {
+    if (status != SessionStatus.IN_PROGRESS) {
+      return; // 끝난 뒤 늦게 온 결과는 건드리지 않는다
+    }
     InterviewQuestion q = question(seq);
     if (q.getFollowUp() == FollowUpState.AWAITING) {
       q.markClosed();
