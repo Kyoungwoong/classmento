@@ -1,30 +1,40 @@
 package com.classmento.interview.infrastructure;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.classmento.interview.application.InterviewProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
+/**
+ * 답변 처리 실행기 두 개. 테스트(classmento.interview.sync-processing=true)에서는 둘 다 동기 실행.
+ *
+ * <ul>
+ *   <li>{@code answerFastExecutor}: STT → 꼬리질문 판단. 다음 질문이 나오기까지(8초 목표, ADR 0008) 평가·종합에 밀리지 않게 따로
+ *       둔다
+ *   <li>{@code interviewExecutor}: 평가·종합(LLM, 수 초). 동시 AI 호출 수를 제한한다
+ * </ul>
+ */
 @Configuration
 public class InterviewExecutorConfig {
 
-  /**
-   * 답변 STT·평가용. 운영: 작은 스레드 풀(동시 AI 호출 수 제한). 테스트: 동기 실행
-   * (classmento.interview.sync-processing=true).
-   */
   @Bean
-  TaskExecutor interviewExecutor(
-      @Value("${classmento.interview.sync-processing:false}") boolean sync) {
-    if (sync) {
-      return new SyncTaskExecutor();
-    }
+  TaskExecutor answerFastExecutor(InterviewProperties props) {
+    return props.syncProcessing() ? new SyncTaskExecutor() : pool("answer-", 4, 8, 50);
+  }
+
+  @Bean
+  TaskExecutor interviewExecutor(InterviewProperties props) {
+    return props.syncProcessing() ? new SyncTaskExecutor() : pool("interview-", 2, 4, 200);
+  }
+
+  private static TaskExecutor pool(String prefix, int core, int max, int queue) {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(2);
-    executor.setMaxPoolSize(4);
-    executor.setQueueCapacity(200);
-    executor.setThreadNamePrefix("interview-");
+    executor.setCorePoolSize(core);
+    executor.setMaxPoolSize(max);
+    executor.setQueueCapacity(queue);
+    executor.setThreadNamePrefix(prefix);
     executor.initialize();
     return executor;
   }

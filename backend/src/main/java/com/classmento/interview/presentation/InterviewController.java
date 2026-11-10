@@ -69,7 +69,7 @@ public class InterviewController {
   @GetMapping("/{id}")
   @Operation(operationId = "getInterview")
   public InterviewView get(@PathVariable Long id, @AuthenticationPrincipal AuthUser user) {
-    InterviewSession s = service.get(user.id(), id);
-    return InterviewView.of(s, answers.answersOf(s.getId()));
+    AnswerService.Progress p = answers.progress(service.get(user.id(), id));
+    return InterviewView.of(p.session(), p.answers());
   }
 }

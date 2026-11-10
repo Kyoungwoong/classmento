@@ -7,6 +7,7 @@ import com.classmento.interview.domain.AnswerRepository;
 import com.classmento.interview.domain.AnswerStatus;
 import com.classmento.interview.domain.InterviewSession;
 import com.classmento.interview.domain.InterviewSessionRepository;
+import com.classmento.interview.domain.SessionStatus;
 import com.classmento.storage.FileStorage;
 import java.util.HashMap;
 import java.util.List;
@@ -29,25 +30,28 @@ public class AnswerService {
   private final AnswerRepository answers;
   private final FileStorage storage;
   private final AnswerProcessor processor;
-  private final TaskExecutor interviewExecutor;
+  private final TaskExecutor answerFastExecutor;
   private final TransactionTemplate tx;
   private final ReportScheduler reports;
+  private final FollowUpScheduler followUps;
 
   public AnswerService(
       InterviewSessionRepository sessions,
       AnswerRepository answers,
       FileStorage storage,
       AnswerProcessor processor,
-      TaskExecutor interviewExecutor,
+      TaskExecutor answerFastExecutor,
       TransactionTemplate tx,
-      ReportScheduler reports) {
+      ReportScheduler reports,
+      FollowUpScheduler followUps) {
     this.sessions = sessions;
     this.answers = answers;
     this.storage = storage;
     this.processor = processor;
-    this.interviewExecutor = interviewExecutor;
+    this.answerFastExecutor = answerFastExecutor;
     this.tx = tx;
     this.reports = reports;
+    this.followUps = followUps;
   }
 
   /** 녹음을 받아 저장하고 처리를 시작한다. 같은 질문에 다시 올리면 다시 녹음으로 본다. */
@@ -121,17 +125,25 @@ public class AnswerService {
   /** 면접 끝내기: 모든 질문에 답했어야 한다. 끝나면 글자까지 된 답변(혼합)을 평가하고, 모두 평가되면 종합을 만든다. */
   public InterviewSession finish(Long userId, Long sessionId) {
     sessions.findByIdAndUserId(sessionId, userId).orElseThrow(ApiException::notFound);
-    InterviewSession finished =
-        tx.execute(
-            s -> {
-              InterviewSession locked = sessions.lockById(sessionId).orElseThrow();
-              Map<Integer, AnswerStatus> answered = new HashMap<>();
-              answers
-                  .findBySessionIdOrderBySeq(sessionId)
-                  .forEach(a -> answered.put(a.getSeq(), a.getStatus()));
-              locked.finish(answered);
-              return locked;
-            });
+    InterviewSession finished;
+    try {
+      finished =
+          tx.execute(
+              s -> {
+                InterviewSession locked = sessions.lockById(sessionId).orElseThrow();
+                Map<Integer, AnswerStatus> answered = new HashMap<>();
+                answers
+                    .findBySessionIdOrderBySeq(sessionId)
+                    .forEach(a -> answered.put(a.getSeq(), a.getStatus()));
+                locked.finish(answered);
+                return locked;
+              });
+    } catch (DomainException e) {
+      if ("FOLLOW_UP_PENDING".equals(e.code())) {
+        followUps.request(sessionId); // 멈춘 판단이면 다시 돌린다(진행 중이면 끝난 뒤 한 번 더)
+      }
+      throw e;
+    }
     for (Answer a : answers.findBySessionIdOrderBySeq(sessionId)) {
       if (a.getStatus() == AnswerStatus.TRANSCRIBED) {
         start(a); // 평가부터(혼합). 거절되면 FAILED로 남아 다시 시도할 수 있다
@@ -146,11 +158,33 @@ public class AnswerService {
     return answers.findBySessionIdOrderBySeq(sessionId);
   }
 
+  /**
+   * 진행 화면이 면접을 다시 불러올 때: 답은 있는데 꼬리질문을 아직 정하지 못한 질문이 있으면(생성 중이거나 중간에 끊김) 다시 정하게 한다. 세션마다 하나만 돌고, 이미
+   * 정하는 중인 답은 건너뛴다.
+   */
+  public Progress progress(InterviewSession s) {
+    List<Answer> list = answersOf(s.getId());
+    if (s.getStatus() == SessionStatus.IN_PROGRESS && s.getMaxFollowUps() > 0) {
+      Map<Integer, AnswerStatus> statuses = new HashMap<>();
+      list.forEach(a -> statuses.put(a.getSeq(), a.getStatus()));
+      if (!s.awaitingFollowUps(statuses).isEmpty()) {
+        followUps.request(s.getId());
+        // 복구가 바로 끝났으면(동기 실행) 새 꼬리를 보여 준다. 비동기면 다음 폴링에서 보인다
+        return new Progress(sessions.findById(s.getId()).orElse(s), answersOf(s.getId()));
+      }
+    }
+    return new Progress(s, list);
+  }
+
+  /** 진행 화면에 보여 줄 면접과 답변. */
+  public record Progress(InterviewSession session, List<Answer> answers) {}
+
   private void start(Answer a) {
     Long id = a.getId();
     int version = a.getAudioVersion();
     try {
-      interviewExecutor.execute(() -> processor.process(id, version));
+      // STT → 꼬리질문 판단은 빠른 실행기에서(평가는 그 뒤 AnswerProcessor가 평가 실행기로 넘긴다)
+      answerFastExecutor.execute(() -> processor.process(id, version));
     } catch (TaskRejectedException e) {
       processor.markFailed(id, version, "지금은 답변을 처리할 수 없어요. 잠시 후 다시 시도해 주세요.");
     }
