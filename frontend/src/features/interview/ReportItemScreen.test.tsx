@@ -112,3 +112,22 @@ describe("ReportItemScreen", () => {
     expect(container.querySelector("audio")).toBeNull();
   });
 });
+
+describe("ReportItemScreen 꼬리질문", () => {
+  it("꼬리 문항은 본 질문 번호로 라벨을 달고 앞 질문으로 가는 링크를 준다", async () => {
+    vi.spyOn(api, "interviewReport").mockResolvedValue({
+      ...view,
+      items: [
+        { ...view.items[0], seq: 1, depth: 0, question: "캐시를 왜 쓰셨나요?" },
+        { ...view.items[0], seq: 4, parentSeq: 1, depth: 1, question: "무효화는요?" },
+        { ...view.items[0], seq: 2, depth: 0, question: "인덱스는요?" },
+      ],
+    });
+    render(<ReportItemScreen id={7} seq={4} />);
+    expect(await screen.findByText("질문 1의 꼬리 1")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "앞 질문 보기" })).toHaveAttribute(
+      "href",
+      "/interview/7/report/1",
+    );
+  });
+});

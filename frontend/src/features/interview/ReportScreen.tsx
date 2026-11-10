@@ -18,6 +18,7 @@ import { GridPaper, HandNote, NoteSheet, Stamp } from "@/components/note";
 import { Mascot } from "@/components/site/Mascot";
 import { api, ApiError, type ReportItemView, type ReportView } from "@/lib/api/client";
 import { criterionLabel } from "./labels";
+import { rootNumbers } from "./questionLabels";
 
 const POLL_MS = 3000;
 
@@ -144,6 +145,7 @@ export function ReportScreen({ id }: { id: number }) {
   }
 
   const ready = report.status === "READY";
+  const numbers = rootNumbers(report.items);
   const overall = ready ? report.overall : null;
 
   return (
@@ -236,9 +238,17 @@ export function ReportScreen({ id }: { id: number }) {
             <h2 className="text-body1 font-semibold text-text-strong">문항별</h2>
             <ul className="mt-2">
               {report.items.map((it) => (
-                <li key={it.seq}>
+                // 꼬리질문은 본 질문 아래 들여 쓴다
+                <li
+                  key={it.seq}
+                  className={it.depth > 0 ? "ml-3 border-l-2 border-rule pl-4" : undefined}
+                >
                   <ListRow
-                    title={`${it.seq}. ${it.question}`}
+                    title={
+                      it.depth > 0
+                        ? `꼬리 ${it.depth} · ${it.question}`
+                        : `${numbers.get(it.seq)}. ${it.question}`
+                    }
                     titleLines={2}
                     description={itemStatus(it)}
                     trailing={
@@ -258,7 +268,11 @@ export function ReportScreen({ id }: { id: number }) {
                     <>
                       <button
                         type="button"
-                        aria-label={`${it.seq}번 다시 평가하기`}
+                        aria-label={
+                          it.depth > 0
+                            ? `${numbers.get(it.seq)}번 질문의 꼬리 ${it.depth} 다시 평가하기`
+                            : `${numbers.get(it.seq)}번 다시 평가하기`
+                        }
                         disabled={retrying === it.seq}
                         onClick={() => retry(it.seq)}
                         className="-mt-2 inline-flex h-11 items-center text-caption text-accent disabled:text-text-hint"

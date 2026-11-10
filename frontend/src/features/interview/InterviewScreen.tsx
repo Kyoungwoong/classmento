@@ -19,6 +19,30 @@ import { useRecorder } from "./useRecorder";
 
 const PROCESSING_RETRY_MS = 2000;
 const PROCESSING_RETRIES = 15;
+/** 꼬리질문을 고르는 동안 다시 불러오는 간격과 횟수(목표 8초, 넉넉히 20초까지). ADR 0008 */
+const FOLLOW_UP_POLL_MS = 1000;
+const FOLLOW_UP_POLLS = 20;
+const PICKING = "다음 질문을 고르고 있어요";
+
+type Question = InterviewView["questions"][number];
+
+/** 사슬의 본 질문 번호(꼬리면 부모를 따라 올라간다) */
+function rootSeqOf(view: InterviewView, q: Question): number {
+  let cur = q;
+  for (let guard = 0; cur.parentSeq != null && guard < 10; guard++) {
+    const parent = view.questions.find((x) => x.seq === cur.parentSeq);
+    if (!parent) break;
+    cur = parent;
+  }
+  return cur.seq;
+}
+
+/** 답할 차례인 질문: 답이 없거나(이번에 올린 것 제외) 실패한 첫 질문(화면 순서) */
+function nextOpen(view: InterviewView, done: Set<number>): Question | undefined {
+  return view.questions.find(
+    (q) => (!q.answerStatus && !done.has(q.seq)) || q.answerStatus === "FAILED",
+  );
+}
 
 const KIND_LABEL = { TECH: "기술 질문", BEHAVIORAL: "인성 질문" } as const;
 
@@ -53,6 +77,8 @@ export function InterviewScreen({ id }: { id: number }) {
   const [finishFailed, setFinishFailed] = useState(false);
   const [loadFailed, setLoadFailed] = useState<"notFound" | "error" | null>(null);
   const [attempt, setAttempt] = useState(0);
+  // 평가만 실패한 답이지만 꼬리가 없어 다시 녹음하기로 고른 질문
+  const [recordInstead, setRecordInstead] = useState<number | null>(null);
   // 화면을 떠나면 끝내기 재시도를 멈춘다(나중에 리포트로 끌려가지 않게)
   const alive = useRef(true);
   useEffect(() => {
@@ -130,12 +156,23 @@ export function InterviewScreen({ id }: { id: number }) {
   }
 
   const question = view.questions.find((q) => q.seq === seq)!;
-  const index = view.questions.findIndex((q) => q.seq === seq);
-  const total = view.questions.length;
+  // 진행은 본 질문 기준(꼬리는 "질문 2의 꼬리 1"로 보여 준다)
+  const roots = view.questions.filter((q) => q.depth === 0);
+  const rootIndex = roots.findIndex((r) => r.seq === rootSeqOf(view, question));
+  const total = roots.length;
+  const parent =
+    question.parentSeq != null
+      ? view.questions.find((q) => q.seq === question.parentSeq)
+      : undefined;
   const remaining = view.questions.filter(
     (q) => q.seq !== seq && ((!q.answerStatus && !done.has(q.seq)) || q.answerStatus === "FAILED"),
   );
-  const isLast = remaining.length === 0;
+  // 이 답에서 꼬리질문이 나올 수 있으면 아직 마지막이 아니다
+  const waitsForFollowUp = question.followUp === "AWAITING";
+  const isLast = remaining.length === 0 && !waitsForFollowUp;
+  // 글자는 있고 평가만 실패: 다시 녹음하지 않고 다시 평가한다
+  const evaluateOnly =
+    question.answerStatus === "FAILED" && question.retryable && recordInstead !== question.seq;
   // 모든 질문을 올렸으면(새로고침·끝내기 실패 뒤) 다시 녹음하지 않고 끝내기만 한다
   const allAnswered = view.questions.every((q) =>
     q.answerStatus === "FAILED" ? false : Boolean(q.answerStatus) || done.has(q.seq),
@@ -149,11 +186,34 @@ export function InterviewScreen({ id }: { id: number }) {
       if (alive.current) router.push(`/interview/${id}/report`);
     } catch (err) {
       if (!alive.current) return;
-      if (err instanceof ApiError && err.code === "ANSWERS_PROCESSING" && retries > 0) {
-        setBusy("정리하고 있어요");
+      if (
+        err instanceof ApiError &&
+        (err.code === "ANSWERS_PROCESSING" || err.code === "FOLLOW_UP_PENDING") &&
+        retries > 0
+      ) {
+        setBusy(err.code === "FOLLOW_UP_PENDING" ? PICKING : "정리하고 있어요");
         await new Promise((r) => setTimeout(r, PROCESSING_RETRY_MS));
         if (!alive.current) return;
         return finish(retries - 1);
+      }
+      if (err instanceof ApiError && err.code === "NOT_ALL_ANSWERED") {
+        // 그 사이 꼬리질문이 붙었다: 답할 차례인 질문으로 간다
+        const fresh = await load().catch(() => undefined);
+        const open = fresh ? nextOpen(fresh, new Set()) : undefined;
+        if (open) {
+          setSeq(open.seq);
+          recorder.reset();
+          setError(
+            open.answerStatus === "FAILED"
+              ? (open.failureReason ?? "답변을 처리하지 못했어요. 다시 시도해 주세요.")
+              : null,
+          );
+        } else if (fresh !== null) {
+          setError("면접을 끝내지 못했어요. 다시 시도해 주세요.");
+          setFinishFailed(true);
+        }
+        setBusy(null);
+        return;
       }
       if (err instanceof ApiError && err.code === "ANSWERS_FAILED") {
         // 다시 녹음해야 하는 질문으로 돌아간다
@@ -191,29 +251,82 @@ export function InterviewScreen({ id }: { id: number }) {
     setBusy("올리고 있어요");
     try {
       await api.uploadAnswer(id, seq, recorder.blob);
-    } catch {
+    } catch (err) {
       setUploadFailed(true);
-      setError("답변을 올리지 못했어요. 연결을 확인하고 다시 올려 주세요.");
+      // 서버가 이유를 들어 거절했으면(예: 꼬리질문이 이미 붙어 다시 녹음 불가) 그 이유를, 아니면 연결 문제로 안내
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "답변을 올리지 못했어요. 연결을 확인하고 다시 올려 주세요.",
+      );
       setBusy(null);
       return;
     }
-    const nextDone = new Set(done).add(seq);
+    await moveOn(seq);
+  }
+
+  /** 답을 올린(또는 다시 평가를 시작한) 뒤: 꼬리질문을 기다려야 하면 기다리고, 다음 차례 질문으로 가거나 끝낸다. */
+  async function moveOn(answered: number) {
+    const nextDone = new Set(done).add(answered);
     setDone(nextDone);
     // 실패로 돌아왔던 질문을 고쳤으면 그 상태를 지운다
-    setView({
+    let current: InterviewView = {
       ...view!,
       questions: view!.questions.map((q) =>
-        q.seq === seq ? { ...q, answerStatus: "UPLOADED", failureReason: undefined } : q,
+        q.seq === answered
+          ? { ...q, answerStatus: "UPLOADED", failureReason: undefined, retryable: false }
+          : q,
       ),
-    });
+    };
+    setView(current);
     if (isLast) {
       setBusy("마무리하고 있어요");
       await finish();
       return;
     }
-    setSeq(remaining[0].seq);
+    if (waitsForFollowUp) {
+      setBusy(PICKING);
+      for (let i = 0; i < FOLLOW_UP_POLLS; i++) {
+        await new Promise((r) => setTimeout(r, FOLLOW_UP_POLL_MS));
+        if (!alive.current) return;
+        const fresh = await load().catch(() => undefined);
+        if (fresh === null) return; // 이미 리포트로 보냈다
+        if (!fresh) continue;
+        current = fresh;
+        const q = fresh.questions.find((x) => x.seq === answered);
+        if (!q || q.followUp !== "AWAITING" || q.answerStatus === "FAILED") break;
+      }
+    }
+    const open = nextOpen(current, nextDone);
+    if (!open) {
+      setBusy("마무리하고 있어요");
+      await finish();
+      return;
+    }
+    if (open.answerStatus === "FAILED") {
+      setError(open.failureReason ?? "답변을 처리하지 못했어요. 다시 시도해 주세요.");
+    }
+    setSeq(open.seq);
     recorder.reset();
     setBusy(null);
+  }
+
+  async function retryEvaluation() {
+    if (seq === null) return;
+    setError(null);
+    setBusy("다시 평가하고 있어요");
+    try {
+      await api.retryAnswer(id, seq);
+    } catch (err) {
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "다시 평가하지 못했어요. 잠시 후 다시 시도해 주세요.",
+      );
+      setBusy(null);
+      return;
+    }
+    await moveOn(seq);
   }
 
   const micError =
@@ -234,6 +347,25 @@ export function InterviewScreen({ id }: { id: number }) {
       <Button loading={busy !== null} loadingText={busy ?? undefined} onClick={submit}>
         {finishFailed ? "다시 끝내기" : "면접 끝내기"}
       </Button>
+    ) : evaluateOnly && recorder.state === "idle" ? (
+      <>
+        {/* 꼬리가 이 답을 근거로 하지 않았으면 다시 녹음도 할 수 있다(평가가 계속 실패할 때 빠져나갈 길) */}
+        {question.followUp !== "ASKED" && busy === null && (
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setRecordInstead(question.seq);
+              setError(null);
+              recorder.start();
+            }}
+          >
+            다시 녹음
+          </Button>
+        )}
+        <Button loading={busy !== null} loadingText={busy ?? undefined} onClick={retryEvaluation}>
+          다시 평가하기
+        </Button>
+      </>
     ) : recorder.state === "recording" ? (
       <Button onClick={recorder.stop}>답변 끝내기</Button>
     ) : recorder.state === "recorded" && busy !== null ? (
@@ -276,14 +408,19 @@ export function InterviewScreen({ id }: { id: number }) {
     <Screen header={<TopBar onBack={() => router.push("/")} />} cta={<BottomCTA>{cta}</BottomCTA>}>
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <ProgressBar value={(index + 1) / total} label="면접 진행도" />
+          <ProgressBar value={(rootIndex + 1) / total} label="면접 진행도" />
         </div>
-        <span className="text-caption text-text-sub">{`${index + 1} / ${total}`}</span>
+        <span className="text-caption text-text-sub">{`${rootIndex + 1} / ${total}`}</span>
       </div>
       <NoteSheet className="mt-6">
         <p className="text-caption font-semibold text-text-sub">
-          {`질문 ${index + 1} · ${KIND_LABEL[question.kind]}`}
+          {question.depth > 0
+            ? `질문 ${rootIndex + 1}의 꼬리 ${question.depth}`
+            : `질문 ${rootIndex + 1} · ${KIND_LABEL[question.kind]}`}
         </p>
+        {parent && (
+          <p className="mt-1 line-clamp-1 text-caption text-text-sub">{`앞 질문: ${parent.text}`}</p>
+        )}
         <h1 className="mt-2 text-title1 whitespace-pre-line text-text-strong md:text-title1-lg">
           {question.text}
         </h1>
@@ -327,7 +464,12 @@ export function InterviewScreen({ id }: { id: number }) {
                   <audio controls src={recorder.url} className="w-full" />
                 </>
               )}
-              {!finishOnly && recorder.state === "idle" && !error && (
+              {!finishOnly && recorder.state === "idle" && !error && evaluateOnly && (
+                <p className="text-body1 text-text">
+                  {`${question.failureReason ?? "답변을 평가하지 못했어요."} 녹음은 그대로 두고 다시 평가해요.`}
+                </p>
+              )}
+              {!finishOnly && recorder.state === "idle" && !error && !evaluateOnly && (
                 <p className="text-body1 text-text">
                   준비되면 답변을 시작해요. 결론부터 말해 보세요.
                 </p>
