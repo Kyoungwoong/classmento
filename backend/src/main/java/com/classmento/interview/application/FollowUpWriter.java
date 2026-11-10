@@ -67,7 +67,7 @@ public class FollowUpWriter {
   }
 
   FollowUpWriter(LlmClient llm, PromptLoader prompts, ObjectMapper json, Duration timeout) {
-    this(llm, prompts, json, timeout, 4);
+    this(llm, prompts, json, timeout, InterviewProperties.DEFAULT_FOLLOW_UP_CONCURRENCY);
   }
 
   private FollowUpWriter(

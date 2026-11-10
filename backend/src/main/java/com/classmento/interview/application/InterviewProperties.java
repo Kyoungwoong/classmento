@@ -14,12 +14,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record InterviewProperties(
     boolean syncProcessing, Duration followUpTimeout, Integer followUpConcurrency) {
 
+  public static final int DEFAULT_FOLLOW_UP_CONCURRENCY = 8;
+
   public InterviewProperties {
     if (followUpTimeout == null) {
       followUpTimeout = Duration.ofSeconds(5);
     }
     if (followUpConcurrency == null || followUpConcurrency < 1) {
-      followUpConcurrency = 8;
+      followUpConcurrency = DEFAULT_FOLLOW_UP_CONCURRENCY;
     }
   }
 }

@@ -76,8 +76,9 @@ public class FollowUpService {
     }
     long started = System.nanoTime();
     // 잠그기 전에 답변 엔티티를 저장 트랜잭션에 올리지 않도록 세션 번호는 밖에서 미리 읽어 둔다(아래 store 참고)
-    Long sessionId = answers.findById(answerId).map(Answer::getSessionId).orElse(null);
+    Long sessionId = null;
     try {
+      sessionId = answers.findById(answerId).map(Answer::getSessionId).orElse(null);
       if (sessionId != null) {
         run(answerId, version);
       }
