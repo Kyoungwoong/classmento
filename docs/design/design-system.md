@@ -81,8 +81,8 @@ Tailwind 기본 팔레트는 꺼져 있다(`--color-*: initial`). `bg-purple-500
 
 | 컴포넌트 | 언제 |
 |---|---|
-| `Screen`, `ScreenTitle` | 페이지 본문 뼈대(`width`)와 큰 제목. 제목 위에 단계 라벨(`eyebrow`)을 붙일 수 있다 |
-| `Section`, `SectionHeading` | 홈·소개처럼 띠로 나누는 페이지. 띠 안 제목은 h2, `tone`을 띠와 같게 넘긴다 |
+| `Screen`, `ScreenTitle` | 페이지 본문 뼈대(`width`)와 큰 제목. 제목 위에 단계 라벨(`eyebrow`)을 붙일 수 있다. `aside`를 주면 데스크톱 2단(왼쪽 aside, 오른쪽 본문 + CTA), `stickyAside`로 왼쪽 고정 |
+| `Section`, `SectionHeading` | 띠로 나누는 섹션. 띠 안 제목은 h2, `tone`을 띠와 같게 넘긴다. 작업 화면 아래 묶음은 `compact`(위아래 여백 작게) |
 | `Panel` | 관련된 것을 한 덩어리로(녹음 패널, 점수 요약, 업로드 영역). `tone="tint"`는 강조 묶음 하나(연한 면 띠 안에는 두지 않는다) |
 | `TwoColumn` | 데스크톱 2단(왼쪽 5/12 · 오른쪽 7/12, `ratio="even"`이면 반반) |
 | `BottomCTA` + `Button` | 주요 행동. 버튼 높이 56(lg). primary = 연두 면 + 남색 글자, secondary = 연한 남색 면. 로딩 문구는 `loadingText`로 지금 하는 일("올리고 있어요") |
@@ -112,8 +112,10 @@ Tailwind 기본 팔레트는 꺼져 있다(`--color-*: initial`). `bg-purple-500
 | `Highlight` | 노랑 형광펜. 제목 핵심어 하나(짧은 단어, 줄바꿈하지 않음) |
 | `Scribble` | 손으로 그은 연두 밑줄(장식). 제목 핵심어 아래 한 곳 |
 | `HandNote` | 손글씨 한마디(`text-accent`). 본문·버튼·폼 금지 |
-| `Stamp` | 채점 도장(종합 점수, role=img "종합 N점, 5점 만점") |
+| `Stamp` | 채점 도장(role=img "종합 N점, 5점 만점", `label="이 문항"`, `size` lg 리포트 머리 · md 패널 안) |
 | `StickyNote` | 노랑 포스트잇 + 테이프, 손글씨 제목. 팁 하나 |
+| `StepProgress` | 세로 단계 목록(`features/interview`): 끝난 단계 연두 원+체크, 지금 단계 연한 연두 행(`aria-current="step"`). 새 면접 왼쪽 열 |
+| `markEvidence` | 답변 글자에서 채점 근거 인용을 노랑 `<mark>`로 칠한다(`features/interview`). 문항 상세 |
 | `CheckList` | 네모 칸 + 손 체크 할 일 목록(준비 단계). 끝난 항목은 "완료"로 읽힌다 |
 
 아이콘: `lucide-react`. 버튼, 목록 행, 섹션 제목 앞에만 쓰고 크기는 20~24, 장식이면 `aria-hidden`이다.
