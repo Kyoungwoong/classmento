@@ -82,11 +82,14 @@ public class AnswerService {
     return tx.execute(
         s -> {
           // 끝내기와 거의 동시에 온 다시 녹음이 끝난 뒤에 반영되지 않게 세션을 잠그고 다시 확인
-          sessions.lockById(session.getId()).orElseThrow().requireAnswerable(seq);
+          InterviewSession locked = sessions.lockById(session.getId()).orElseThrow();
+          locked.requireAnswerable(seq);
           return answers
               .lockBySessionIdAndSeq(session.getId(), seq)
               .map(
                   a -> {
+                    // 이 답을 근거로 꼬리질문을 이미 했으면 다시 녹음할 수 없다(ADR 0008)
+                    locked.requireReRecordable(seq);
                     a.reRecord(key, type);
                     return a;
                   })
