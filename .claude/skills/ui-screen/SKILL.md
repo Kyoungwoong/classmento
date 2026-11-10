@@ -23,6 +23,7 @@ description: classmento 프론트엔드 화면·컴포넌트를 만들거나 고
 1. `cd frontend && pnpm dev` (백그라운드).
 2. playwright MCP로 해당 경로를 **375×812**, **768×1024**, **1280×800** 세 크기로 스크린샷.
    (playwright MCP가 없으면 내장 브라우저 도구로 같은 작업)
+   - 가로 넘침 검사: 폭 320 · 768 · 1024 · 1280 · 1920에서 `document.documentElement.scrollWidth`가 `clientWidth`보다 크지 않은지 확인한다(넘치면 헤더 선·푸터가 끊겨 보인다). 넘치면 `getBoundingClientRect().right`로 범인 요소를 찾는다.
 3. `design-reviewer` 서브에이전트에 스크린샷 경로와 변경된 tsx 파일 목록을 넘겨 검토 요청.
 4. 지적 사항을 고치고 다시 스크린샷. "위반 없음"이 나올 때까지.
 

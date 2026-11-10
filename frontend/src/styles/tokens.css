@@ -2,6 +2,7 @@
  * classmento 디자인 토큰 — 원본 문서: docs/design/design-system.md
  * 여기 없는 색·크기를 컴포넌트에서 임의로 쓰지 않는다. 필요하면 이 파일과 문서를 함께 고친다.
  * 팔레트: 연두(메인 면·버튼) · 남색(글자·제목·헤더) · 연한 연두 면, 포인트 노랑. ADR 0006
+ * 콘셉트: 면접 노트(종이 면·모눈·형광펜·도장). ADR 0007
  */
 :root {
   /* Gray — 본문 글자·구분선·회색 면 */
@@ -48,6 +49,9 @@
   --bg-subtle: var(--gray-50);
   --bg-muted: var(--gray-100);
   --bg-tint: #f4fce3;
+  /* 노트(ADR 0007): 미색 종이 면, 모눈·줄 선 */
+  --paper: #fffdf6;
+  --rule: #dfe5f0;
   --text-strong: var(--navy-900);
   --text: var(--gray-800);
   --text-sub: var(--gray-600);

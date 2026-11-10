@@ -6,7 +6,7 @@ import { HomeLanding } from "./HomeLanding";
 afterEach(() => vi.restoreAllMocks());
 
 describe("HomeLanding", () => {
-  it("히어로 제목과 시작 버튼, 준비 흐름·면접 종류 섹션을 보여준다", () => {
+  it("히어로 제목과 시작 버튼, 노트 미리보기·준비 체크리스트·면접 종류·칠판을 보여준다", () => {
     vi.spyOn(api, "interviews").mockRejectedValue(new Error("401"));
     render(<HomeLanding />);
 
@@ -17,13 +17,15 @@ describe("HomeLanding", () => {
       "href",
       "/resume/upload",
     );
+    // 노트 콘셉트(ADR 0007): 채점된 노트 미리보기 · 준비 체크리스트 · 색인 탭 · 칠판
+    const preview = screen.getByRole("figure", { name: "면접 노트 미리보기" });
+    expect(preview).toContainElement(screen.getByRole("img", { name: "종합 4.2점, 5점 만점" }));
+    expect(screen.getByRole("heading", { name: "오늘의 면접 준비" })).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "면접 준비 체크리스트" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "경험 기반 면접" })).toBeInTheDocument();
     expect(
-      screen.getByRole("figure", { name: "내 이력서가 면접 리포트가 되는 과정" }),
+      screen.getByRole("heading", { name: "오늘은 질문 세 개만 답해 볼까요?" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "준비는 단순하게, 연습은 실전처럼" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("경험 기반 면접")).toBeInTheDocument();
   });
 
   it("로그인했고 면접이 있으면 최근 면접을 히어로 아래에 보여준다", async () => {
