@@ -14,6 +14,8 @@ import com.classmento.storage.FileStorage;
 import java.util.function.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.core.task.TaskRejectedException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -39,6 +41,8 @@ public class AnswerProcessor {
   private final AnswerEvaluator evaluator;
   private final TransactionTemplate tx;
   private final ReportScheduler reports;
+  private final FollowUpService followUps;
+  private final TaskExecutor interviewExecutor;
 
   public AnswerProcessor(
       AnswerRepository answers,
@@ -47,7 +51,9 @@ public class AnswerProcessor {
       SttClient stt,
       AnswerEvaluator evaluator,
       TransactionTemplate tx,
-      ReportScheduler reports) {
+      ReportScheduler reports,
+      FollowUpService followUps,
+      TaskExecutor interviewExecutor) {
     this.answers = answers;
     this.sessions = sessions;
     this.storage = storage;
@@ -55,6 +61,8 @@ public class AnswerProcessor {
     this.evaluator = evaluator;
     this.tx = tx;
     this.reports = reports;
+    this.followUps = followUps;
+    this.interviewExecutor = interviewExecutor;
   }
 
   /** 어떤 예외가 나도 답변을 처리 중 상태로 남기지 않는다(FAILED로 두어 다시 시도할 수 있게). */
@@ -84,7 +92,22 @@ public class AnswerProcessor {
     if (answer.getStatus() == AnswerStatus.UPLOADED && !transcribe(answer, version)) {
       return;
     }
-    evaluateIfDue(answerId, version);
+    // 다음 질문(꼬리)을 먼저 정하고, 평가는 평가 실행기로 넘긴다(다음 질문이 평가에 밀리지 않게)
+    followUps.decide(answerId, version);
+    try {
+      interviewExecutor.execute(() -> evaluateSafely(answerId, version));
+    } catch (TaskRejectedException e) {
+      markFailed(answerId, version, EVAL_FAILED);
+    }
+  }
+
+  private void evaluateSafely(Long answerId, int version) {
+    try {
+      evaluateIfDue(answerId, version);
+    } catch (RuntimeException e) {
+      log.error("답변 {} 평가 중 예상하지 못한 오류: {}", answerId, e.getClass().getSimpleName());
+      markFailed(answerId, version, UNEXPECTED);
+    }
   }
 
   /** 혼합 면접은 끝낸 뒤에만 평가한다(그 전에는 글자까지). */

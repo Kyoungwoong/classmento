@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -17,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.classmento.common.security.AuthUser;
 import com.classmento.identity.domain.AppUser;
+import com.classmento.interview.application.AnswerService;
 import com.classmento.interview.domain.AnswerStatus;
 import com.classmento.interview.domain.Conditions;
 import com.classmento.interview.domain.FollowUpState;
@@ -46,6 +48,7 @@ import org.springframework.test.web.servlet.ResultActions;
 class InterviewFollowUpGenerationTest extends IntegrationTest {
 
   @Autowired InterviewSessionRepository sessions;
+  @Autowired AnswerService answerService;
   @MockitoSpyBean LlmClient llm;
   @MockitoSpyBean SttClient stt;
 
@@ -198,5 +201,32 @@ class InterviewFollowUpGenerationTest extends IntegrationTest {
     mockMvc
         .perform(post("/api/interviews/" + id + "/finish").with(csrf()).with(user(me)))
         .andExpect(status().isAccepted());
+  }
+
+  @Test
+  void 꼬리를_정하는_사이_다시_녹음하면_옛_답으로_만든_꼬리는_버리고_다시_정한다() throws Exception {
+    long id =
+        session(InterviewType.TECH, 1, QuestionKind.TECH, QuestionKind.TECH, QuestionKind.TECH);
+    boolean[] reRecorded = {false};
+    doAnswer(
+            inv -> {
+              if (!reRecorded[0]) {
+                reRecorded[0] = true; // 옛 답(1번째 녹음)으로 꼬리를 만드는 도중 다시 녹음
+                answerService.upload(me.id(), id, 1, "webm-2".getBytes(), "audio/webm");
+              }
+              return inv.callRealMethod();
+            })
+        .when(llm)
+        .generate(argThat(r -> r != null && r.promptName().startsWith("follow-up-question")));
+
+    answer(id, 1);
+
+    InterviewSession s = reload(id);
+    assertThat(s.getQuestions()).hasSize(3); // 옛 답의 꼬리는 버렸다
+    assertThat(s.question(1).getFollowUp()).isEqualTo(FollowUpState.AWAITING);
+
+    // 진행 화면이 다시 불러오면 새 답으로 다시 정한다
+    mockMvc.perform(get("/api/interviews/" + id).with(user(me))).andExpect(status().isOk());
+    assertThat(reload(id).question(1).getFollowUp()).isEqualTo(FollowUpState.ASKED);
   }
 }

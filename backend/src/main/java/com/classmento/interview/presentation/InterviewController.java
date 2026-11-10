@@ -4,6 +4,7 @@ import com.classmento.common.security.AuthUser;
 import com.classmento.interview.application.AnswerService;
 import com.classmento.interview.application.InterviewService;
 import com.classmento.interview.application.ReportQuery;
+import com.classmento.interview.domain.Answer;
 import com.classmento.interview.domain.InterviewSession;
 import com.classmento.interview.presentation.InterviewDtos.CreateInterviewRequest;
 import com.classmento.interview.presentation.InterviewDtos.InterviewSummary;
@@ -70,6 +71,8 @@ public class InterviewController {
   @Operation(operationId = "getInterview")
   public InterviewView get(@PathVariable Long id, @AuthenticationPrincipal AuthUser user) {
     InterviewSession s = service.get(user.id(), id);
-    return InterviewView.of(s, answers.answersOf(s.getId()));
+    List<Answer> list = answers.answersForProgress(s);
+    // 복구가 동기로 끝났으면(테스트·빠른 응답) 새 꼬리를 바로 보여 준다
+    return InterviewView.of(service.get(user.id(), id), list);
   }
 }

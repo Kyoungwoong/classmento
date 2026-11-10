@@ -105,13 +105,14 @@ class InterviewFollowUpPersistenceTest extends IntegrationTest {
   @Test
   void 꼬리가_붙은_답변은_다시_녹음할_수_없다() throws Exception {
     long id = session(1);
-    answer(id, 1).andExpect(status().isAccepted());
-    addFollowUp(id, 1, "그 캐시의 적중률은 얼마였나요?");
+    answer(id, 1).andExpect(status().isAccepted()); // 이 답으로 꼬리질문이 붙는다(가짜 LLM)
+    assertThat(sessions.findById(id).orElseThrow().question(1).getFollowUp())
+        .isEqualTo(FollowUpState.ASKED);
 
     answer(id, 1)
         .andExpect(status().isConflict())
         .andExpect(jsonPath("$.code").value("FOLLOW_UP_ASKED"));
-    answer(id, 2).andExpect(status().isAccepted());
+    answer(id, 2).andExpect(status().isAccepted()); // 같은 꼬리 문장이라 닫힘
     answer(id, 2).andExpect(status().isAccepted()); // 꼬리가 없으면 다시 녹음할 수 있다
   }
 }
