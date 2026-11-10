@@ -271,7 +271,7 @@ export function InterviewScreen({ id }: { id: number }) {
           : null;
   const StateIcon = finishOnly ? Flag : recorder.state === "recorded" ? Headphones : Mic;
 
-  // 한 장면: 질문을 적은 노트 한 장(본문 폭 전체) — 위에 질문, 아래 줄 친 "답란"에서 말로 답한다
+  // 한 장면: 질문을 적은 노트 한 장(본문 폭 전체) — 위에 질문, 점선 아래 "답란"(연한 연두 면)에서 말로 답한다
   return (
     <Screen header={<TopBar onBack={() => router.push("/")} />} cta={<BottomCTA>{cta}</BottomCTA>}>
       <div className="flex items-center gap-3">

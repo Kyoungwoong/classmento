@@ -116,21 +116,21 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
 
   return (
     <Screen header={<TopBar onBack={back} />} aside={aside} cta={cta}>
-      {/* 오른쪽: 채점 — 점수(도장) · 근거 · 피드백 · 포스트잇 예시 */}
+      {/* 오른쪽: 채점 — 점수(큰 숫자) · 근거 · 피드백 · 포스트잇 예시 */}
       <div className="flex flex-col gap-6">
         {item.scores.length > 0 && (
           <Panel>
             <div className="flex items-baseline justify-between gap-4">
               <h2 className="text-body1 font-semibold text-text-strong">기준별 점수</h2>
               {evaluated && item.overall != null && (
-                <p
-                  aria-label={`이 문항 ${item.overall.toFixed(1)}점, 5점 만점`}
-                  className="flex items-baseline gap-1"
-                >
-                  <span className="text-display text-text-strong tabular-nums">
+                <p className="flex items-baseline gap-1">
+                  <span aria-hidden="true" className="text-display text-text-strong tabular-nums">
                     {item.overall.toFixed(1)}
                   </span>
-                  <span className="text-body2 text-text-sub">/ 5</span>
+                  <span aria-hidden="true" className="text-body2 text-text-sub">
+                    / 5
+                  </span>
+                  <span className="sr-only">{`이 문항 ${item.overall.toFixed(1)}점, 5점 만점`}</span>
                 </p>
               )}
             </div>

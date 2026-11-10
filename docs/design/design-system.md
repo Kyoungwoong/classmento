@@ -112,7 +112,7 @@ Tailwind 기본 팔레트는 꺼져 있다(`--color-*: initial`). `bg-purple-500
 | `Highlight` | 노랑 형광펜. 제목 핵심어 하나(짧은 단어, 줄바꿈하지 않음) |
 | `Scribble` | 손으로 그은 연두 밑줄(장식). 제목 핵심어 아래 한 곳 |
 | `HandNote` | 손글씨 한마디(`text-accent`). 본문·버튼·폼 금지 |
-| `Stamp` | 채점 도장(role=img "종합 N점, 5점 만점", `label="이 문항"`, `size` lg 리포트 머리 · md 패널 안) |
+| `Stamp` | 채점 도장(role=img "종합 N점, 5점 만점"). 리포트 종합 점수·홈 미리보기에만 |
 | `StickyNote` | 노랑 포스트잇 + 테이프, 손글씨 제목. 팁 하나 |
 | `StepProgress` | 세로 단계 목록(`features/interview`): 끝난 단계 연두 원+체크, 지금 단계 연한 연두 행(`aria-current="step"`). 새 면접 왼쪽 열 |
 | `markEvidence` | 답변 글자에서 채점 근거 인용을 노랑 `<mark>`로 칠한다(두 군데까지, `features/interview`). 문항 상세 |
