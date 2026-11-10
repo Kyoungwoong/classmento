@@ -73,6 +73,7 @@ describe("NewInterviewScreen", () => {
         level: "JUNIOR",
         jobRole: "BACKEND",
         narrowByResume: false,
+        followUps: 1,
       }),
     );
     expect(push).toHaveBeenCalledWith("/interview/9");
@@ -222,5 +223,41 @@ describe("NewInterviewScreen 단계 안내", () => {
     expect(steps.querySelector("[aria-current='step']")).toHaveTextContent("질문 수");
     // 지나온 단계는 고른 값과 "완료"
     expect(steps.querySelector("li")).toHaveTextContent("인성 면접 · 완료");
+  });
+});
+
+describe("NewInterviewScreen 꼬리질문 옵션", () => {
+  it("기술 면접은 꼬리질문을 고를 수 있고(기본 한 번) 고른 값을 보낸다", async () => {
+    noResume();
+    const create = vi.spyOn(api, "createInterview").mockResolvedValue(created);
+    render(<NewInterviewScreen />);
+    fireEvent.click(await screen.findByRole("radio", { name: /기술 면접/ }));
+    next();
+    fireEvent.click(screen.getByRole("button", { name: "백엔드" }));
+    fireEvent.click(screen.getByRole("radio", { name: "주니어" }));
+    next();
+
+    const group = screen.getByRole("radiogroup", { name: "꼬리질문" });
+    expect(group).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "한 번" })).toBeChecked();
+    fireEvent.click(screen.getByRole("radio", { name: "두 번" }));
+    fireEvent.click(screen.getByRole("button", { name: "질문 만들기" }));
+
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith(expect.objectContaining({ followUps: 2 })),
+    );
+  });
+
+  it("인성 면접은 꼬리질문 옵션이 없고 0을 보낸다", async () => {
+    noResume();
+    const create = vi.spyOn(api, "createInterview").mockResolvedValue(created);
+    render(<NewInterviewScreen />);
+    fireEvent.click(await screen.findByRole("radio", { name: /인성 면접/ }));
+    next();
+    expect(screen.queryByRole("radiogroup", { name: "꼬리질문" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "질문 만들기" }));
+    await waitFor(() =>
+      expect(create).toHaveBeenCalledWith({ type: "BEHAVIORAL", count: 3, followUps: 0 }),
+    );
   });
 });

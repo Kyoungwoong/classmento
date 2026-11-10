@@ -258,3 +258,83 @@ describe("InterviewScreen 마스코트", () => {
     expect(screen.getByText("준비되면 답변을 시작해요. 결론부터 말해 보세요.")).toBeInTheDocument();
   });
 });
+
+type Q = InterviewView["questions"][number];
+
+function withFollowUps(questions: Partial<Q>[]): InterviewView {
+  return {
+    ...interview(),
+    maxFollowUps: 1,
+    questions: questions.map((q) => ({
+      seq: 1,
+      text: "질문",
+      kind: "TECH",
+      depth: 0,
+      followUp: "AWAITING",
+      retryable: false,
+      ...q,
+    })) as Q[],
+  };
+}
+
+describe("InterviewScreen 꼬리질문", () => {
+  it("답을 올리면 다음 질문을 고르는 동안 기다렸다가 꼬리질문으로 간다", async () => {
+    const before = withFollowUps([
+      { seq: 1, text: "질문 1번이에요" },
+      { seq: 2, text: "질문 2번이에요" },
+    ]);
+    const after = withFollowUps([
+      { seq: 1, text: "질문 1번이에요", followUp: "ASKED", answerStatus: "TRANSCRIBED" },
+      { seq: 3, text: "그 캐시는 어떻게 무효화했나요?", parentSeq: 1, depth: 1, followUp: "NONE" },
+      { seq: 2, text: "질문 2번이에요" },
+    ]);
+    vi.spyOn(api, "interview").mockResolvedValueOnce(before).mockResolvedValue(after);
+    vi.spyOn(api, "uploadAnswer").mockResolvedValue({ seq: 1, status: "UPLOADED" });
+    Object.assign(recorder, { state: "recorded", blob: new Blob(["v"]), url: "blob:x" });
+    render(<InterviewScreen id={7} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "다음 질문" }));
+
+    expect(await screen.findByText("다음 질문을 고르고 있어요")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "그 캐시는 어떻게 무효화했나요?" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("질문 1의 꼬리 1")).toBeInTheDocument();
+    expect(screen.getByText("1 / 2")).toBeInTheDocument(); // 진행은 본 질문 기준
+  });
+
+  it("마지막 본 질문이어도 꼬리를 기다리는 중이면 끝내지 않고 다음 질문으로 묻는다", async () => {
+    vi.spyOn(api, "interview").mockResolvedValue(
+      withFollowUps([
+        { seq: 1, text: "질문 1번이에요", followUp: "CLOSED", answerStatus: "EVALUATED" },
+        { seq: 2, text: "질문 2번이에요" },
+      ]),
+    );
+    Object.assign(recorder, { state: "recorded", blob: new Blob(["v"]), url: "blob:x" });
+    render(<InterviewScreen id={7} />);
+    expect(await screen.findByRole("button", { name: "다음 질문" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "면접 끝내기" })).toBeNull();
+  });
+
+  it("글자는 있고 평가만 실패했으면 다시 녹음 대신 다시 평가한다", async () => {
+    vi.spyOn(api, "interview").mockResolvedValue(
+      withFollowUps([
+        {
+          seq: 1,
+          text: "질문 1번이에요",
+          followUp: "ASKED",
+          answerStatus: "FAILED",
+          failureReason: "답변을 평가하지 못했어요. 다시 시도해 주세요.",
+          retryable: true,
+        },
+        { seq: 2, text: "꼬리질문이에요", parentSeq: 1, depth: 1, followUp: "NONE" },
+      ]),
+    );
+    const retry = vi.spyOn(api, "retryAnswer").mockResolvedValue({ seq: 1, status: "TRANSCRIBED" });
+    render(<InterviewScreen id={7} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "다시 평가하기" }));
+    await waitFor(() => expect(retry).toHaveBeenCalledWith(7, 1));
+    expect(await screen.findByRole("heading", { name: "꼬리질문이에요" })).toBeInTheDocument();
+  });
+});

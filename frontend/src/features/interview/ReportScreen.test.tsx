@@ -230,3 +230,28 @@ describe("ReportScreen 마스코트", () => {
     expect(second.container.querySelector("[data-mood]")).toHaveAttribute("data-mood", "thinking");
   });
 });
+
+describe("ReportScreen 꼬리질문", () => {
+  it("꼬리 문항은 본 질문 번호와 꼬리 순서로 보여 준다", async () => {
+    vi.spyOn(api, "interviewReport").mockResolvedValue(
+      report({
+        items: [
+          { seq: 1, depth: 0, question: "캐시를 왜 쓰셨나요?", kind: "TECH", scores: [] },
+          {
+            seq: 3,
+            parentSeq: 1,
+            depth: 1,
+            question: "무효화는 어떻게 했나요?",
+            kind: "TECH",
+            scores: [],
+          },
+          { seq: 2, depth: 0, question: "인덱스는 어떻게 골랐나요?", kind: "TECH", scores: [] },
+        ],
+      }),
+    );
+    render(<ReportScreen id={7} />);
+    expect(await screen.findByText("1. 캐시를 왜 쓰셨나요?")).toBeInTheDocument();
+    expect(screen.getByText("꼬리 1 · 무효화는 어떻게 했나요?")).toBeInTheDocument();
+    expect(screen.getByText("2. 인덱스는 어떻게 골랐나요?")).toBeInTheDocument();
+  });
+});
