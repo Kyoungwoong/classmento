@@ -69,7 +69,7 @@ export function ExperienceSection({
     <Section
       title="경험"
       count={items?.length}
-      description="곧 경험 하나를 골라 그 경험으로 면접을 볼 수 있어요."
+      description="경험 하나를 골라 그 경험으로 면접을 볼 수 있어요."
       showEmpty={false}
     >
       {error ? (

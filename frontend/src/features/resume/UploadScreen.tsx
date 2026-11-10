@@ -80,7 +80,12 @@ export function UploadScreen() {
         />
 
         {/* 노트 전체가 놓는 자리: 파일을 고른 뒤에도 끌어다 놓아 바꿀 수 있다 */}
-        <NoteSheet onDragOver={onDragOver} onDragLeave={() => setDragging(false)} onDrop={onDrop}>
+        <NoteSheet
+          active={dragging}
+          onDragOver={onDragOver}
+          onDragLeave={() => setDragging(false)}
+          onDrop={onDrop}
+        >
           {file ? (
             <ListRow
               leading={<FileBadge name={file.name} />}
@@ -102,16 +107,16 @@ export function UploadScreen() {
               type="button"
               onClick={() => inputRef.current?.click()}
               className={clsx(
-                "flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed px-5 py-12 transition-colors",
-                dragging
-                  ? "border-accent bg-bg-tint"
-                  : "border-rule bg-bg hover:bg-bg-subtle active:bg-bg-muted",
+                // 노트 줄 위의 가벼운 점선 칸(상자 안 상자처럼 보이지 않게 면 없이)
+                "flex w-full flex-col items-center justify-center rounded-md border border-dashed px-5 py-12 transition-colors",
+                dragging ? "border-accent" : "border-rule hover:bg-bg-subtle active:bg-bg-muted",
               )}
             >
               <FileUp size={24} aria-hidden className="text-ink" />
               <span className="mt-3 text-body1 font-semibold text-text-strong">파일 고르기</span>
               <span className="mt-1 text-body2 text-text-sub">
-                여기로 끌어다 놓아도 돼요 · PDF, DOCX · 최대 20MB
+                <span className="hidden md:inline">여기로 끌어다 놓아도 돼요 · </span>PDF, DOCX ·
+                최대 20MB
               </span>
             </button>
           )}
@@ -137,7 +142,7 @@ function FileBadge({ name }: { name: string }) {
   return (
     <span
       aria-hidden
-      className="flex size-10 items-center justify-center rounded-sm bg-bg-muted text-caption font-bold text-text-sub"
+      className="flex size-10 items-center justify-center rounded-sm bg-bg-muted text-caption font-bold text-text"
     >
       {ext}
     </span>

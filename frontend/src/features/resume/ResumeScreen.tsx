@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   BottomCTA,
   Button,
@@ -35,33 +35,38 @@ export function ResumeScreen() {
   if (error) {
     const notFound = error.status === 404;
     return (
-      <Screen
-        header={<TopBar />}
-        cta={
-          <BottomCTA>
-            {notFound ? (
-              <ButtonLink href="/resume/upload">이력서 올리기</ButtonLink>
-            ) : (
-              <Button onClick={() => window.location.reload()}>다시 시도하기</Button>
-            )}
-          </BottomCTA>
-        }
-      >
-        <Mascot mood="oops" size={96} className="mb-6" />
-        <ScreenTitle
-          title={notFound ? "이력서를 찾을 수 없어요" : "이력서를 불러오지 못했어요"}
-          description={notFound ? "지워졌거나 다른 계정의 이력서예요." : error.message}
-        />
-      </Screen>
+      <OnPaper>
+        <Screen
+          width="narrow"
+          header={<TopBar />}
+          cta={
+            <BottomCTA>
+              {notFound ? (
+                <ButtonLink href="/resume/upload">이력서 올리기</ButtonLink>
+              ) : (
+                <Button onClick={() => window.location.reload()}>다시 시도하기</Button>
+              )}
+            </BottomCTA>
+          }
+        >
+          <Mascot mood="oops" size={96} className="mb-6" />
+          <ScreenTitle
+            title={notFound ? "이력서를 찾을 수 없어요" : "이력서를 불러오지 못했어요"}
+            description={notFound ? "지워졌거나 다른 계정의 이력서예요." : error.message}
+          />
+        </Screen>
+      </OnPaper>
     );
   }
   // 처음 불러오는 중: 처리 중 화면과 구분 (이미 끝난 이력서를 "읽고 있어요"로 보이지 않게)
   if (!resume) {
     return (
-      <Screen width="narrow" header={<TopBar />}>
-        <Mascot mood="thinking" size={96} className="mb-6" />
-        <p className="text-body2 text-text-hint">이력서를 불러오고 있어요</p>
-      </Screen>
+      <OnPaper>
+        <Screen width="narrow" header={<TopBar />}>
+          <Mascot mood="thinking" size={96} className="mb-6" />
+          <p className="text-body2 text-text-sub">이력서를 불러오고 있어요</p>
+        </Screen>
+      </OnPaper>
     );
   }
   if (resume.status === "UPLOADED" || resume.status === "EXTRACTED") {
@@ -69,20 +74,23 @@ export function ResumeScreen() {
   }
   if (resume.status === "FAILED") {
     return (
-      <Screen
-        header={<TopBar />}
-        cta={
-          <BottomCTA>
-            <ButtonLink href="/resume/upload">다시 올리기</ButtonLink>
-          </BottomCTA>
-        }
-      >
-        <Mascot mood="oops" size={96} className="mb-6" />
-        <ScreenTitle
-          title="이력서를 읽지 못했어요"
-          description={resume.failureReason ?? "다른 파일로 다시 올려주세요."}
-        />
-      </Screen>
+      <OnPaper>
+        <Screen
+          width="narrow"
+          header={<TopBar />}
+          cta={
+            <BottomCTA>
+              <ButtonLink href="/resume/upload">다시 올리기</ButtonLink>
+            </BottomCTA>
+          }
+        >
+          <Mascot mood="oops" size={96} className="mb-6" />
+          <ScreenTitle
+            title="이력서를 읽지 못했어요"
+            description={resume.failureReason ?? "다른 파일로 다시 올려주세요."}
+          />
+        </Screen>
+      </OnPaper>
     );
   }
   return <ParsedView resume={resume} onSaved={setResume} />;
@@ -95,23 +103,40 @@ function Processing({ status }: { status?: string }) {
   ];
   const current = status === "EXTRACTED" ? 1 : 0;
   return (
-    <Screen width="narrow" header={<TopBar back={false} />}>
-      <Mascot mood="thinking" size={112} className="mb-6" />
-      <ScreenTitle title="이력서를 읽고 있어요" description="보통 30초 안에 끝나요." />
-      <ProgressBar value={status === "EXTRACTED" ? 0.7 : 0.3} label="이력서 처리 진행률" />
-      <ol className="mt-6" aria-live="polite">
-        {steps.map((s, i) => (
-          <li
-            key={s.key}
-            className={
-              i <= current ? "py-2 text-body1 text-text-strong" : "py-2 text-body1 text-text-hint"
-            }
-          >
-            {s.label}
-          </li>
-        ))}
-      </ol>
-    </Screen>
+    <OnPaper>
+      <Screen width="narrow" header={<TopBar back={false} />}>
+        <Mascot mood="thinking" size={112} className="mb-6" />
+        <ScreenTitle title="이력서를 읽고 있어요" description="보통 30초 안에 끝나요." />
+        {/* 노트를 읽는 장면: 단계 한 장 */}
+        <NoteSheet>
+          <ProgressBar value={status === "EXTRACTED" ? 0.7 : 0.3} label="이력서 처리 진행률" />
+          <ol className="mt-4" aria-live="polite">
+            {steps.map((s, i) => (
+              <li
+                key={s.key}
+                className={
+                  i <= current
+                    ? "py-2 text-body1 text-text-strong"
+                    : "py-2 text-body1 text-text-hint"
+                }
+              >
+                {s.label}
+              </li>
+            ))}
+          </ol>
+        </NoteSheet>
+      </Screen>
+    </OnPaper>
+  );
+}
+
+/** 이력서 화면들의 바탕: 업로드 화면과 이어지는 모눈 + 종이 면 */
+function OnPaper({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative isolate flex-1 bg-paper">
+      <GridPaper />
+      {children}
+    </div>
   );
 }
 
@@ -179,9 +204,10 @@ function ParsedView({
             <p className="text-caption font-semibold text-text-sub">{resume.filename}</p>
             <h1 id="resume-heading" className="mt-2 text-title1 text-text-strong md:text-title1-lg">
               이렇게 정리했어요
-              <br />
-              빠진 기술이 있으면 더해 주세요
             </h1>
+            <p className="mt-2 text-body2 text-text md:text-body1">
+              빠진 기술이 있으면 더해 주세요.
+            </p>
           </div>
           <NoteSheet className="mt-8">
             <div className="grid gap-8 lg:grid-cols-12 lg:gap-10">

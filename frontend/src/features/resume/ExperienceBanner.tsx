@@ -58,7 +58,7 @@ export function ExperienceBanner({
         <ul className="mt-3 flex flex-wrap gap-2" aria-label="사용한 기술">
           {shown.map((s, i) => (
             <li key={`${i}-${s}`}>
-              <Chip label={s} size="sm" tone="surface" />
+              <Chip label={s} size="sm" tone="muted" />
             </li>
           ))}
           {rest > 0 && (
