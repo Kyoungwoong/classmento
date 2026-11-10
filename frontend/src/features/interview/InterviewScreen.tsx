@@ -296,7 +296,7 @@ export function InterviewScreen({ id }: { id: number }) {
               <Mascot mood={mood} size={96} />
             ) : (
               <span className="flex size-16 shrink-0 items-center justify-center rounded-full bg-bg text-ink ring-1 ring-rule">
-                <StateIcon size={28} aria-hidden />
+                <StateIcon size={24} aria-hidden />
               </span>
             )}
             <div className="w-full min-w-0 flex-1">

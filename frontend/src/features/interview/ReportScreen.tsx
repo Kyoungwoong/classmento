@@ -48,7 +48,7 @@ function shouldPoll(r: ReportView): boolean {
 }
 
 /**
- * /interview/[id]/report — 종합 점수(큰 숫자)·강점·보완점·기준별 점수·문항별 점수.
+ * /interview/[id]/report — 채점된 답안지(종합 도장)·강점·보완점·기준별 점수·문항별 점수.
  * 평가 중이면 3초마다 다시 불러온다(종합이 빠졌을 때 서버가 다시 만드는 계기이기도 하다).
  */
 export function ReportScreen({ id }: { id: number }) {

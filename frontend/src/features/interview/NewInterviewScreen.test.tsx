@@ -219,5 +219,7 @@ describe("NewInterviewScreen 단계 안내", () => {
     next();
     expect(steps).not.toHaveTextContent("조건");
     expect(steps.querySelector("[aria-current='step']")).toHaveTextContent("질문 수");
+    // 지나온 단계는 고른 값과 "완료"
+    expect(steps.querySelector("li")).toHaveTextContent("인성 면접 · 완료");
   });
 });

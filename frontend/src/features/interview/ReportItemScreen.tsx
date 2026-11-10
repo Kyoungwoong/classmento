@@ -88,7 +88,7 @@ export function ReportItemScreen({ id, seq }: { id: number; seq: number }) {
         description={item.intent ? `이 질문으로 보려는 것: ${item.intent}` : undefined}
       />
       {item.answerStatus && (
-        <NoteSheet aria-labelledby="answer-heading">
+        <NoteSheet role="region" aria-labelledby="answer-heading">
           <h2 id="answer-heading" className="text-body1 font-semibold text-text-strong">
             내 답변
           </h2>

@@ -37,7 +37,7 @@ export function StepProgress({
                 done || now ? "bg-primary text-on-primary" : "bg-navy-100 text-ink",
               )}
             >
-              {done ? <Check size={18} aria-hidden /> : i + 1}
+              {done ? <Check size={20} aria-hidden /> : i + 1}
             </span>
             <span className="min-w-0">
               <span className="block text-body1 font-semibold text-text-strong">{s.label}</span>
