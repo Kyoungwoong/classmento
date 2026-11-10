@@ -1,7 +1,10 @@
 "use client";
 
+import clsx from "clsx";
+import { FileUp } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRef, useState, type DragEvent } from "react";
+import { GridPaper, NoteSheet, StickyNote } from "@/components/note";
 import { BottomCTA, Button, ListRow, Screen, ScreenTitle, TopBar } from "@/components/ui";
 import { api, ApiError } from "@/lib/api/client";
 import { ACCEPTED_RESUME, formatBytes, validateResumeFile } from "./formatBytes";
@@ -12,6 +15,7 @@ export function UploadScreen() {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [dragging, setDragging] = useState(false);
 
   function pick(selected: File | undefined) {
     if (!selected) return;
@@ -33,65 +37,98 @@ export function UploadScreen() {
     }
   }
 
+  function onDragOver(e: DragEvent) {
+    if (loading || !e.dataTransfer.types.includes("Files")) return;
+    e.preventDefault(); // 놓기 허용
+    setDragging(true);
+  }
+
+  function onDrop(e: DragEvent) {
+    e.preventDefault();
+    setDragging(false);
+    if (loading) return;
+    pick(e.dataTransfer.files?.[0]);
+  }
+
   return (
-    <Screen
-      width="narrow"
-      header={<TopBar />}
-      cta={
-        <BottomCTA caption="올린 이력서는 면접 질문을 만드는 데만 써요">
-          <Button onClick={upload} disabled={!file} loading={loading} loadingText="올리고 있어요">
-            올리기
-          </Button>
-        </BottomCTA>
-      }
-    >
-      <ScreenTitle
-        title="이력서를 올려주세요"
-        description="경력, 기술, 프로젝트를 자동으로 정리해 드려요."
-      />
+    // 모눈 바탕 위 노트 한 장에 이력서를 끼운다(ADR 0007)
+    <div className="relative isolate flex-1 bg-paper">
+      <GridPaper />
+      <Screen
+        width="narrow"
+        header={<TopBar />}
+        cta={
+          <BottomCTA caption="올린 이력서는 면접 질문을 만드는 데만 써요">
+            <Button onClick={upload} disabled={!file} loading={loading} loadingText="올리고 있어요">
+              올리기
+            </Button>
+          </BottomCTA>
+        }
+      >
+        <ScreenTitle
+          title="이력서를 올려주세요"
+          description="경력, 기술, 프로젝트를 자동으로 정리해 드려요."
+        />
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ACCEPTED_RESUME}
-        className="sr-only"
-        onChange={(e) => pick(e.target.files?.[0])}
-        aria-label="이력서 파일 선택"
-      />
+        <input
+          ref={inputRef}
+          type="file"
+          accept={ACCEPTED_RESUME}
+          className="sr-only"
+          onChange={(e) => pick(e.target.files?.[0])}
+          aria-label="이력서 파일 선택"
+        />
 
-      {file ? (
-        <ListRow
-          leading={<FileBadge name={file.name} />}
-          title={file.name}
-          description={formatBytes(file.size)}
-          trailing={
+        {/* 노트 전체가 놓는 자리: 파일을 고른 뒤에도 끌어다 놓아 바꿀 수 있다 */}
+        <NoteSheet onDragOver={onDragOver} onDragLeave={() => setDragging(false)} onDrop={onDrop}>
+          {file ? (
+            <ListRow
+              leading={<FileBadge name={file.name} />}
+              title={file.name}
+              description={formatBytes(file.size)}
+              trailing={
+                <button
+                  type="button"
+                  onClick={() => inputRef.current?.click()}
+                  disabled={loading}
+                  className="-mr-2 h-11 px-2 font-semibold text-accent disabled:text-text-hint"
+                >
+                  바꾸기
+                </button>
+              }
+            />
+          ) : (
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
-              disabled={loading}
-              className="-mr-2 h-11 px-2 font-semibold text-accent disabled:text-text-hint"
+              className={clsx(
+                "flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed px-5 py-12 transition-colors",
+                dragging
+                  ? "border-accent bg-bg-tint"
+                  : "border-rule bg-bg hover:bg-bg-subtle active:bg-bg-muted",
+              )}
             >
-              바꾸기
+              <FileUp size={24} aria-hidden className="text-ink" />
+              <span className="mt-3 text-body1 font-semibold text-text-strong">파일 고르기</span>
+              <span className="mt-1 text-body2 text-text-sub">
+                여기로 끌어다 놓아도 돼요 · PDF, DOCX · 최대 20MB
+              </span>
             </button>
-          }
-        />
-      ) : (
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="flex w-full flex-col items-center justify-center rounded-lg bg-bg-muted px-5 py-10 active:bg-gray-200"
-        >
-          <span className="text-body1 font-semibold text-text-strong">파일 고르기</span>
-          <span className="mt-1 text-body2 text-text-sub">PDF, DOCX · 최대 20MB</span>
-        </button>
-      )}
+          )}
 
-      {error && (
-        <p role="alert" className="mt-4 text-body2 text-danger">
-          {error}
-        </p>
-      )}
-    </Screen>
+          {error && (
+            <p role="alert" className="mt-4 text-body2 text-danger">
+              {error}
+            </p>
+          )}
+        </NoteSheet>
+
+        <StickyNote title="이렇게 정리해요" level="h2" className="mt-10">
+          경력·프로젝트를 경험 하나씩 나누고, 기술과 학력을 뽑아요. 틀린 건 다음 화면에서 고칠 수
+          있어요.
+        </StickyNote>
+      </Screen>
+    </div>
   );
 }
 
