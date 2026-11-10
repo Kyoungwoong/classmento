@@ -46,7 +46,7 @@ public class InterviewService {
     Conditions c =
         new Conditions(
             cmd.level(), cmd.jobRole(), cmd.resumeId(), cmd.experienceId(), cmd.narrowByResume());
-    InterviewSession.requireValid(cmd.type(), cmd.count(), c);
+    InterviewSession.requireValid(cmd.type(), cmd.count(), c, cmd.followUps());
     List<QuestionDraft> drafts =
         switch (cmd.type()) {
           case TECH -> tech(userId, c, cmd.count());
@@ -54,7 +54,8 @@ public class InterviewService {
           case MIXED -> mixed(c, cmd.count());
           case EXPERIENCE -> experience(userId, c, cmd.count());
         };
-    return sessions.save(InterviewSession.start(userId, cmd.type(), cmd.count(), c, drafts));
+    return sessions.save(
+        InterviewSession.start(userId, cmd.type(), cmd.count(), c, cmd.followUps(), drafts));
   }
 
   @Transactional(readOnly = true)
@@ -99,6 +100,9 @@ public class InterviewService {
     return out;
   }
 
+  /**
+   * @param followUps 질문 하나에 붙일 꼬리질문 최대 수(0~2, 인성은 0). ADR 0008
+   */
   public record Command(
       InterviewType type,
       int count,
@@ -106,5 +110,18 @@ public class InterviewService {
       JobRole jobRole,
       Long resumeId,
       Long experienceId,
-      boolean narrowByResume) {}
+      boolean narrowByResume,
+      int followUps) {
+
+    public Command(
+        InterviewType type,
+        int count,
+        InterviewLevel level,
+        JobRole jobRole,
+        Long resumeId,
+        Long experienceId,
+        boolean narrowByResume) {
+      this(type, count, level, jobRole, resumeId, experienceId, narrowByResume, 0);
+    }
+  }
 }
