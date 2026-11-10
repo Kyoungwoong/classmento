@@ -20,6 +20,17 @@ describe("ResumeScreen 상태 그림", () => {
       await screen.findByRole("heading", { name: "이력서를 읽고 있어요" }),
     ).toBeInTheDocument();
     expect(container.querySelector("[data-mood]")).toHaveAttribute("data-mood", "thinking");
+    expect(container.querySelector("[aria-current='step']")).toHaveTextContent("글자를 읽고 있어요");
+  });
+
+  it("정리 단계면 앞 단계는 끝난 말로 바뀐다", async () => {
+    vi.spyOn(api, "resume").mockResolvedValue({ ...base, status: "EXTRACTED" } as ResumeDetail);
+    const { container } = render(<ResumeScreen />);
+    await screen.findByRole("heading", { name: "이력서를 읽고 있어요" });
+    expect(screen.getByText("글자를 읽었어요")).toBeInTheDocument();
+    expect(container.querySelector("[aria-current='step']")).toHaveTextContent(
+      "경력과 기술을 정리하고 있어요",
+    );
   });
 
   it("읽지 못했으면 문제 표정과 원인", async () => {

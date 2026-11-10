@@ -79,14 +79,13 @@ describe("노트 부품", () => {
 });
 
 describe("NoteSheet active", () => {
-  it("active면 놓는 중처럼 연한 연두 면과 진한 연두 테두리", () => {
+  it("active면 종이 면은 그대로 두고(글자 대비 유지) 진한 연두 테두리와 연두 고리", () => {
     render(
       <NoteSheet active aria-label="노트">
         <p>파일</p>
       </NoteSheet>,
     );
     const sheet = screen.getByLabelText("노트");
-    expect(sheet).toHaveClass("bg-bg-tint", "border-accent");
-    expect(sheet).not.toHaveClass("bg-paper");
+    expect(sheet).toHaveClass("bg-paper", "border-accent", "ring-4", "ring-primary");
   });
 });
